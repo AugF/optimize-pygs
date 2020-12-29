@@ -1,8 +1,17 @@
+毕业论文工作
+
+## 贡献1：性能瓶颈分析 
 
 ## 贡献2: 基于采样的优化
+Motivation:
+- 模型并行和数据并行的形式，使用难以上手
+- 实际中往往有资源有限的场景，特别是遇到图神经网络以及更复杂的网络，运行时间过长始终是巨大的问题
 
+目标:
+- input(sampler, training, evaluation)
+- output: 数据结果
 
-### 优化点1： sampling, data_transferring, training的overlap
+### 优化点1: 流水线技术优化程序执行流程
 
 #### 思路
 1. 采样overlap这个点，尝试优化思路
@@ -16,12 +25,29 @@
     >  - 实际上Dataloader的sampler已经在毫秒级别了
     > 要证明batch_size大了的好处才是，这个有证据可以表明的
     >   - 之前gnn的证明是否是有效
-2. 
+
+
+2. 主存都放不下的情况下如何采样?
 
 #### 计划
-[ ] 验证torch.cuda的data_transferring和training的接口
-    [ ] torch.cuda(non_blocking=True): 
-[ ] 验证python的multiprocessing机制:
-    > 
 
-### 优化点2： graphsage采样技术的优化
+[x] 查看现有GNN系统是否已经采用了贡献2的想法
+    [x] 阅读“大规模图神经网络系统综述", 没有涉及该部分内存
+    [x] 查看pyg, dgl官方是否已经做过这部分内容; 总结：现有的图神经网络系统都没有用到
+        [x] pyg没有用到
+        [x] ogb没有用到
+        [x] dgl没有用到
+    > 认为是可以做的点
+[x] 验证有效性
+    > 使用
+[ ] 安装
+
+
+## 贡献3: 基于GPU的内存保护
+
+motivation:
+1. 防止中间OOM带来的问题，一旦崩溃便难以处理
+2. 在模型运行前，为算法习得合适的模型以判断是否能够成功预测
+3. 当内存都放不下的情况，考虑如何对Inference阶段的模型进行剪枝
+
+
