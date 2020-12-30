@@ -26,6 +26,16 @@ Motivation:
     > 要证明batch_size大了的好处才是，这个有证据可以表明的
     >   - 之前gnn的证明是否是有效
 
+设计原则：尽量封装得越简单越好
+封装：
+- models:
+- sampler:
+- trainer: train(model, device)
+- evaluator: input, output
+- 
+
+设计想法：
+评估Full
 
 2. 主存都放不下的情况下如何采样?
 
@@ -38,10 +48,13 @@ Motivation:
         [x] ogb没有用到
         [x] dgl没有用到
     > 认为是可以做的点
-[x] 验证有效性
-    > 使用
+[x] 整体思路
+    [ ] 验证Full和分批的思路
 [ ] 安装
 
+#### idea
+
+可以收集多种early_stoppping的机制，供用户选择; AutoDL
 
 ## 贡献3: 基于GPU的内存保护
 
