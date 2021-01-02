@@ -44,7 +44,6 @@ model = model.to(device)
 x = data.x.to(device)
 y = data.y.squeeze().to(device)
 
-
 def train(epoch):
     model.train()
 
@@ -78,7 +77,7 @@ def train(epoch):
 def test():
     model.eval()
 
-    out = model.inference(x)
+    out = model.inference(x, subgraph_loader, device)
 
     y_true = y.cpu().unsqueeze(-1)
     y_pred = out.argmax(dim=-1, keepdim=True)

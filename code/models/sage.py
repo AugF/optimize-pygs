@@ -1,31 +1,38 @@
 import torch
+from torch import nn
 import torch.nn.functional as F
-from tqdm import tqdm
 from torch_geometric.nn import SAGEConv
+from code.globals import *
 
-class SAGE(torch.nn.Module):
-    def __init__(self, in_channels, hidden_channels, out_channels, num_layers):
+class SAGE(nn.Module):
+    def __init__(self, in_channels, hidden_channels, out_channels, num_layers, cpu_eval=False):
         super(SAGE, self).__init__()
 
+        self.use_cuda = (args_global.gpu >= 0)
+        if cpu_eval:
+            self.use_cuda = False        
+        
+        # params
+        self.lr = train_paras['lr']
+        self.weight_decay = train_paras['weight_decay']
+        self.dropout = train_paras['dropout']  
+        
+        # model
         self.num_layers = num_layers
-
         self.convs = torch.nn.ModuleList()
         self.convs.append(SAGEConv(in_channels, hidden_channels))
         for _ in range(num_layers - 2):
             self.convs.append(SAGEConv(hidden_channels, hidden_channels))
         self.convs.append(SAGEConv(hidden_channels, out_channels))
 
+        # optimizer
+        self.optimizer = torch.optim.Adam(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+        
     def reset_parameters(self):
         for conv in self.convs:
             conv.reset_parameters()
-
+    
     def forward(self, x, adjs):
-        # `train_loader` computes the k-hop neighborhood of a batch of nodes,
-        # and returns, for each layer, a bipartite graph object, holding the
-        # bipartite edges `edge_index`, the index `e_id` of the original edges,
-        # and the size/shape `size` of the bipartite graph.
-        # Target nodes are also included in the source nodes so that one can
-        # easily apply skip-connections or add self-loops.
         for i, (edge_index, _, size) in enumerate(adjs):
             x_target = x[:size[1]]  # Target nodes are always placed first.
             x = self.convs[i]((x, x_target), edge_index)
@@ -33,14 +40,23 @@ class SAGE(torch.nn.Module):
                 x = F.relu(x)
                 x = F.dropout(x, p=0.5, training=self.training)
         return x.log_softmax(dim=-1)
+    
+    
+    def train_step(self, node_subgraph, adj_subgraph, norm_loss_subgraph):
+        """
+        Forward and backward propagation
+        """
+        self.train()
+        self.optimizer.zero_grad()
+        preds, labels, labels_converted = self(node_subgraph, adj_subgraph)
+        loss = self._loss(preds, labels_converted, norm_loss_subgraph)
+        loss.backward()
+        torch.nn.utils.clip_grad_norm(self.parameters(), 5) # 梯度裁剪
+        self.optimizer.step()
+        return loss, self.predict(preds), labels
 
-    def inference(self, x_all):
-        pbar = tqdm(total=x_all.size(0) * self.num_layers)
-        pbar.set_description('Evaluating')
 
-        # Compute representations of nodes layer by layer, using *all*
-        # available edges. This leads to faster computation in contrast to
-        # immediately computing the final representations of each batch.
+    def inference(self, x_all, subgraph_loader, device):
         total_edges = 0
         for i in range(self.num_layers):
             xs = []
@@ -54,10 +70,16 @@ class SAGE(torch.nn.Module):
                     x = F.relu(x)
                 xs.append(x.cpu())
 
-                pbar.update(batch_size)
-
             x_all = torch.cat(xs, dim=0)
-
-        pbar.close()
-
         return x_all
+    
+    def eval_step(self, x, y, adj):
+        """
+        Forward propagation only
+        """
+        self.eval()
+        with torch.no_grad():
+            out = self(x, adj)
+            loss = F.nll_loss(out, y)
+        return loss
+        

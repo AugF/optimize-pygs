@@ -4,7 +4,14 @@
 
 基于pyg的进一步优化工作。
 
+#### Installation
+
+1. `pip install -e .` 安装包; `python setup.py install --user`
+
 #### Usage
 
-1. `pip install -e .`
-2. 例子：运行gcn.py代码 `python -m code.models.gcn`(必须在根目录)
+CPU上运行
+`python -m code.train --data_prefix ./data/<dataset_name> --train_config <path to train_config yml> --gpu -1`
+
+GPU上运行
+`python -m code.train --data_prefix ./data/<dataset_name> --train_config <path to train_config yml> --gpu <GPU number>`
