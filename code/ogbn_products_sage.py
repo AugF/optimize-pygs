@@ -1,4 +1,5 @@
 '''
+该文件用来测试基于采样的并行化
 https://github.com/rusty1s/pytorch_geometric/blob/master/examples/ogbn_products_sage.py master: 8a57480
 report acc: 0.7870 ± 0.0036
 rank: 12
@@ -44,8 +45,6 @@ model = SAGE(dataset.num_features, 256, dataset.num_classes, num_layers=3)
 # model_eval = model.to(eval_device)
 model = model.to(train_device)
 
-# x = data.x.to(device)
-# y = data.y.squeeze().to(device)
 
 def train(model, device):
     model.train()
