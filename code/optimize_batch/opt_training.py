@@ -48,7 +48,6 @@ model = model.to(train_device)
 def train(model, device):
     model.train()
 
-    print(torch.cuda.memory_stats(device)["allocated_bytes.all.peak"])
     total_loss = total_correct = 0
     for batch_size, n_id, adjs in train_loader:
         # `adjs` holds a list of `(edge_index, e_id, size)` tuples.
@@ -62,10 +61,6 @@ def train(model, device):
 
         total_loss += float(loss)
         total_correct += int(out.argmax(dim=-1).eq(y[n_id[:batch_size]]).sum())
-        print(torch.cuda.memory_stats(device)["allocated_bytes.all.peak"])
-        # pbar.update(batch_size)
-
-    # pbar.close()
 
     loss = total_loss / len(train_loader)
     approx_acc = total_correct / train_idx.size(0)
@@ -74,58 +69,4 @@ def train(model, device):
     return loss, approx_acc
 
 
-@torch.no_grad()
-def test(model, device):
-    model.eval()
-    print(torch.cuda.memory_stats(device)["allocated_bytes.all.peak"])
-    out = model.inference(x, subgraph_loader, device)
-    y_true = y.cpu().unsqueeze(-1)
-    y_pred = out.argmax(dim=-1, keepdim=True)
-
-    train_acc = evaluator.eval({
-        'y_true': y_true[split_idx['train']],
-        'y_pred': y_pred[split_idx['train']],
-    })['acc']
-    val_acc = evaluator.eval({
-        'y_true': y_true[split_idx['valid']],
-        'y_pred': y_pred[split_idx['valid']],
-    })['acc']
-    test_acc = evaluator.eval({
-        'y_true': y_true[split_idx['test']],
-        'y_pred': y_pred[split_idx['test']],
-    })['acc']
-    print(torch.cuda.memory_stats(device)["allocated_bytes.all.peak"])
-    return train_acc, val_acc, test_acc
-
-def run_train():
-    test_accs = []
-    for run in range(args.runs):
-        print('')
-        print(f'Run {run:02d}:')
-        print('')
-
-        model.reset_parameters()
-        optimizer = torch.optim.Adam(model.parameters(), lr=0.003)
-
-        best_val_acc = final_test_acc = 0
-        for epoch in range(1, 1 + args.epochs):
-            loss, acc = train(mode, epoch)
-            print(f'Epoch {epoch:02d}, Loss: {loss:.4f}, Approx. Train: {acc:.4f}')
-
-            if epoch > 5:
-                # 增加一个判断依据
-                result = test()
-                train_acc, val_acc, test_acc = result
-                print(f'Train: {train_acc:.4f}, Val: {val_acc:.4f}, '
-                    f'Test: {test_acc:.4f}')
-
-                if val_acc > best_val_acc:
-                    best_val_acc = val_acc
-                    final_test_acc = test_acc
-        test_accs.append(final_test_acc)
-        logger.print_statistics(run)
-        
-    logger.print_statistics()
-    test_acc = torch.tensor(test_accs)
-    print('============================')
-    print(f'Final Test: {test_acc.mean():.4f} ± {test_acc.std():.4f}')
+train(model, device)
