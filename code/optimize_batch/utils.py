@@ -1,4 +1,5 @@
 import argparse
+import torch.nn.functional as F
 
 def get_args(description='OGBN-Products'):
     parser = argparse.ArgumentParser(description=description)
@@ -18,4 +19,52 @@ def get_args(description='OGBN-Products'):
     
     return args
 
+def train_base(model, loader, optimizer, device):
+    model.train()
 
+    total_loss = total_examples = 0
+    total_correct = total_examples = 0
+    for data in loader:
+        data = data.to(device)
+        if data.train_mask.sum() == 0:
+            continue
+        optimizer.zero_grad()
+        out = model(data.x, data.edge_index)[data.train_mask]
+        y = data.y.squeeze(1)[data.train_mask]
+        loss = F.nll_loss(out, y)
+        loss.backward()
+        optimizer.step()
+
+        num_examples = data.train_mask.sum().item()
+        total_loss += loss.item() * num_examples
+        total_examples += num_examples
+
+        total_correct += out.argmax(dim=-1).eq(y).sum().item()
+        total_examples += y.size(0)
+
+    return total_loss / total_examples, total_correct / total_examples
+
+
+@torch.no_grad()
+def test_base(model, data, evaluator, subgraph_loader, device):
+    model.eval()
+
+    out = model.inference(data.x, subgraph_loader, device)
+
+    y_true = data.y
+    y_pred = out.argmax(dim=-1, keepdim=True)
+
+    train_acc = evaluator.eval({
+        'y_true': y_true[data.train_mask],
+        'y_pred': y_pred[data.train_mask]
+    })['acc']
+    valid_acc = evaluator.eval({
+        'y_true': y_true[data.valid_mask],
+        'y_pred': y_pred[data.valid_mask]
+    })['acc']
+    test_acc = evaluator.eval({
+        'y_true': y_true[data.test_mask],
+        'y_pred': y_pred[data.test_mask]
+    })['acc']
+
+    return train_acc, valid_acc, test_acc

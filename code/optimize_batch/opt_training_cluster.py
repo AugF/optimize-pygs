@@ -1,47 +1,11 @@
-'''
-https://github.com/snap-stanford/ogb/blob/master/examples/nodeproppred/products/cluster_gcn.py master: cf066f9
-report acc: 0.7897 ± 0.0033
-rank: 11
-2020-10-27
-'''
+import time
 import torch
-from tqdm import tqdm
-import torch.nn.functional as F
 
 from torch_geometric.data import ClusterData, ClusterLoader, NeighborSampler
-from torch_geometric.nn import SAGEConv
-
 from ogb.nodeproppred import PygNodePropPredDataset, Evaluator
 
 from code.models.sage import SAGE
-from code.optimize_batch.utils import get_args
-
-def train(model, loader, optimizer, device):
-    model.train()
-
-    total_loss = total_examples = 0
-    total_correct = total_examples = 0
-    for data in loader:
-        data = data.to(device)
-        if data.train_mask.sum() == 0:
-            continue
-        optimizer.zero_grad()
-        out = model(data.x, data.edge_index)[data.train_mask]
-        y = data.y.squeeze(1)[data.train_mask]
-        loss = F.nll_loss(out, y)
-        loss.backward()
-        optimizer.step()
-
-        num_examples = data.train_mask.sum().item()
-        total_loss += loss.item() * num_examples
-        total_examples += num_examples
-
-        total_correct += out.argmax(dim=-1).eq(y).sum().item()
-        total_examples += y.size(0)
-
-    return total_loss / total_examples, total_correct / total_examples
-
-
+from code.optimize_batch.utils import get_args, train_base
 
 # ---- begin ----
 # step1. get args
@@ -75,6 +39,6 @@ model.reset_parameters()
 optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 
 # step5. train
-loss, train_acc = train(model, loader, optimizer, device)
+loss, train_acc = train_base(model, loader, optimizer, device)
 print(f'loss: {loss:.4f}, train_acc: {train_acc:.4f}')
 
