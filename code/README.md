@@ -13,9 +13,10 @@
         [x] ogb没有用到
         [x] dgl没有用到
 [ ] 采样的流水线技术实现
-    [ ] optimize batch: ogbn_products_sage
+    [ ] optimize batch: ogbn_products_sage;
         - train
         - inference
+        [ ] 版本问题：之后可能耗时比例就不如想象了
     [ ] optimize epoch
     [ ] optimize sampler
     [ ] 进一步考虑使用什么实现流水线
