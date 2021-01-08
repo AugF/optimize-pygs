@@ -11,6 +11,32 @@ from ogb.nodeproppred import PygNodePropPredDataset, Evaluator
 from code.models.sage import SAGE
 from code.optimize_batch.utils import get_args, test_base
 
+
+def train_base(model, loader, optimizer, device):
+    model.train()
+
+    total_loss = total_examples = 0
+    total_correct = total_examples = 0
+    for data in loader:
+        data = data.to(device)
+        if data.train_mask.sum() == 0:
+            continue
+        optimizer.zero_grad()
+        out = model(data.x, data.edge_index)[data.train_mask]
+        y = data.y.squeeze(1)[data.train_mask]
+        loss = F.nll_loss(out, y)
+        loss.backward()
+        optimizer.step()
+
+        num_examples = data.train_mask.sum().item()
+        total_loss += loss.item() * num_examples
+        total_examples += num_examples
+
+        total_correct += out.argmax(dim=-1).eq(y).sum().item()
+        total_examples += y.size(0)
+
+    return total_loss / total_examples, total_correct / total_examples
+
 # ---- begin ----
 # step1. get args
 args = get_args(description="ogbn_products_sage_cluster")
