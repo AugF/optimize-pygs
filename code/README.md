@@ -13,7 +13,9 @@
         [x] ogb没有用到
         [x] dgl没有用到
 [ ] 采样的流水线技术实现
-    [ ]
+    [ ] optimize batch
+    [ ] optimize epoch
+    [ ] optimize sampler
     [ ] 进一步考虑使用什么实现流水线
         [ ] python协程
         [ ] 分布式Ray
