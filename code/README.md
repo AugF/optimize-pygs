@@ -26,6 +26,8 @@ Motivation:
     > 要证明batch_size大了的好处才是，这个有证据可以表明的
     >   - 之前gnn的证明是否是有效
 
+思路：直接对某个场景进行来做
+
 2. 主存都放不下的情况下如何采样?
 
 #### 计划
@@ -38,35 +40,6 @@ Motivation:
         [x] dgl没有用到
     > 认为是可以做的点
 [x] 整体思路
-    [ ] 
-[ ] 安装
+    
 
-
-- mode: (train, evaluation, test, optimizer, sampler, **args)
-    - 固定epoch
-        - input: *args, epoch
-    - early_stopping
-        - input: **args, hot epochs, patience 
-        - output: 
-
-- 核心：
-    - training和evaluation在不同GPU上，数据保存在内存中，数据存储到文件
-    - training在CPU, evaluation在GPU
-    - sampler和GPU
-
-#### 相关技术和知识点
-
-- python多线程
-- to
-- 数据存储
-
-train_loader: 每一运行每一个batch的数据都不一样
-
-
-## 贡献3: 基于GPU的内存保护
-
-motivation:
-1. 防止中间OOM带来的问题，一旦崩溃便难以处理
-2. Inference阶段采样出来的子图是变化的，这样来说是有意义的
-3. 考虑如何才可以，将这一套做得有意义
 

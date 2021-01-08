@@ -13,12 +13,13 @@ from tqdm import tqdm
 from ogb.nodeproppred import PygNodePropPredDataset, Evaluator
 from torch_geometric.data import NeighborSampler
 
-from models.sage import SAGE
-from utils.logger import Logger
+from code.models.sage import SAGE
+from code.utils.logger import Logger
 
 
 parser = argparse.ArgumentParser(description='Neighborsampling(SAGE)')
-parser.add_argument('--device', type=int, default=0)
+parser.add_argument('--train_device', type=int, default=0)
+parser.add_argument('--eval_device', type=str, default="cpu")
 parser.add_argument('--epochs', type=int, default=20)
 parser.add_argument('--runs', type=int, default=10)
 args = parser.parse_args()
@@ -37,19 +38,19 @@ subgraph_loader = NeighborSampler(data.edge_index, node_idx=None, sizes=[-1],
                                   batch_size=4096, shuffle=False,
                                   num_workers=12)
 
-device = f'cuda:{args.device}' if torch.cuda.is_available() else 'cpu'
+train_device = f'cuda:{args.train_device}' if torch.cuda.is_available() else 'cpu'
 model = SAGE(dataset.num_features, 256, dataset.num_classes, num_layers=3)
-model = model.to(device)
 
-x = data.x.to(device)
-y = data.y.squeeze().to(device)
+# model_eval = model.to(eval_device)
+model = model.to(train_device)
 
-def train(epoch):
+# x = data.x.to(device)
+# y = data.y.squeeze().to(device)
+
+def train(model, device):
     model.train()
 
-    pbar = tqdm(total=train_idx.size(0))
-    pbar.set_description(f'Epoch {epoch:02d}')
-
+    print(torch.cuda.memory_stats(device)["allocated_bytes.all.peak"])
     total_loss = total_correct = 0
     for batch_size, n_id, adjs in train_loader:
         # `adjs` holds a list of `(edge_index, e_id, size)` tuples.
@@ -63,22 +64,23 @@ def train(epoch):
 
         total_loss += float(loss)
         total_correct += int(out.argmax(dim=-1).eq(y[n_id[:batch_size]]).sum())
-        pbar.update(batch_size)
+        print(torch.cuda.memory_stats(device)["allocated_bytes.all.peak"])
+        # pbar.update(batch_size)
 
-    pbar.close()
+    # pbar.close()
 
     loss = total_loss / len(train_loader)
     approx_acc = total_correct / train_idx.size(0)
-
+    print(torch.cuda.memory_stats(device)["allocated_bytes.all.peak"])
+    
     return loss, approx_acc
 
 
 @torch.no_grad()
-def test():
+def test(model, device):
     model.eval()
-
+    print(torch.cuda.memory_stats(device)["allocated_bytes.all.peak"])
     out = model.inference(x, subgraph_loader, device)
-
     y_true = y.cpu().unsqueeze(-1)
     y_pred = out.argmax(dim=-1, keepdim=True)
 
@@ -94,9 +96,16 @@ def test():
         'y_true': y_true[split_idx['test']],
         'y_pred': y_pred[split_idx['test']],
     })['acc']
-
+    print(torch.cuda.memory_stats(device)["allocated_bytes.all.peak"])
     return train_acc, val_acc, test_acc
 
+# 
+train(model, train_device)
+# 
+torch.cuda.reset_max_memory_allocated(train_device)
+test(model, train_device)
+#
+sys.exit(0)
 
 test_accs = []
 for run in range(args.runs):
@@ -109,13 +118,13 @@ for run in range(args.runs):
 
     best_val_acc = final_test_acc = 0
     for epoch in range(1, 1 + args.epochs):
-        loss, acc = train(epoch)
+        loss, acc = train(mode, epoch)
         print(f'Epoch {epoch:02d}, Loss: {loss:.4f}, Approx. Train: {acc:.4f}')
 
         if epoch > 5:
+            # 增加一个判断依据
             result = test()
             train_acc, val_acc, test_acc = result
-            logger.add_result(run, result)
             print(f'Train: {train_acc:.4f}, Val: {val_acc:.4f}, '
                   f'Test: {test_acc:.4f}')
 
@@ -123,9 +132,9 @@ for run in range(args.runs):
                 best_val_acc = val_acc
                 final_test_acc = test_acc
     test_accs.append(final_test_acc)
-    logger.print_statistics(run)
+    # logger.print_statistics(run)
     
-logger.print_statistics()
+# logger.print_statistics()
 test_acc = torch.tensor(test_accs)
 print('============================')
 print(f'Final Test: {test_acc.mean():.4f} ± {test_acc.std():.4f}')
