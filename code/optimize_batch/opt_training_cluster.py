@@ -1,5 +1,6 @@
 import time
 import torch
+import torch.nn.functional as F
 
 from torch_geometric.data import ClusterData, ClusterLoader, NeighborSampler
 from ogb.nodeproppred import PygNodePropPredDataset, Evaluator
