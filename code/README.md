@@ -16,9 +16,9 @@
     [ ] optimize batch: ogbn_products_sage;
         - train
         - inference
-        [ ] 版本问题：之后可能耗时比例就不如想象了
-    [ ] optimize epoch
     [ ] optimize sampler
+        > 先使用，再考虑优化
+    [ ] optimize epoch
     [ ] 进一步考虑使用什么实现流水线
         [ ] python协程
         [ ] 分布式Ray
