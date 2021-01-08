@@ -13,13 +13,15 @@
         [x] ogb没有用到
         [x] dgl没有用到
 [ ] 采样的流水线技术实现
-    [ ] optimize batch
+    [ ] optimize batch: ogbn_products_sage
+        - train
+        - inference
     [ ] optimize epoch
     [ ] optimize sampler
     [ ] 进一步考虑使用什么实现流水线
         [ ] python协程
         [ ] 分布式Ray
-        [ ] C++多线程库,cuda stream:      
+        [ ] C++多线程库,cuda stream + pybind   
 [ ] 训练的流水线技术实现
 [ ] 采样的优化实现
 [ ] 典型场景下，上述三个技术的实现
