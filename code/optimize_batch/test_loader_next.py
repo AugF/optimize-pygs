@@ -20,7 +20,7 @@ def train_next(model, loader, optimizer, device):
     loader_iter = iter(loader)
     while True:
         try:
-            data = next(loader)
+            data = next(loader_iter)
             data = data.to(device)
             if data.train_mask.sum() == 0:
                 continue
@@ -75,13 +75,14 @@ model.reset_parameters()
 optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 
 # step5. train
-t1 = time.time()
-loss, train_acc = train_base(model, loader, optimizer, device)
-print(f'loss: {loss:.4f}, train_acc: {train_acc:.4f}')
+for i in range(50):
+    t1 = time.time()
+    loss, train_acc = train_base(model, loader, optimizer, device)
+    print(f'loss: {loss:.4f}, train_acc: {train_acc:.4f}')
 
-t2 = time.time()
-loss, train_acc = train_next(model, loader, optimizer, device)
-print(f'loss: {loss:.4f}, train_acc: {train_acc:.4f}')
+    t2 = time.time()
+    loss, train_acc = train_next(model, loader, optimizer, device)
+    print(f'loss: {loss:.4f}, train_acc: {train_acc:.4f}')
 
-t3 = time.time()
-print(f"for's time: {t2 - t1}s, next's time: {t3 - t2}s")
+    t3 = time.time()
+    print(f"for's time: {t2 - t1}s, next's time: {t3 - t2}s")
