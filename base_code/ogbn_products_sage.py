@@ -15,7 +15,7 @@ from torch_geometric.nn import SAGEConv
 
 from ogb.nodeproppred import PygNodePropPredDataset, Evaluator
 
-from logger import Logger
+#from logger import Logger
 
 
 class SAGE(torch.nn.Module):
@@ -138,7 +138,7 @@ def main():
     device = f'cuda:{args.device}' if torch.cuda.is_available() else 'cpu'
     device = torch.device(device)
 
-    dataset = PygNodePropPredDataset(name='ogbn-products', root="/home/wangzhaokang/wangyunpan/gnns-project/ogb_evaluations/dataset")
+    dataset = PygNodePropPredDataset(name='ogbn-products', root="/home/wangzhaokang/wangyunpan/gnns-project/datasets")
     split_idx = dataset.get_idx_split()
     data = dataset[0]
 
@@ -162,7 +162,7 @@ def main():
                  args.num_layers, args.dropout).to(device)
 
     evaluator = Evaluator(name='ogbn-products')
-    logger = Logger(args.runs, args)
+    #logger = Logger(args.runs, args)
 
     for run in range(args.runs):
         model.reset_parameters()
@@ -177,7 +177,7 @@ def main():
 
             if epoch > 19 and epoch % args.eval_steps == 0:
                 result = test(model, data, evaluator, subgraph_loader, device)
-                logger.add_result(run, result)
+   #             logger.add_result(run, result)
                 train_acc, valid_acc, test_acc = result
                 print(f'Run: {run + 1:02d}, '
                       f'Epoch: {epoch:02d}, '
@@ -185,8 +185,8 @@ def main():
                       f'Valid: {100 * valid_acc:.2f}% '
                       f'Test: {100 * test_acc:.2f}%')
 
-        logger.print_statistics(run)
-    logger.print_statistics()
+  #      logger.print_statistics(run)
+ #   logger.print_statistics()
 
 
 if __name__ == "__main__":
