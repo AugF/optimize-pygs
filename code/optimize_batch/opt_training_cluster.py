@@ -67,17 +67,14 @@ def train_next(model, loader, optimizer, device):
 # ---- begin ----
 # step1. get args
 args = get_args(description="ogbn_products_sage_cluster")
-
-# step2. prepare data
+print(args)
 device = f'cuda:{args.device}' if torch.cuda.is_available() and args.device >= 0 else 'cpu'
-# set random seeds
 np.random.seed(args.seed)
 torch.manual_seed(args.seed)
 if 'cuda' in device:
     torch.cuda.manual_seed(args.seed)
-    
-device = torch.device(device)
 
+device = torch.device(device)
 dataset = PygNodePropPredDataset(name='ogbn-products', root="/home/wangzhaokang/wangyunpan/gnns-project/datasets")
 split_idx = dataset.get_idx_split()
 data = dataset[0]
@@ -87,28 +84,29 @@ for key, idx in split_idx.items():
     mask[idx] = True
     data[f'{key}_mask'] = mask
 
-# step3. get dataloader
-cluster_data = ClusterData(data, num_parts=args.num_partitions,
-                            recursive=False, save_dir=dataset.processed_dir)
-
-loader = ClusterLoader(cluster_data, batch_size=args.batch_size,
-                        shuffle=True, num_workers=args.num_workers)
 
 model = SAGE(data.x.size(-1), args.hidden_channels, dataset.num_classes,
                 args.num_layers, args.dropout).to(device)
 
-# step4. set model and optimizer
-model.reset_parameters()
-optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+# 开始测试性能: 
+print(f"ogbn_products: node, edge = {data.num_nodes}, {data.num_edges}")
+cluster_batchs = [15, 45, 90, 150, 375, 750]
+xticklabels = ['1%', '3%', '6%', '10%', '25%', '50%']
 
-# step5. train
-st1 = time.time()
-loss, train_acc = train_next(model, loader, optimizer, device)
-print(f'loss: {loss:.4f}, train_acc: {train_acc:.4f}')
-st2 = time.time()
-print(f"pipeline use time: {st2 - st1}s")
+method_names = ['base_model', 'pipeline_thread']
 
-loss, train_acc = train_base(model, loader, optimizer, device)
-print(f'loss: {loss:.4f}, train_acc: {train_acc:.4f}')
-st3 = time.time()
-print(f"base use time: {st3 - st2}s")
+for i, bs in enumerate(cluster_batchs):
+    cluster_data = ClusterData(data, num_parts=1500,
+                                recursive=False, save_dir=dataset.processed_dir)
+
+    loader = ClusterLoader(cluster_data, batch_size=bs,
+                            shuffle=True, num_workers=args.num_workers)
+    for j, train_method in enumerate([test_base, test_next]):
+        model.reset_parameters()
+        optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+        st1 = time.time()
+        loss, train_acc = train_method(model, loader, optimizer, device)
+        print(f'loss: {loss:.4f}, train_acc: {train_acc:.4f}')
+        st2 = time.time()
+        print(f"method={method_names[j]}, relative batch size={xticklabels[i]}, use time: {st2 - st1}s")
+
