@@ -1,9 +1,12 @@
+import torch
 import argparse
+from threading import Thread
 import torch.nn.functional as F
 
 def get_args(description='OGBN-Products'):
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('--device', type=int, default=0)
+    parser.add_argument('--seed', type=int, default=123)
     parser.add_argument('--log_steps', type=int, default=1)
     parser.add_argument('--num_partitions', type=int, default=15000)
     parser.add_argument('--num_workers', type=int, default=12)
@@ -68,3 +71,19 @@ def test_base(model, data, evaluator, subgraph_loader, device):
     })['acc']
 
     return train_acc, valid_acc, test_acc
+
+
+class MyThread(Thread): # 复写Thread, 获取返回值
+    def __init__(self, target, args):
+        super(MyThread, self).__init__()
+        self.target = target
+        self.args = args
+
+    def run(self):
+        self.result = self.target(*self.args)
+
+    def get_result(self):
+        try:
+            return self.result
+        except Exception:
+            return None
