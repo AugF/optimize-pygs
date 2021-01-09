@@ -73,7 +73,7 @@ def test_base(model, data, evaluator, subgraph_loader, device):
     return train_acc, valid_acc, test_acc
 
 
-class MyThread(Thread): # 复写Thread, 获取返回值
+class MyThread(Thread): # 相比全局变量，有点慢
     def __init__(self, target, args):
         super(MyThread, self).__init__()
         self.target = target
