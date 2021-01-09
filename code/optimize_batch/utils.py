@@ -1,4 +1,5 @@
 import torch
+import time
 import argparse
 from threading import Thread
 import torch.nn.functional as F
@@ -27,8 +28,17 @@ def train_base(model, loader, optimizer, device):
 
     total_loss = total_examples = 0
     total_correct = total_examples = 0
-    for data in loader:
+    
+    num = len(loader)
+    loader_iter = iter(loader)
+    
+    sampling_time, to_time, training_time = 0, 0, 0
+    for i in range(num):
+        t1 = time.time()
+        data = next(loader_iter)
+        t2 = time.time()
         data = data.to(device)
+        t3 = time.time()
         if data.train_mask.sum() == 0:
             continue
         optimizer.zero_grad()
@@ -44,7 +54,14 @@ def train_base(model, loader, optimizer, device):
 
         total_correct += out.argmax(dim=-1).eq(y).sum().item()
         total_examples += y.size(0)
+        t4 = time.time()
+        sampling_time += t2 - t1
+        to_time += t3 - t2
+        training_time += t4 - t3
 
+    list1 = [sampling_time / num, to_time / num, training_time / num]
+    print(f"except pipeline time: {max(list1) * (num - 1) + sum(list1)}s") # 计算流水线期待的时间
+    
     return total_loss / total_examples, total_correct / total_examples
 
 

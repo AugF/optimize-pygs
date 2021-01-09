@@ -28,11 +28,11 @@ def sub_consumer(in_q):
         print(f'sub_consumer get {data}')
         time.sleep(st3)    
 
-for i in range(5):
+for i in range(3):
     # set 
     st1, st2, st3 = random.randint(1, 5), random.randint(1, 5), random.randint(1, 5)
     num = 3
-    print(time, st1, st2, st3, num)
+    print(st1, st2, st3, num)
     # run
     st = time.time()    
     q = Queue()

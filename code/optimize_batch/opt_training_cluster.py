@@ -102,11 +102,11 @@ model.reset_parameters()
 optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 
 # step5. train
-# st1 = time.time()
-# loss, train_acc = train_next(model, loader, optimizer, device)
-# print(f'loss: {loss:.4f}, train_acc: {train_acc:.4f}')
+st1 = time.time()
+loss, train_acc = train_next(model, loader, optimizer, device)
+print(f'loss: {loss:.4f}, train_acc: {train_acc:.4f}')
 st2 = time.time()
-# print(f"pipeline use time: {st2 - st1}s")
+print(f"pipeline use time: {st2 - st1}s")
 
 loss, train_acc = train_base(model, loader, optimizer, device)
 print(f'loss: {loss:.4f}, train_acc: {train_acc:.4f}')

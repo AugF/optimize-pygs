@@ -2,6 +2,9 @@ from ogb.nodeproppred import PygNodePropPredDataset, Evaluator
 from code.globals import *
 from code.utils.tools import log_dir, parse_n_prepare
 
+"""
+TODO: 封装为pipeline, 即最后写成抽象类
+"""
 def train(model, train_loader, x, y, optimizer, device):
     model.train()
     
