@@ -96,48 +96,6 @@ def test_base(model, data, evaluator, subgraph_loader, device):
 
     return train_acc, valid_acc, test_acc
 
-def train_thread_2(model, loader, optimizer, device):
-    model.train()
-    num = len(loader)
-    
-    def task1(q1):
-        loader_iter = iter(loader)
-        for i in range(num):
-            data = next(loader_iter)
-            q1.put(data.to(device, non_blocking=True))
-        
-    def task2(q1):
-        total_loss = total_examples = total_correct = 0
-        for i in range(num):
-            data = q1.get()
-            if data.train_mask.sum() == 0: # task3
-                continue
-            optimizer.zero_grad()
-            out = model(data.x, data.edge_index)[data.train_mask]
-            y = data.y.squeeze(1)[data.train_mask]
-            loss = F.nll_loss(out, y)
-            loss.backward()
-            optimizer.step()
-
-            num_examples = data.train_mask.sum().item()
-            total_loss += loss.item() * num_examples
-            total_examples += num_examples
-
-            total_correct += out.argmax(dim=-1).eq(y).sum().item()
-            total_examples += y.size(0)
-        print(f'loss: {total_loss / total_examples:.4f}, train_acc: {total_correct / total_examples:.4f}')
-
-    q1 = Queue()
-    job1 = Thread(target=task1, args=(q1,))
-    job2 = Thread(target=task2, args=(q1, ))
-    
-    job1.start()
-    job2.start()
-    
-    job1.join()
-    job2.join()
-    return
-
 
 class MyThread(Thread): # 相比全局变量，有点慢
     def __init__(self, target, args):
