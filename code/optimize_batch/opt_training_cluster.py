@@ -95,7 +95,13 @@ xticklabels = ['1%', '3%', '6%', '10%', '25%', '50%']
 
 method_names = ['base_model', 'pipeline_thread']
 
-for i, bs in enumerate(cluster_batchs):
+# for i, bs in enumerate(cluster_batchs):
+if True:
+    cluster_data = ClusterData(data, num_parts=args.num_partitions,
+                                recursive=False, save_dir=dataset.processed_dir)
+
+    loader = ClusterLoader(cluster_data, batch_size=args.batch_size,
+                            shuffle=True, num_workers=args.num_workers)
     cluster_data = ClusterData(data, num_parts=1500,
                                 recursive=False, save_dir=dataset.processed_dir)
 

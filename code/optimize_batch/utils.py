@@ -14,7 +14,7 @@ def get_args(description='OGBN-Products'):
     parser.add_argument('--num_layers', type=int, default=3)
     parser.add_argument('--hidden_channels', type=int, default=256)
     parser.add_argument('--dropout', type=float, default=0.5)
-    parser.add_argument('--batch_size', type=int, default=500)
+    parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--lr', type=float, default=0.001)
     parser.add_argument('--epochs', type=int, default=50)
     parser.add_argument('--eval_steps', type=int, default=5)
