@@ -26,9 +26,10 @@ def sub_consumer(in_q):
         print(f'sub_consumer get {data}')
         time.sleep(st3)    
 
-for i in range(3):
+# 100ms = 0.1s, 10ms级别没有用，100ms级别有用
+for i in range(1):
     # set 
-    st1, st2, st3 = random.randint(1, 5), random.randint(1, 5), random.randint(1, 5)
+    st1, st2, st3 = 0.05, 0.01, 0.02
     num = 3
     print(st1, st2, st3, num)
     # run
@@ -45,5 +46,5 @@ for i in range(3):
     t1.join()
     t2.join()
     t3.join()
-    print(f"expect time: {max(st1, max(st2, st3)) * (num - 1) + sum([st1, st2, st3])}s, use time: {time.time() - st}s")
+    print(f"max_time: {sum([st1, st2, st3]) * num}s, expect time: {max(st1, max(st2, st3)) * (num - 1) + sum([st1, st2, st3])}s, use time: {time.time() - st}s")
 
