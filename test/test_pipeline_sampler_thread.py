@@ -6,8 +6,6 @@ import random
 from threading import Thread
 from queue import Queue
 
-# from multiprocessing import Process, Queue
-
 def producer(out_q):
     for i in range(num):
         time.sleep(st1)

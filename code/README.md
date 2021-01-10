@@ -13,7 +13,7 @@
         [x] ogb没有用到
         [x] dgl没有用到
 [ ] 采样的流水线技术实现 1.9-1.10
-    [ ] optimize batch: ogbn_products_sage;
+    [ ] optimize batch: ogbn_products_sage, cluster为例子
         - train: 自己实现很多逻辑上需要加锁，所以用了生产者和消费者模式
             [x] 提出想法，并理论分析正确性
             [x] 调研和对比各种技术，剩下某种实现

@@ -1,29 +1,43 @@
 from multiprocessing import Process, Queue
 import os, time, random
 
-# 写数据进程执行的代码:
-def write(q):
-    for value in ['A', 'B', 'C']:
-        print('Put %s to queue...' % value)
-        q.put(value)
-        time.sleep(random.random())
+def producer(out_q):
+    for i in range(num):
+        time.sleep(st1)
+        data = random.randint(0, 10)
+        print(f"producer produce {data}")
+        out_q.put(data)
+    
+def consumer(in_q, sub_q):
+    for i in range(num):
+        data = in_q.get()
+        print(f'consumer get {data}')
+        time.sleep(st2)
+        sub_q.put(data)
 
-# 读数据进程执行的代码:
-def read(q):
-    while True:
-        value = q.get(True)
-        print('Get %s from queue.' % value)
-
-if __name__=='__main__':
-    # 父进程创建Queue，并传给各个子进程：
+def sub_consumer(in_q):
+    for i in range(num):
+        data = in_q.get()
+        print(f'sub_consumer get {data}')
+        time.sleep(st3)   
+        
+for i in range(2):
+    # set 
+    st1, st2, st3 = random.randint(1, 5), random.randint(1, 5), random.randint(1, 5)
+    num = 3
+    print(st1, st2, st3, num)
+    # run
+    st = time.time()    
     q = Queue()
-    pw = Process(target=write, args=(q,))
-    pr = Process(target=read, args=(q,))
-    # 启动子进程pw，写入:
-    pw.start()
-    # 启动子进程pr，读取:
-    pr.start()
-    # 等待pw结束:
-    pw.join()
-    # pr进程里是死循环，无法等待其结束，只能强行终止:
-    pr.terminate()
+    sub_q = Queue()
+    t1 = Process(target=producer, args=(q,))
+    t2 = Process(target=consumer, args=(q, sub_q, ))
+    t3 = Process(target=sub_consumer, args=(sub_q,))
+    t1.start()
+    t2.start()
+    t3.start()
+
+    t1.join()
+    t2.join()
+    t3.join()
+    print(f"expect time: {max(st1, max(st2, st3)) * (num - 1) + sum([st1, st2, st3])}s, use time: {time.time() - st}s")
