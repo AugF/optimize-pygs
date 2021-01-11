@@ -4,6 +4,7 @@ from queue import Queue
 
 import torch.nn.functional as F
 
+# 
 def train_thread_3(model, loader, optimizer, device):
     model.train()
     num = len(loader)
