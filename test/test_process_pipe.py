@@ -1,4 +1,4 @@
-from multiprocessing import Process, Queue
+from multiprocessing import Process, Queue, Pipe
 import os, time, random
 import logging
 
@@ -29,21 +29,22 @@ def g3(step):
     print("g3 end time", time.time() * 1000)
 
 # 写数据进程执行的代码:
-def write(q):
+def write(p):
     # print("ID of process running write: {}".format(os.getpid())) 
     print("begin write", (time.time() * 1000))
     for i in range(10):
         value = 'A' + str(i)
         g1(i)
         print("begin write", i, (time.time() * 1000))
-        q.put(value)
+        p.send(i)
         print("end write", i, (time.time() * 1000))
 
 # 读数据进程执行的代码:
 def read(q, subq):
     # print("ID of process running read: {}".format(os.getpid())) 
     print("begin read", (time.time() * 1000))
-    for i in range(10):
+    while True:
+        try:
         print("begin read", i, (time.time() * 1000))
         value = q.get()
         print("read get", i, value, (time.time() * 1000))
@@ -67,11 +68,11 @@ if __name__=='__main__':
 
     # 父进程创建Queue，并传给各个子进程：
     print("use time", time.time() * 1000) # 488.90
-    q = Queue()
-    subq = Queue()
-    pw = Process(target=write, args=(q,))
-    pr = Process(target=read, args=(q,subq,))
-    psr = Process(target=subread, args=(subq,))
+    wp_in, rp_out = Pipe()
+    rp_in, srp_out = Pipe()
+    pw = Process(target=write, args=(wp_in,))
+    pr = Process(target=read, args=(rp_out, rp_in))
+    psr = Process(target=subread, args=(srp_out,))
 
     st = time.time() * 1000
     print("start", st) # 501.98
