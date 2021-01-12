@@ -48,8 +48,8 @@ def fun3(in_q):
         g3(i)
         
 num = 3
-q = Queue()
-sub_q = Queue()
+q = Queue(1)
+sub_q = Queue(1)
 task1 = Process(target=fun1, args=(q,))
 task2 = Process(target=fun2, args=(q, sub_q, ))
 task3 = Process(target=fun3, args=(sub_q,))

@@ -28,8 +28,8 @@ for i in range(2):
     print(st1, st2, st3, num)
     # run
     st = time.time()    
-    q = Queue()
-    sub_q = Queue()
+    q = Queue(1)
+    sub_q = Queue(1)
     t1 = Process(target=producer, args=(q,))
     t2 = Process(target=consumer, args=(q, sub_q, ))
     t3 = Process(target=sub_consumer, args=(sub_q,))
