@@ -16,7 +16,7 @@ void test() {
 
 int main() {
 
-   printf("%d", CLOCKS_PER_SEC);
+   printf("%d\n", CLOCKS_PER_SEC);
 
    clock_t t1 = clock();
 #pragma omp parallel for
