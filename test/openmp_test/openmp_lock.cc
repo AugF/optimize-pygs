@@ -19,9 +19,10 @@ void TestOmpLock()
     }
 
     t2 = clock();
-    printf("SingleThread,omp_lock 2,000,000:a = %ld, time = %ld\n", a, t2-t1);
+    printf("SingleThread,omp_lock 2,000,000:a = %ld, time = %ld\n", a, (t2-t1) / 1000);
     t1 = clock();
-
+    
+    a = 0;
     #pragma omp parallel for
         for( i = 0; i < 2000000; i++ )
         {
@@ -31,7 +32,7 @@ void TestOmpLock()
         }
 
     t2 = clock();
-    printf("MultiThread,omp_lock 2,000,000:a = %ld, time = %ld\n", a, t2-t1);
+    printf("MultiThread,omp_lock 2,000,000:a = %ld, time = %ld\n", a, (t2-t1) / 1000);
     omp_destroy_lock(&mylock);
 }
 
