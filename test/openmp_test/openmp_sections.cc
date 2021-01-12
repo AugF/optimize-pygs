@@ -3,6 +3,17 @@
 #include<time.h>
 #include<omp.h>
 #include <unistd.h>
+
+void test() {
+   int a = 0;
+   clock_t t1 = clock();
+   for (int i = 0; i < 100000000; i ++) {
+      a = i + 1;
+   }
+   clock_t t2 = clock();
+   printf("Time = %d\n", t2 - t1);
+}
+
 int main()
 {
 
@@ -12,18 +23,18 @@ int main()
    {
      #pragma omp section
      {
-          printf("section 0,threadid=%d\n",omp_get_thread_num());
-          sleep(1);
+        //   printf("section 0,threadid=%d\n",omp_get_thread_num());
+          test();
      }
      #pragma omp section
      {
-          printf("section 1,threadid=%d\n",omp_get_thread_num());
-          sleep(1);
+        //   printf("section 1,threadid=%d\n",omp_get_thread_num());
+          test();
      }
      #pragma omp section
      {
-          printf("section 2,threadid=%d\n",omp_get_thread_num());
-          sleep(1);
+        //   printf("section 2,threadid=%d\n",omp_get_thread_num());
+          test();
      }
    }
 
@@ -32,18 +43,18 @@ int main()
    {
       #pragma omp section
      {
-          printf("section 3,threadid=%d\n",omp_get_thread_num());
-          sleep(1);
+        //   printf("section 3,threadid=%d\n",omp_get_thread_num());
+          test();
      }
       #pragma omp section
      {
-          printf("section 4,threadid=%d\n",omp_get_thread_num());
-          sleep(1);
+        //   printf("section 4,threadid=%d\n",omp_get_thread_num());
+          test();
      }
       #pragma omp section
      {
-          printf("section 5,threadid=%d\n",omp_get_thread_num());
-          sleep(1);
+        //   printf("section 5,threadid=%d\n",omp_get_thread_num());
+          test();
      }
    }
    
