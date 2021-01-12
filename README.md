@@ -15,3 +15,5 @@ CPU上运行
 
 GPU上运行
 `python -m code.train --data_prefix ./data/<dataset_name> --train_config <path to train_config yml> --gpu <GPU number>`
+
+2. openmp编译命令 `g++ Test.cpp -o omptest -fopenmp`
