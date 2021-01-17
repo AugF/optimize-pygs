@@ -37,10 +37,8 @@ def train_base(model, loader, optimizer, device):
     for i in range(num):
         t1 = time.time()
         data = next(loader_iter)
-        time.sleep(2) # add
         t2 = time.time()
         data = data.to(device)
-        time.sleep(1) # add
         t3 = time.time()
         if data.train_mask.sum() == 0:
             continue
@@ -57,7 +55,6 @@ def train_base(model, loader, optimizer, device):
 
         total_correct += out.argmax(dim=-1).eq(y).sum().item()
         total_examples += y.size(0)
-        time.sleep(4) # add
         t4 = time.time()
         print(f"batch {i}: sampling_time: {t2 - t1}s, to_time: {t3 - t2}s, training_time: {t4 - t3}s")
         sampling_time += t2 - t1

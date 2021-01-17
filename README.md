@@ -17,3 +17,9 @@ GPU上运行
 `python -m code.train --data_prefix ./data/<dataset_name> --train_config <path to train_config yml> --gpu <GPU number>`
 
 2. openmp编译命令 `g++ Test.cpp -o omptest -fopenmp`
+
+3. cython编译命令 `python setup.py build_ext --inplace`
+
+4. pybind11编译命令
+> g++ -O3 -Wall -shared -std=c++11 -fPIC `python3 -m pybind11 --includes` example.cpp -o example`python3-config --extension-suffix`
+> g++ -O3 -Wall -shared -std=c++11 -fPIC `python3 -m pybind11 --includes` call_python.cpp -o call_python`python3-config --extension-suffix` -fopenmp

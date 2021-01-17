@@ -10,17 +10,19 @@ else:
     total_num = 10
 
 print(f"st1={st1}, st2={st2}, st3={st3}, total_num={total_num}")
+x = 1
 def increment(value):
     time.sleep(st1)
-    return value + 1
+    return value
 
 def double(value):
     time.sleep(st2)
-    return value * 2
+    return value
 
 def echo(value):
     time.sleep(st3)
-    return value + 3
+    print(value, time.time())
+    return value
 
 t1 = time.time()
 stage1 = OrderedStage(increment)
@@ -35,12 +37,12 @@ for number in range(total_num):
 
 pipe.put(None)
 
-for res in pipe.results():
-    print(res)
+# for res in pipe.results():
+#     print(res)
 print("use time: ", time.time() - t1, "except time: ", sum([st1, st2, st3]) + max([st1, st2, st3]) * (total_num - 1), "original time:", total_num * (st1 + st2 + st3))
 
 t1 = time.time()
 for i in range(total_num):
-    print(echo(double(increment(total_num))))
+    echo(double(increment(i)))
 print("origin time", time.time() - t1)
     

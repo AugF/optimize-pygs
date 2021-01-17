@@ -8,7 +8,7 @@ from torch_geometric.data import ClusterData, ClusterLoader, NeighborSampler
 from ogb.nodeproppred import PygNodePropPredDataset, Evaluator
 
 from code.models.sage import SAGE
-from code.optimize_batch.utils import get_args, train_base, train_thread_2
+from code.optimize_batch.utils import get_args, train_base
 from code.optimize_batch.train_thread_3 import train_thread_3
 
 # ---- begin ----
@@ -44,7 +44,7 @@ loader = ClusterLoader(cluster_data, batch_size=1500,
 model.reset_parameters()
 optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 t1 = time.time()
-train_thread_3(model, loader, optimizer, device)
+train_base(model, loader, optimizer, device)
 t2 = time.time()
 print(f"use time: {t2 - t1}s")
 

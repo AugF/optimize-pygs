@@ -81,7 +81,7 @@ def subread(q, share_var, share_lock):
         t1 = time.time()
         g3(i)
         t2 = time.time() - t1
-        print(f"{i}_fun3, {t2 * 1000}ms")
+        # print(f"{i}_fun3, {t2 * 1000}ms")
         share_lock.acquire()
         share_var.value += t2
         share_lock.release()

@@ -28,6 +28,6 @@ int main() {
    printf("Total time = %d\n", t2 - t1);
 
    test();
-   
+   test();
    return 0;
 }
