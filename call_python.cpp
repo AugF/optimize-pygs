@@ -69,65 +69,25 @@ int run() {
 
 
 int run_parallel() {
-   std::printf("cores:%d\n", omp_get_num_procs());
-   std::printf("parent threadid:%d, cpu=%d\n",omp_get_thread_num(), sched_getcpu());
-  
-   int x = 0, num = 3;
-   omp_lock_t mylock;
-   omp_init_lock(&mylock);
-
-   // x的第1位表示第1个数据是否产生，x的第0为表示第2个数据是否产生
    #pragma omp parallel sections num_threads(3)
    {
       #pragma omp section
-      {
-        for (int i = 0; i < num; i ++) {
-            std::printf("begin fun1, i=%d, x=%d, time=%d\n", i, x, omp_get_thread_num());
-            while ((x >> 1) & 1); 
-            fun1(i);
-            std::printf("fun1, i=%d, x=%d\n", i, x);
-            omp_set_lock(&mylock);
-            x |= 0b10;
-            omp_unset_lock(&mylock);
-            std::printf("after lock, fun1, i=%d, x=%d\n", i, x);
-        }
-      }
-
+     {
+        //   printf("section 3,threadid=%d\n",omp_get_thread_num());
+          test();
+     }
       #pragma omp section
-      {  
-         for (int i = 0; i < num; i ++) {
-            std::printf("begin fun2, i=%d, x=%d, time=%d\n", i, x, omp_get_thread_num());
-            while (!((x >> 1) & 1));
-            
-            omp_set_lock(&mylock);
-            x &= ~0b10; // 修改状态
-            omp_unset_lock(&mylock);
-
-            fun2(i);
-            std::printf("fun2, i=%d, x=%d, time=%d\n", i, x, omp_get_thread_num());
-            while (x & 1); // 当c正在被使用
-            omp_set_lock(&mylock);
-            x |= 0b1; // 修改状态
-            omp_unset_lock(&mylock);
-            std::printf("after lock, fun2, i=%d, x=%d\n", i, x);
-         }
-      }
-
+     {
+        //   printf("section 4,threadid=%d\n",omp_get_thread_num());
+          test();
+     }
       #pragma omp section
-      {
-         for (int i = 0; i < num; i ++) {
-            std::printf("fun3, i=%d, x=%d\n", i, x);
-            while (!(x & 1));
-            fun3(i); 
-            std::printf("fun3, i=%d, x=%d\n", i, x);
-            omp_set_lock(&mylock);
-            x &= ~0b1;
-            omp_unset_lock(&mylock);
-            std::printf("fun3, i=%d, x=%d\n", i, x);
-         }
-      }
+     {
+        //   printf("section 5,threadid=%d\n",omp_get_thread_num());
+          test();
+     }
    }
-   omp_destroy_lock(&mylock);
+   
    return 0;
 }
 

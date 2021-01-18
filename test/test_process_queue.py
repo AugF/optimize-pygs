@@ -1,5 +1,5 @@
 from multiprocessing import Process, Queue
-import multiprocessing
+import multiprocessing as mp
 import os, time, random
 import logging
 

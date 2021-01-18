@@ -31,6 +31,7 @@ loader = ClusterLoader(cluster_data, batch_size=args.batch_size,
 model = SAGE(data.x.size(-1), args.hidden_channels, dataset.num_classes,
                 args.num_layers, args.dropout).to(device)
 
+num = len(loader)
 # step4. set model and optimizer
 model.reset_parameters()
 optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
@@ -58,21 +59,4 @@ def task3(data, model, optimizer):
     return model, optimizer, loss.item(), acc.item(), num_examples + y.size(0)
 
 
-def run():
-    global model
-    import time
-    print("in", model.convs[0].lin_l.weight)
-    t1 = time.time()
-    loader_iter = iter(loader)
-    data_cpu = task1(loader_iter)
-    data_gpu = task2(data_cpu, device);
-    res = task3(data_gpu, model, optimizer)
-    model = res[0]
-    t2 = time.time()
-    print("use time", t2 - t1)
-    print("task1", data_cpu)
-    print("task2", data_gpu)
-    print("task2", res)
-    print("out", model.convs[0].lin_l.weight)
     
-# run()

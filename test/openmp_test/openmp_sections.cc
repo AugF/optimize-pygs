@@ -20,24 +20,24 @@ int main()
    printf("cores:%d\n", omp_get_num_procs());
    printf("parent threadid:%d, cpu=%d\n",omp_get_thread_num(), sched_getcpu());
    double t1 = omp_get_wtime();
-   #pragma omp sections 
-   {
-     #pragma omp section
-     {
-        //   printf("section 0,threadid=%d\n",omp_get_thread_num());
-          test();
-     }
-     #pragma omp section
-     {
-        //   printf("section 1,threadid=%d\n",omp_get_thread_num());
-          test();
-     }
-     #pragma omp section
-     {
-        //   printf("section 2,threadid=%d\n",omp_get_thread_num());
-          test();
-     }
-   }
+   // #pragma omp sections 
+   // {
+   //   #pragma omp section
+   //   {
+   //      //   printf("section 0,threadid=%d\n",omp_get_thread_num());
+   //        test();
+   //   }
+   //   #pragma omp section
+   //   {
+   //      //   printf("section 1,threadid=%d\n",omp_get_thread_num());
+   //        test();
+   //   }
+   //   #pragma omp section
+   //   {
+   //      //   printf("section 2,threadid=%d\n",omp_get_thread_num());
+   //        test();
+   //   }
+   // }
 
    double t2 = omp_get_wtime();
    #pragma omp parallel sections num_threads(3)
