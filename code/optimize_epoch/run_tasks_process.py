@@ -1,10 +1,10 @@
 import time
 import torch
+import mpipe
 import os, sys
 import copy
 
 import torch.multiprocessing as mp
-from threading import Thread
 from code.optimize_epoch.utils import BitSet
 from code.optimize_epoch.cora_gcn import model, data, device
 
@@ -21,6 +21,13 @@ def eval_stage(model_dict):
     print(f"Acc: train {train_acc}, val {val_acc}, tmp_test {tmp_test_acc}")
 
 if __name__ == "__main__":
+    try:
+        mp.set_start_method('spawn', force=True)
+    except RuntimeError:
+        pass
+
+    print(mp.get_start_method())
+
     epochs = 11
     t1 = time.time()
 
@@ -31,7 +38,7 @@ if __name__ == "__main__":
         loss = model.train_step(data)
         # print(f"epoch: {epoch}, loss: {loss:.4f}")
         st1 = time.time()
-        p = Thread(target=eval_stage, args=(model.state_dict(),)) # 多进程，继续尝试多线程
+        p = mp.Process(target=eval_stage, args=(model.state_dict(),)) # 多进程，继续尝试多线程
         jobs.append(p)
         p.start()
         st2 = time.time()

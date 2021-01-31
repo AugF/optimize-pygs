@@ -1,9 +1,15 @@
-# https://github.com/rbotarleanu/Python-Bitset
+import os
 from math import ceil
+from torch_geometric.datasets import Planetoid
+import torch_geometric.transforms as T
+from torch_geometric.datasets.amazon import Amazon
+from torch_geometric.datasets.coauthor import Coauthor
 
+from code.optimize_epoch.datasets import DataProcess
 
 class BitSet:
     """
+    # https://github.com/rbotarleanu/Python-Bitset
     A lightweight bitset class which can hold a fixed-size idx of bits in a
     memory-efficient manner.
     Methods
@@ -226,3 +232,26 @@ class BitSet:
             s += self.__int_to_bitstring(i)
 
         return s
+
+
+def get_dataset(name, normalize_features=False, transform=None): #
+    if name in ["cora", "pubmed"]:
+        path = os.path.join('/home/wangzhaokang/wangyunpan/gnns-project/datasets')
+        dataset = Planetoid(path, name, split='full')
+    else:
+        path = os.path.join('/home/wangzhaokang/wangyunpan/gnns-project/datasets', name)
+        if name in ["amazon-computers", "amazon-photo"]:
+            dataset = Amazon(path, name[7:])
+        elif name == "coauthor-physics":
+            dataset = Coauthor(path, name[9:])
+        else:  # [com-amazon, com-lj, flickr, reddit, yelp]
+            dataset = DataProcess(root=path)
+
+    if transform is not None and normalize_features:
+        dataset.transform = T.Compose([T.NormalizeFeatures(), transform])
+    elif normalize_features:
+        dataset.transform = T.NormalizeFeatures()
+    elif transform is not None:
+        dataset.transform = transform
+
+    return dataset

@@ -1,19 +1,15 @@
 import os.path as osp
-import copy
 import torch
 from torch.nn import Linear
 import torch.nn.functional as F
-from torch_geometric.datasets import Planetoid
-import torch_geometric.transforms as T
+
 from torch_geometric.nn import GCN2Conv
 from torch_geometric.nn.conv.gcn_conv import gcn_norm
+from code.optimize_epoch.utils import get_dataset
 
-dataset = 'cora'
-path = osp.join('/home/wangzhaokang/wangyunpan/gnns-project/datasets')
-transform = T.Compose([T.NormalizeFeatures(), T.ToSparseTensor()])
-dataset = Planetoid(path, dataset, transform=transform)
+dataset = 'flickr'
+dataset = get_dataset(dataset, normalize_features=True)
 data = dataset[0]
-data.adj_t = gcn_norm(data.adj_t) 
 
 class Net(torch.nn.Module):
     def __init__(self, hidden_channels, num_layers, alpha, theta,
@@ -65,7 +61,7 @@ class Net(torch.nn.Module):
     def train_step(self, data):
         self.train()
         self.optimizer.zero_grad()
-        out = self.forward(data.x, data.adj_t)
+        out = self.forward(data.x, data.edge_index)
         loss = F.nll_loss(out[data.train_mask], data.y[data.train_mask])
         loss.backward()
         self.optimizer.step()
@@ -74,7 +70,7 @@ class Net(torch.nn.Module):
     def eval_step(self, data):
         self.eval()
         with torch.no_grad():
-            pred, accs = self(data.x, data.adj_t).argmax(dim=-1), []
+            pred, accs = self(data.x, data.edge_index).argmax(dim=-1), []
             for _, mask in data('train_mask', 'val_mask', 'test_mask'):
                 accs.append(int((pred[mask] == data.y[mask]).sum()) / int(mask.sum()))
             return accs
