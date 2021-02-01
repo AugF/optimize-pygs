@@ -13,7 +13,7 @@
         [x] ogb没有用到
         [x] dgl没有用到
 [ ] 采样的流水线技术实现 1.9-1.20
-    [ ] optimize batch: ogbn_products_sage, cluster为例子
+    [x] optimize batch: ogbn_products_sage, cluster为例子
         - train: 自己实现很多逻辑上需要加锁，所以用了生产者和消费者模式
             [x] 提出想法，并理论分析正确性
             [x] 调研和对比各种技术，剩下某种实现
@@ -25,9 +25,9 @@
                 [ ] 针对不同数据集进行测试
                 [ ] 针对不同的模型进行测试: GCN, GGNN, GAT, GaAN
         - inference
-    [ ] optimize sampler
+    [x] optimize sampler
         > 先使用，再考虑优化
-    [ ] optimize epoch
+    [x] optimize epoch
         [ ] 
             - 待验证的是事情: 多进程处理同一个文件的问题
             - 额外开销: 判断的开销和调度问题

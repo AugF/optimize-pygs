@@ -103,6 +103,9 @@ elif args.mode == 'graphsage':
                                num_workers=args.num_workers) 
 loader_time = time.time() - loader_time
 
+#print("xx", train_loader[0])
+# train_loader must iter
+
 # 3. set model
 if args.model == 'gcn':
     # 预先计算edge_weight出来
@@ -162,7 +165,7 @@ def train(epoch):
             t0 = time.time()
             batch = next(train_iter)
             t1 = time.time()
-            sampling_time += t1 - t0
+            sampling_time = t1 - t0
             nvtx_push(gpu, "batch" + str(cnt))
             log_memory(flag, device, 'forward_start')
             nvtx_push(gpu, "forward")
@@ -170,7 +173,7 @@ def train(epoch):
             if args.mode == "cluster":
                 batch = batch.to(device)
                 t2 = time.time()
-                to_time += t2 - t1
+                to_time = t2 - t1
                 optimizer.zero_grad()
                 out = model(batch.x, batch.edge_index)
                 if args.dataset in ['yelp', 'amazon']:
@@ -187,7 +190,7 @@ def train(epoch):
                 else:
                     y = data.y[n_id[:batch_size]].to(device)
                 t2 = time.time()
-                to_time += t2 - t1
+                to_time = t2 - t1
                 optimizer.zero_grad()            
                 out = model(data.x[n_id].to(device), adjs)
                 if args.dataset in ['yelp', 'amazon']:
@@ -205,13 +208,15 @@ def train(epoch):
             log_memory(flag, device, 'backward_end')
             total_loss += loss.item() * batch_size            
             nvtx_pop(gpu)
-            train_time += time.time() - t2 # 
-            cnt += 1      
+            train_time = time.time() - t2 # 
+            
+            cnt += 1
+            print(f"cnt:{cnt}, sampling_time: {sampling_time}, to_time: {to_time}, train_time: {train_time}")
         except StopIteration:
             break
 
     loss = total_loss / total_nodes
-    return loss, sampling_time, to_time, train_time, cnt
+    return loss
 
 
 @torch.no_grad()
@@ -239,16 +244,16 @@ for epoch in range(args.epochs):
     nvtx_push(gpu, "epochs" + str(epoch))
     
     # nvtx_push(gpu, "train")
-    # train(epoch)
+    train(epoch)
     # nvtx_pop(gpu)
     
-    nvtx_push(gpu, "eval")
-    log_memory(infer_flag, device, 'eval_start')
-    log = 'Epoch: {:03d}, Train: {:.8f}, Val: {:.8f}, Test: {:.8f}, Use time: {:.8f}s'
-    accs = test(epoch)
-    print(log.format(epoch, *accs, time.time() - t0))
-    log_memory(infer_flag, device, 'eval_end')
-    nvtx_pop(gpu)
+    #nvtx_push(gpu, "eval")
+    #log_memory(infer_flag, device, 'eval_start')
+    #log = 'Epoch: {:03d}, Train: {:.8f}, Val: {:.8f}, Test: {:.8f}, Use time: {:.8f}s'
+    #accs = test(epoch)
+    #print(log.format(epoch, *accs, time.time() - t0))
+    #log_memory(infer_flag, device, 'eval_end')
+    #nvtx_pop(gpu)
     
     nvtx_pop(gpu)
 

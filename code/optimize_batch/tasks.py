@@ -1,4 +1,5 @@
 import torch
+import copy
 import torch.nn.functional as F
 from ogb.nodeproppred import PygNodePropPredDataset
 from torch_geometric.data import ClusterData, ClusterLoader, NeighborSampler
@@ -12,7 +13,7 @@ args = get_args(description="ogbn_products_sage_cluster")
 device = f'cuda:{args.device}' if torch.cuda.is_available() else 'cpu'
 device = torch.device(device)
 
-dataset = PygNodePropPredDataset(name='ogbn-products', root="/home/wangzhaokang/wangyunpan/gnns-project/datasets")
+dataset = PygNodePropPredDataset(name='ogbn-products', root="/mnt/data/wangzhaokang/wangyunpan/datasets")
 split_idx = dataset.get_idx_split()
 data = dataset[0]
 
@@ -40,12 +41,13 @@ def task1(loader):
     data = next(loader)
     if data.train_mask.sum() == 0: # task3
         return None
-    return data
+    return copy.copy(data)
 
 def task2(data, device):
-    return data.to(device)
+    return data
     
 def task3(data, model, optimizer):
+    data = data.to("cuda")
     optimizer.zero_grad()
     out = model(data.x, data.edge_index)[data.train_mask]
     y = data.y.squeeze(1)[data.train_mask]
