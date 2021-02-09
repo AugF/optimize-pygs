@@ -43,5 +43,6 @@
         "utility": "cpp",
         "typeindex": "cpp",
         "typeinfo": "cpp"
-    }
+    },
+    "python.pythonPath": "C:\\Users\\hikk\\miniconda3\\envs\\pyg1.6\\python.exe"
 }
