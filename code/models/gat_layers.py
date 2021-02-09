@@ -8,7 +8,7 @@ from torch.nn import Parameter, Linear
 from torch_geometric.utils import remove_self_loops, add_self_loops, softmax
 from torch_geometric.nn.conv import MessagePassing
 from code.utils.inits import glorot, zeros
-from code.utils.utils import nvtx_push, nvtx_pop
+from code.utils.utils import nvtx_push, nvtx_pop, log_memory
 
 
 class GATConv(MessagePassing):

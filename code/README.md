@@ -46,9 +46,14 @@
     [ ] 底层扩展性实验
 [ ] 综合使用三个策略下的分析，说明哪些策略对哪些算法更有效果
 
+[ ] 大数据准备
+    - graphsaint: ppi, flickr, reddit, yelp, amazon
+    - standford
+
 
 ## 第五章 
 
+[ ] 验证Motivation: 即同等条件下的
 
 ## 总览
 

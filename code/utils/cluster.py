@@ -143,7 +143,6 @@ class ClusterLoader(torch.utils.data.DataLoader):
         N = self.cluster_data.data.num_nodes
         E = self.cluster_data.data.num_edges
 
-        print(self.cluster_data.partptr[batch])
         start = self.cluster_data.partptr[batch].tolist()
         end = self.cluster_data.partptr[batch + 1].tolist()
         node_idx = torch.cat([torch.arange(s, e) for s, e in zip(start, end)])
@@ -152,6 +151,7 @@ class ClusterLoader(torch.utils.data.DataLoader):
         if hasattr(data, '__num_nodes__'):
             del data.__num_nodes__
         adj, data.adj = self.cluster_data.data.adj, None
+
         adj = adj.index_select(0, node_idx).index_select(1, node_idx)
         row, col, edge_idx = adj.coo()
         data.edge_index = torch.stack([row, col], dim=0)

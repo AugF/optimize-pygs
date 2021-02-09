@@ -11,7 +11,7 @@ from torch_geometric.utils import add_remaining_self_loops
 
 from torch_geometric.nn.conv import MessagePassing
 from code.utils.inits import glorot, zeros
-from code.utils.utils import nvtx_push, nvtx_pop
+from code.utils.utils import nvtx_push, nvtx_pop, log_memory
 
 class GCNConv(MessagePassing):
     r"""The graph convolutional operator from the `"Semi-supervised

@@ -10,7 +10,7 @@ import torch.nn.functional as F
 
 from torch_geometric.nn.conv import MessagePassing
 from code.utils.inits import glorot, uniform, zeros
-from code.utils.utils import nvtx_push, nvtx_pop
+from code.utils.utils import nvtx_push, nvtx_pop, log_memory
 
 
 class GatedGraphConv(MessagePassing):

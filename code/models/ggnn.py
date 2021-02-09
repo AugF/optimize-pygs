@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from torch.nn import Parameter, Module
 from code.models.ggnn_layers import GatedGraphConv
 from code.utils.inits import glorot, zeros
-from code.utils.utils import nvtx_push, nvtx_pop
+from code.utils.utils import nvtx_push, nvtx_pop, log_memory
 
 
 class GGNN(Module):

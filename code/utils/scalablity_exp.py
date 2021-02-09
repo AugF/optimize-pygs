@@ -6,38 +6,6 @@ import scipy.sparse as sp
 # from utils import small_datasets, small_nodes
 # https://snap.stanford.edu/snappy/doc/reference/GenRMat.html
 # directed graph
-
-def input_dense_feature_exp(datasets, nodes, dir_in=".", seed=1):
-    dims = [16, 32, 64, 128, 256, 512]
-    np.random.seed(seed)
-    for i, name in enumerate(datasets):
-        for d in dims:
-          feats = np.random.randn(nodes[i], d)
-          np.save(dir_in + "/data/feats_x/" + name + "_" + str(d) + "_feats", feats)
-
-
-def input_sparse_feature_exp(datasets, nodes, seed=1):
-    # 1. input feature dimension
-    np.random.seed(seed)
-    print("begin features ratio exp..")
-    # 1.1 dims=500, ratio=0.05, 0.1, 0.2, 0.5
-    ratios = [0.05, 0.1, 0.2, 0.5]
-    for i, name in enumerate(datasets):
-        for r in ratios:  #
-            feats = np.random.randn(nodes[i], 500)
-            feats = np.where(feats <= r, 0, 1)
-            np.save("data/feats_x/" + name + "_500_" + str(int(r * 100)) + "_feats", feats)
-
-    print("begin features dims exp..")
-    # 1.2 ratio=0.2, dims=250, 500, 750, 1000, 1250
-    dims = [250, 750, 1000, 1250]
-    for i, name in enumerate(datasets):
-        for d in dims:  #
-            feats = np.random.randn(nodes[i], d)
-            feats = np.where(feats <= 0.2, 0, 1)
-            np.save("data/feats_x/" + name + "_" + str(d) + "_20_feats", feats)
-
-
 # 2. graph scalablity
 def gen_graph(raw_dir, nodes, edges, features=32, classes=10, tr=0.70, va=0.15, seed=1):
     np.random.seed(seed)
@@ -76,7 +44,7 @@ def graph_scale_exp(seed=1):
         edges = nodes * degree_fix
         print("nodes={}, edges={}".format(nodes, edges))
         graph = snap.GenRMat(nodes, edges, .6, .1, .15, Rnd)
-        raw_dir = "epochs/graph_" + names[i] + "_25/raw"
+        raw_dir = "/mnt/data/wangzhaokang/wangyunpan/datasets/graph_" + names[i] + "_25/raw"
         print(raw_dir)
         if not os.path.exists(raw_dir):
             os.makedirs(raw_dir)
@@ -102,7 +70,7 @@ def graph_scale_exp(seed=1):
     for d in degrees:
         edges = nodes * d
         graph = snap.GenRMat(nodes, edges, .6, .1, .15, Rnd)
-        raw_dir = "data/graph_50k_" + str(d) + "/raw"
+        raw_dir = "/mnt/data/wangzhaokang/wangyunpan/datasets/graph_50k_" + str(d) + "/raw"
         print(raw_dir)
         if not os.path.exists(raw_dir):
             os.makedirs(raw_dir)
@@ -249,9 +217,4 @@ def gen_real_degrees_memory(seed=1):
         np.savez(raw_dir + "/adj_full", data=f.data, indptr=f.indptr, indices=f.indices, shape=f.shape)
         gen_graph(raw_dir, nodes, edges)
 
-# 10K, 100K
-gen_real_degrees_exp()
-# gen_real_edges_memory()
-# gen_real_degrees_memory()
-# gen_min_edges_graph(seed=1)
-# input_dense_feature_exp(["com-amazon"], [334863], dir_in="/mnt/data/wangzhaokang/wangyunpan/datasets", seed=1)
+
