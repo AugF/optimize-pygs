@@ -37,7 +37,7 @@ parser.add_argument('--d_m', type=int, default=64, help="gaan model: gate: max a
 parser.add_argument('--x_sparse', action='store_true', default=False, help="whether to use data.x sparse version")
 
 parser.add_argument('--seed', type=int, default=1, help="random seed")
-parser.add_argument('--device', type=str, default='cuda:0', help='[cpu, cuda:id]')
+parser.add_argument('--device', type=str, default='cuda:1', help='[cpu, cuda:id]')
 parser.add_argument('--cpu', action='store_true', default=False, help='use cpu, not use gpu')
 parser.add_argument('--lr', type=float, default=0.01, help="adam's learning rate")
 parser.add_argument('--weight_decay', type=float, default=0.0005, help="adam's weight decay")
@@ -176,8 +176,12 @@ def train(epoch):
                 to_time = t2 - t1
                 optimizer.zero_grad()
                 out = model(batch.x, batch.edge_index)
-                if args.dataset in ['yelp', 'amazon']:
+                print("out", out, out.shape)
+                print("batch.y", batch.y, batch.y.shape)
+                if args.dataset in ['yelp']:
                     loss = torch.nn.BCEWithLogitsLoss()(out[batch.train_mask, :], batch.y[batch.train_mask, :])
+                elif args.dataset in ['amazon']:
+                    loss = torch.nn.BCEWithLogitsLoss(reduction='sum')(out[batch.train_mask, :], batch.y[batch.train_mask, :])
                 else:
                     loss = F.nll_loss(out.log_softmax(dim=-1)[batch.train_mask], batch.y[batch.train_mask])
                 batch_size = batch.train_mask.sum().item()
