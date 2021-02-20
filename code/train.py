@@ -1,10 +1,10 @@
+import torch.nn.functional as F
+
 from ogb.nodeproppred import PygNodePropPredDataset, Evaluator
 from code.globals import *
 from code.utils.tools import log_dir, parse_n_prepare
 
-"""
-TODO: 封装为pipeline, 即最后写成抽象类
-"""
+
 def train(model, train_loader, x, y, optimizer, device):
     model.train()
     
@@ -55,8 +55,9 @@ def test(mode, subgraph_loader, x, y, evaluator, split_idx, device):
     return train_acc, val_acc, test_acc
 
 
-def prepare_data(data_prefix, root="/home/wangzhaokang/wangyunpan/gnns-project/datasets"):
-    dataset = PygNodePropPredDataset(date_prefix, root=root)
+def prepare_data(data_prefix, root="/mnt/data/wangzhaokang/wangyunpan/datasets"):
+    # PygNodePropPredDataset
+    dataset = PygNodePropPredDataset(data_prefix, root=root)
     split_idx = dataset.get_idx_split()
     evaluator = Evaluator(name=data_prefix)
     data = dataset[0]
@@ -65,8 +66,9 @@ def prepare_data(data_prefix, root="/home/wangzhaokang/wangyunpan/gnns-project/d
 
 
 def prepare_model(**args):
-    return SAGE(args['num_features'], args['hidden_dims'], args['num_classes'], args['num_layers'])
-
+    # args: num_features, hidden_dims, num_classes, num_layers
+    pass
+    
 
 if __name__ == "__main__":
     # set random seed
@@ -82,7 +84,7 @@ if __name__ == "__main__":
     log_dir = log_dir(args_global.train_config, args_global.data_prefix, git_branch, git_rev, timestamp)
     model_paras, train_paras, phase_paras = parse_n_prepare(args_global.train_config)
 
-    if 'eval_val_every' not in train_params:
+    if 'eval_val_every' not in train_paras:
         train_paras['eval_val_every'] = EVAL_VAL_EVERY_EP    
         
     # step2: 准备数据集
@@ -101,7 +103,7 @@ if __name__ == "__main__":
             if (epoch + 1) % train_paras['eval_val_every'] == 0:
                 if args_global.cpu_eval:
                     torch.save(model.state_dict(), log_dir + "/tmp.pkl")
-                    model_eval.load_state_dict
+                    model_eval.load_state_dict()
                 
         logger.print_statistics(run)
     logger.print_statistics()

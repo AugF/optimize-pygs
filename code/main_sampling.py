@@ -1,6 +1,3 @@
-"""
-Sample-based Inference阶段的时间性能瓶颈和空间性能瓶颈测量文件
-"""
 import torch
 import torch.nn.functional as F
 from torch.nn import ModuleList
@@ -72,7 +69,6 @@ if dataset_info[0] in small_datasets and len(dataset_info) > 1:
 
 dataset = get_dataset(args.dataset, normalize_features=True)
 data = dataset[0]
-sys.exit(0)
 
 # add train, val, test split
 if args.dataset in ['amazon-computers', 'amazon-photo', 'coauthor-physics']:
@@ -148,10 +144,7 @@ optimizer = torch.optim.Adam([
     for i in range(1 if args.model == "ggnn" else args.layers)]
     , lr=args.lr)  # Only perform weight-decay on first convolution, 参考了pytorch_geometric中的gcn.py的例子: https://github.com/rusty1s/pytorch_geometric/blob/master/examples/gcn.py
 
-print("data load", torch.cuda.memory_stats(device)["allocated_bytes.all.peak"])
-torch.cuda.reset_max_memory_allocated(device)
-
-def train(epoch):
+def train_base(epoch, mode):
     model.train()
     
     total_nodes = int(data.train_mask.sum())
@@ -169,7 +162,7 @@ def train(epoch):
             t1 = time.time()
             sampling_time = t1 - t0
             
-            if args.mode == "cluster":
+            if mode == "cluster":
                 batch = batch.to(device)
                 nodes, edges = batch.x.shape[0], batch.edge_index.shape[1]
                 print(f"nodes: {nodes}, edges: {edges}")
@@ -188,7 +181,7 @@ def train(epoch):
                         label = batch.y[batch.train_mask]
                     loss = F.nll_loss(out.log_softmax(dim=-1)[batch.train_mask], label)
                 batch_size = batch.train_mask.sum().item()
-            elif args.mode == 'graphsage':
+            elif mode == 'graphsage':
                 batch_size, n_id, adjs = batch
                 adjs = [adj.to(device) for adj in adjs] 
                 nodes, edges = adjs[0][2][0], adjs[0][0].shape[1]
@@ -224,6 +217,99 @@ def train(epoch):
     loss = total_loss / total_nodes
     return loss
 
+# 对于sample进行特别的实现
+def train_optimize(epoch, mode):
+    model.train()
+    
+    num = len(train_loader)
+    train_iter = iter(train_loader)
+    def task1(q1):
+        loader_iter = iter(train_iter)
+        for i in range(num):
+            data = next(loader_iter)
+            q1.put(data)
+    
+    def task2(q1, q2):
+        for i in range(num):
+            data = q1.get()
+            data = data.to(device)
+            q2.put(data)
+    
+    def task3(q2):
+        total_loss = total_examples = total_correct = 0
+        for i in range(num):
+            batch = q2.get()
+            optimizer.zero_grad()
+            
+            if mode == "cluster":
+                out = model(batch.x, batch.edge_index)
+                if args.dataset in ['yelp']:
+                    loss = torch.nn.BCEWithLogitsLoss()(out[batch.train_mask, :], batch.y[batch.train_mask, :])
+                else:
+                    if args.dataset == 'amazon':
+                        label = torch.argmax(batch.y[batch.train_mask], dim=1)
+                    else:
+                        label = batch.y[batch.train_mask]
+                    loss = F.nll_loss(out.log_softmax(dim=-1)[batch.train_mask], label)
+                batch_size = batch.train_mask.sum().item()  
+            
+    while True:
+        try:
+            t0 = time.time()
+            batch = next(train_iter)
+            t1 = time.time()
+            sampling_time = t1 - t0
+            
+            if args.mode == "cluster":
+                batch = batch.to(device)
+                nodes, edges = batch.x.shape[0], batch.edge_index.shape[1]
+                print(f"nodes: {nodes}, edges: {edges}")
+                t2 = time.time()
+                to_time = t2 - t1
+                optimizer.zero_grad()
+                out = model(batch.x, batch.edge_index)
+                print("out", out, out.shape)
+                print("batch.y", batch.y, batch.y.shape)
+                if args.dataset in ['yelp']:
+                    loss = torch.nn.BCEWithLogitsLoss()(out[batch.train_mask, :], batch.y[batch.train_mask, :])
+                else:
+                    if args.dataset == 'amazon':
+                        label = torch.argmax(batch.y[batch.train_mask], dim=1)
+                    else:
+                        label = batch.y[batch.train_mask]
+                    loss = F.nll_loss(out.log_softmax(dim=-1)[batch.train_mask], label)
+                batch_size = batch.train_mask.sum().item()
+            elif args.mode == 'graphsage':
+                # 这里还需要重新设计
+                batch_size, n_id, adjs = batch
+                adjs = [adj.to(device) for adj in adjs] 
+                nodes, edges = adjs[0][2][0], adjs[0][0].shape[1]
+                print(f"nodes: {nodes}, edges: {edges}")
+                x = data.x[n_id].to(device)
+                if args.dataset in ['yelp', 'amazon']:
+                    y = data.y[n_id[:batch_size], :].to(device)
+                else:
+                    y = data.y[n_id[:batch_size]].to(device)
+                t2 = time.time()
+                to_time = t2 - t1
+                optimizer.zero_grad()            
+                out = model(data.x[n_id].to(device), adjs)
+                if args.dataset in ['yelp', 'amazon']:
+                    loss = torch.nn.BCEWithLogitsLoss()(out, y)
+                else:
+                    loss = F.nll_loss(out.log_softmax(dim=-1), y)
+
+            loss.backward()
+            optimizer.step()
+            
+            total_loss += loss.item() * batch_size            
+            train_time = time.time() - t2 # 
+            
+        except StopIteration:
+            break
+
+    loss = total_loss / total_nodes
+    return loss
 
 @torch.no_grad()
 def test(epoch):  # Inference should be performed on the full graph.

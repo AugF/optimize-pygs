@@ -42,6 +42,18 @@ datasets_maps = {
 
 df = {}
 
+
+class ArgClass(object):
+    def __init__(self):
+        pass
+
+
+def build_args_from_dict(dic):
+    args = ArgClass()
+    for key, value in dic.items():
+        args.__setattr__(key, value)
+    return args
+
 def get_dataset(name, normalize_features=False, transform=None): #
     if name in ["cora", "pubmed"]:
         path = osp.join('/mnt/data/wangzhaokang/wangyunpan/datasets')

@@ -8,7 +8,7 @@ from torch_geometric.data import NeighborSampler
 from torch_geometric.nn import SAGEConv
 
 
-dataset = PygNodePropPredDataset(name='ogbn-products', root="/home/wangzhaokang/wangyunpan/gnns-project/datasets")
+dataset = PygNodePropPredDataset(name='ogbn-products', root="/mnt/data/wangzhaokang/wangyunpan/datasets")
 split_idx = dataset.get_idx_split()
 evaluator = Evaluator(name='ogbn-products')
 data = dataset[0]

@@ -212,7 +212,6 @@ def gen_real_degrees_memory(seed=1):
         edges_list = set(edges_list)
         row = [i[0] for i in edges_list]
         col = [i[1] for i in edges_list]
-        print(edges, len(row))
         f = sp.csr_matrix(([1] * len(row), (row, col)), shape=(nodes, nodes)) # directed -> undirected
         np.savez(raw_dir + "/adj_full", data=f.data, indptr=f.indptr, indices=f.indices, shape=f.shape)
         gen_graph(raw_dir, nodes, edges)

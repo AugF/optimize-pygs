@@ -110,4 +110,4 @@ t1 = time.time()
 for data in train_loader_new:
     pass
 t2 = time.time()
-print("use time", t1 - t0, t2 - t1)
+

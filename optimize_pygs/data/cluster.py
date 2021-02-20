@@ -2,13 +2,10 @@ import copy
 import os.path as osp
 from typing import Optional
 
-import time
 import torch
 import torch.utils.data
 from torch_sparse import SparseTensor, cat
 
-max_x = -1
-min_x = 1e6
 
 class ClusterData(torch.utils.data.Dataset):
     r"""Clusters/partitions a graph data object into multiple subgraphs, as
@@ -141,18 +138,10 @@ class ClusterLoader(torch.utils.data.DataLoader):
     def __collate__(self, batch):
         if not isinstance(batch, torch.Tensor):
             batch = torch.tensor(batch)
-        
+
         N = self.cluster_data.data.num_nodes
         E = self.cluster_data.data.num_edges
 
-        global max_x, min_x
-        print(batch)
-        print(batch + 1)
-        max_x = max(max_x, max(batch))
-        min_x = min(min_x, min(batch))
-        print(f"max: {max_x}, min: {min_x}")        
-        print(N)
-        
         start = self.cluster_data.partptr[batch].tolist()
         end = self.cluster_data.partptr[batch + 1].tolist()
         node_idx = torch.cat([torch.arange(s, e) for s, e in zip(start, end)])
@@ -161,8 +150,8 @@ class ClusterLoader(torch.utils.data.DataLoader):
         if hasattr(data, '__num_nodes__'):
             del data.__num_nodes__
         adj, data.adj = self.cluster_data.data.adj, None
-
-        adj = adj.index_select(0, node_idx).index_select(1, node_idx)
+        adj = cat([adj.narrow(0, s, e - s) for s, e in zip(start, end)], dim=0)
+        adj = adj.index_select(1, node_idx)
         row, col, edge_idx = adj.coo()
         data.edge_index = torch.stack([row, col], dim=0)
 

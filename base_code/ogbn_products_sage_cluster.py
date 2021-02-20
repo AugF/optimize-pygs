@@ -102,10 +102,19 @@ def test(model, data, evaluator, subgraph_loader, device):
     y_true = data.y
     y_pred = out.argmax(dim=-1, keepdim=True)
 
+    train_axx = evaluator.eval({
+        'y_true': y_true[data.train_mask],
+        'y_pred': y_pred[data.train_mask]
+    })
+    print("out", train_axx)
+    import sys
+    sys.exit(0)
+    
     train_acc = evaluator.eval({
         'y_true': y_true[data.train_mask],
         'y_pred': y_pred[data.train_mask]
     })['acc']
+    
     valid_acc = evaluator.eval({
         'y_true': y_true[data.valid_mask],
         'y_pred': y_pred[data.valid_mask]
@@ -138,7 +147,7 @@ def main():
     device = f'cuda:{args.device}' if torch.cuda.is_available() else 'cpu'
     device = torch.device(device)
 
-    dataset = PygNodePropPredDataset(name='ogbn-products', root="/mnt/data/wangzhaokang/wangyunpan/gnns-project/datasets")
+    dataset = PygNodePropPredDataset(name='ogbn-products', root="/mnt/data/wangzhaokang/wangyunpan/datasets")
     split_idx = dataset.get_idx_split()
     data = dataset[0]
 
@@ -168,6 +177,8 @@ def main():
         model.reset_parameters()
         optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
         for epoch in range(1, 1 + args.epochs):
+            result = test(model, data, evaluator, subgraph_loader, device)
+            
             loss, train_acc = train(model, loader, optimizer, device)
             if epoch % args.log_steps == 0:
                 print(f'Run: {run + 1:02d}, '

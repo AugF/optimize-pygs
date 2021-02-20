@@ -7,7 +7,7 @@ from torch.nn import Module
 
 from code.models.gcn_layers import GCNConv
 from code.utils.inits import glorot
-from code.utils.utils import nvtx_push, nvtx_pop, log_memory
+from code.utils.utils import nvtx_push, nvtx_pop, log_memory, gcn_cluster_norm
 
 class GCN(Module):
     """
@@ -58,7 +58,7 @@ class GCN(Module):
                 nvtx_pop(self.gpu)
                 log_memory(self.flag, device, 'layer' + str(i))
         else:
-            if  self.cluster_flag:
+            if self.cluster_flag:
                 norm = gcn_cluster_norm(adjs, x.size(0), None, False, x.dtype)
             else:
                 norm = None

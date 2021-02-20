@@ -3,7 +3,8 @@ import time
 
 import torch.nn.functional as F
 from torch.nn import Parameter, Module
-from code.models.gat_layers import GATConv
+# from code.models.gat_layers import GATConv
+from torch_geometric.nn import GATConv
 from code.utils.inits import glorot
 from code.utils.utils import nvtx_push, nvtx_pop, log_memory
 
@@ -32,7 +33,7 @@ class GAT(Module):
             [
                 GATConv(in_channels=in_shapes[layer], out_channels=out_shapes[layer],
                         heads=head_shape[layer], dropout=attention_dropout, negative_slope=negative_slop,
-                        gpu=gpu, concat=layer != layers - 1)
+                        concat=layer != layers - 1)
                 for layer in range(layers)
              ]
         )
