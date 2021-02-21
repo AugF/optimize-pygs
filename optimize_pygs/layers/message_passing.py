@@ -5,7 +5,7 @@ import torch
 from torch_sparse import SparseTensor
 from torch_scatter import gather_csr, scatter, segment_csr
 
-from optimize_pygs.utils import nvtx_push, nvtx_pop
+from optimize_pygs.utils.pyg15_utils import nvtx_push, nvtx_pop
 
 msg_aggr_special_args = set([
     'adj_t',

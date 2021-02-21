@@ -3,7 +3,7 @@ from torch_geometric.nn.conv import GATConv
 
 from . import BaseModel, register_model
 
-# TODO: 检查参数是否正确
+
 @register_model("pyg_gat")
 class GAT(BaseModel):
     @staticmethod

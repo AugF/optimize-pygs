@@ -27,6 +27,7 @@ class SAGE(BaseModel):
             args.num_features,
             args.hidden_size,
             args.num_classes,
+            args.num_layers,
             args.dropout,
         )
 

@@ -6,10 +6,10 @@ import torch
 import torch.nn.functional as F
 from torch.nn import Parameter, Linear
 from torch_geometric.utils import remove_self_loops, add_self_loops, softmax
-from message_passing import MessagePassing
 
-from inits import glorot, zeros
-from utils import nvtx_push, nvtx_pop
+from optimize_pygs.layers.message_passing import MessagePassing
+from optimize_pygs.utils.inits import glorot, zeros
+from optimize_pygs.utils.pyg15_utils import nvtx_push, nvtx_pop
 
 
 class GATConv(MessagePassing):
@@ -49,7 +49,7 @@ class GATConv(MessagePassing):
     """
     def __init__(self, in_channels, out_channels, heads=1, concat=True,
                  negative_slope=0.2, dropout=0, bias=True, gpu=False, **kwargs):
-        super(GATConv, self).__init__(aggr='add', gpu=gpu, **kwargs)
+        super(GATConv, self).__init__(aggr='add', **kwargs)
 
         self.in_channels = in_channels
         self.out_channels = out_channels

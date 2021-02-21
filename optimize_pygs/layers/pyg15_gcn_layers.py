@@ -9,9 +9,10 @@ from torch.nn import Parameter
 from torch_scatter import scatter_add
 from torch_geometric.utils import add_remaining_self_loops
 
-from .message_passing import MessagePassing
-from optimize_pygs.utils import glorot, zeros
-from optimize_pygs.utils import nvtx_push, nvtx_pop
+from optimize_pygs.layers.message_passing import MessagePassing
+from optimize_pygs.utils.inits import glorot, zeros
+from optimize_pygs.utils.pyg15_utils import nvtx_push, nvtx_pop
+
 
 class GCNConv(MessagePassing):
     r"""The graph convolutional operator from the `"Semi-supervised
@@ -47,8 +48,8 @@ class GCNConv(MessagePassing):
     """
 
     def __init__(self, in_channels, out_channels, gpu=False, improved=False, cached=False,
-                 bias=True, normalize=True):
-        super(GCNConv, self).__init__(aggr='add', gpu=gpu)
+                 bias=True, device=None, normalize=True):
+        super(GCNConv, self).__init__(aggr='add')
 
         self.in_channels = in_channels
         self.out_channels = out_channels
@@ -56,6 +57,7 @@ class GCNConv(MessagePassing):
         self.cached = cached
         self.normalize = normalize
         self.gpu = gpu
+        self.device = device
 
         self.weight = Parameter(torch.Tensor(in_channels, out_channels))
 
@@ -113,16 +115,15 @@ class GCNConv(MessagePassing):
             if not self.cached or self.cached_result is None:
                 self.cached_num_edges = edge_index.size(1)
                 if self.normalize:
-                    edge_index, norm = self.gcn_norm(edge_index, x.size(
+                    edge_index, norm = self.gcn_norm(edge_index.to(self.device), x.size(
                         self.node_dim), edge_weight, self.improved, x.dtype)
                 else:
                     norm = edge_weight
                 self.cached_result = edge_index, norm
             edge_index, norm = self.cached_result
-
+        
         out = self.propagate(edge_index, x=x, norm=norm) # edge cal
         nvtx_pop(self.gpu)
-        
         return out
 
     def message(self, x_j, norm):
@@ -136,5 +137,4 @@ class GCNConv(MessagePassing):
     def __repr__(self):
         return '{}({}, {})'.format(self.__class__.__name__, self.in_channels,
                                    self.out_channels)
-
 

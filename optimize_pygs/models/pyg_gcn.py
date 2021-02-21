@@ -10,7 +10,7 @@ from . import BaseModel, register_model
 class GCN(BaseModel):
     @staticmethod
     def add_args(parser):
-        """Add model-specific arguments to the parser.
+        """Add model-specific arguments to the parser, for future
         """
         parser.add_argument("--num-features", type=int)
         parser.add_argument("--num-classes", type=int)
@@ -20,16 +20,13 @@ class GCN(BaseModel):
     
     @classmethod
     def build_model_from_args(cls, args):
-        return cls(
+        return cls( 
             args.num_features,
             args.num_classes,
             args.hidden_size,
-            args.num_layers,
-            args.dropout
+            dropout=args.dropout, # 可以乱序
+            num_layers=args.num_layers,
         )
-    
-    def get_trainer(self, task, args):
-        return None
     
     def __init__(self, num_features, num_classes, hidden_size, num_layers, dropout):
         super(GCN, self).__init__()
@@ -52,13 +49,7 @@ class GCN(BaseModel):
         x = self.convs[-1](x, edge_index, weight)
         return F.log_softmax(x, dim=1)
 
-    def get_embeddings(self, x, edge_index, weight=None):
-        for conv in self.convs[:-1]:
-            x = F.relu(conv(x, edge_index, weight))
-            x = F.dropout(x, p=self.dropout, training=self.training)
-        return x
-
-    def node_classification_loss(self, data): # 这里实际上可以不用指定
+    def node_classification_loss(self, data): # 这里是log_softmax + F.nll_loss, 所以重写了
         return F.nll_loss(
             self.forward(data.x, data.edge_index, None if "norm_aggr" not in data else data.norm_aggr)[data.train_mask],
             data.y[data.train_mask],
@@ -66,3 +57,4 @@ class GCN(BaseModel):
 
     def predict(self, data):
         return self.forward(data.x, data.edge_index, None if "norm_aggr" not in data else data.norm_aggr)
+

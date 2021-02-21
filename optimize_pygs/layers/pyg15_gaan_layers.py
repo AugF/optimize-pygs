@@ -2,19 +2,45 @@ import torch
 import sys
 from torch.nn import Parameter
 import torch.nn.functional as F
-from torch_geometric.utils import remove_self_loops, add_self_loops, softmax
+from torch_geometric.utils import remove_self_loops, add_self_loops
+from torch_scatter import scatter_max, scatter_add
 
-from message_passing import MessagePassing
-from inits import glorot, zeros
-from utils import nvtx_push, nvtx_pop
+from optimize_pygs.layers.message_passing import MessagePassing
+from optimize_pygs.utils.inits import glorot, zeros
+from optimize_pygs.utils.pyg15_utils import nvtx_push, nvtx_pop
 
+
+def maybe_num_nodes(index, num_nodes=None):
+    return index.max().item() + 1 if num_nodes is None else num_nodes
+
+def softmax(src, index, num_nodes=None):
+    r"""Computes a sparsely evaluated softmax.
+    Given a value tensor :attr:`src`, this function first groups the values
+    along the first dimension based on the indices specified in :attr:`index`,
+    and then proceeds to compute the softmax individually for each group.
+    Args:
+        src (Tensor): The source tensor.
+        index (LongTensor): The indices of elements for applying the softmax.
+        num_nodes (int, optional): The number of nodes, *i.e.*
+            :obj:`max_val + 1` of :attr:`index`. (default: :obj:`None`)
+    :rtype: :class:`Tensor`
+    """
+
+    num_nodes = maybe_num_nodes(index, num_nodes)
+
+    out = src - scatter_max(src, index, dim=0, dim_size=num_nodes)[0][index]
+    out = out.exp()
+    out = out / (
+        scatter_add(out, index, dim=0, dim_size=num_nodes)[index] + 1e-16)
+
+    return out
 
 class MaxAggregate(MessagePassing):
     """
     max aggregate
     """
     def __init__(self, gpu=False):
-        super(MaxAggregate, self).__init__(aggr="max", gpu=gpu)
+        super(MaxAggregate, self).__init__(aggr="max")
 
     def forward(self, x, edge_index):
         x = self.propagate(edge_index, x=x)
@@ -32,7 +58,7 @@ class MeanAggregate(MessagePassing):
     mean aggregate
     """
     def __init__(self, gpu=False):
-        super(MeanAggregate, self).__init__(aggr='mean', gpu=gpu)
+        super(MeanAggregate, self).__init__(aggr='mean')
 
     def forward(self, x, edge_index):
         return self.propagate(edge_index, x=x)
@@ -50,7 +76,7 @@ class GaANConv(MessagePassing):
     """
     def __init__(self, in_channels, out_channels, d_a, d_v, d_m, heads,
                  gpu=False):
-        super(GaANConv, self).__init__(aggr='add', gpu=gpu)
+        super(GaANConv, self).__init__(aggr='add')
 
         self.in_channels = in_channels
         self.out_channels = out_channels

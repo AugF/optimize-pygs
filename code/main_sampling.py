@@ -144,7 +144,9 @@ optimizer = torch.optim.Adam([
     for i in range(1 if args.model == "ggnn" else args.layers)]
     , lr=args.lr)  # Only perform weight-decay on first convolution, 参考了pytorch_geometric中的gcn.py的例子: https://github.com/rusty1s/pytorch_geometric/blob/master/examples/gcn.py
 
-def train_base(epoch, mode):
+print("out", model.device)
+
+def train(epoch, mode):
     model.train()
     
     total_nodes = int(data.train_mask.sum())
@@ -332,6 +334,6 @@ def test(epoch):  # Inference should be performed on the full graph.
 cnt = len(subgraph_loader)
 for epoch in range(args.epochs):
     t0 = time.time()
-    train(epoch)
+    train(epoch, mode=args.mode)
 
 print(f"use_time: {time.time() - st}s")

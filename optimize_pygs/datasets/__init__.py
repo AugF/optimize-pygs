@@ -50,7 +50,7 @@ def build_dataset(args):
         # if dataset is not None:
         #     return dataset
         exit(1)
-    return DATASET_REGISTRY[args.dataset]()
+    return DATASET_REGISTRY[args.dataset]() # 这里不需要参数
 
 
 def build_dataset_from_name(dataset):

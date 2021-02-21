@@ -159,7 +159,7 @@ def main():
 
     cluster_data = ClusterData(data, num_parts=args.num_partitions,
                                recursive=False, save_dir=dataset.processed_dir)
-
+    
     loader = ClusterLoader(cluster_data, batch_size=args.batch_size,
                            shuffle=True, num_workers=args.num_workers)
 

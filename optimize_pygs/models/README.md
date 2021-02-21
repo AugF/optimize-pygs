@@ -1,10 +1,7 @@
-import math
+增加一个模型的步骤:
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from torch.nn.parameter import Parameter
-
+1. 创建一个模型
+```python
 from . import BaseModel, register_model
 
 
@@ -37,12 +34,46 @@ class ModelName(BaseModel):
         
     def forward(self, x, adj):
         return 0, 0
-    
-    def loss(self, data):
-        return F.nll_loss(
-            self.forward(data.x, data.edge_index)[data.train_mask],
-            data.y[data.train_mask],
-        )
-    
-    def predict(self, data):
-        return self.forward(data.x, data.edge_index)
+```
+
+2. 在`__init__.py`文件下注册
+```python
+SUPPORED_MODELS = {
+    ...,
+    "template_model": "optimize_pygs.models.template_model", # added
+    ...,
+}
+```
+
+3. optimize_pygs目录下configs.py文件中增加默认配置
+```
+DEFAULT_MODEL_CONFIGS = {
+    ...,
+    'template_model': { # added
+        "num_features": 100,
+        "num_classes": 12,
+        "hidden_size": 64,
+    }
+    ...,
+}
+```
+
+4. 测试
+
+```python
+from optimize_pygs.utils import build_args_from_dict
+from optimize_pygs.models import build_model
+from optimize_pygs.configs import DEFAULT_MODEL_CONFIGS
+
+def get_default_args(model):
+    # get default args
+    default_dict = DEFAULT_MODEL_CONFIGS[model]
+    # add model
+    default_dict['model'] = model 
+    return build_args_from_dict(default_dict)
+
+model_name = "template_model"
+args = get_default_args(model_name)
+model = build_model(args)
+print(model)
+```

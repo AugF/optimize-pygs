@@ -6,13 +6,13 @@ import sys
 
 from collections import defaultdict
 from tabulate import tabulate
-from torch_geometric.data import ClusterData, ClusterLoader
 from torch_sparse import cat
 
 from ogb.nodeproppred import PygNodePropPredDataset
-from optimize_pygs.datasets import CustomDataset
+from optimize_pygs.data.cluster import ClusterData, ClusterLoader
+from optimize_pygs.datasets import build_dataset
 from optimize_pygs.global_configs import dataset_root as root
-from optimize_pygs.utils.utils import tabulate_results
+from optimize_pygs.utils.utils import tabulate_results, build_args_from_dict
 
 class ClusterOptimizerLoader(torch.utils.data.DataLoader):
     def __init__(self, cluster_data, **kwargs):
@@ -86,7 +86,7 @@ def test_efficiency(datasets, batch_size=20):
     print(f"{sys._getframe().f_code.co_name}, batch_size={batch_size}")
     results_dict = defaultdict(list)
     for name in datasets:
-        dataset = CustomDataset(root=root, name=name) # bugs
+        dataset = build_dataset(build_args_from_dict({'dataset': name}))
         data = dataset[0]
         nodes, edges = data.num_nodes, data.num_edges
         cluster_data = ClusterData(data, num_parts=1500, recursive=False, save_dir=dataset.processed_dir)
@@ -119,7 +119,7 @@ def test_loader_efficiency(datasets, batch_size=20, num_workers=0):
     print(f"{sys._getframe().f_code.co_name}, batch_size={batch_size}, num_workers={num_workers}")
     results_dict = defaultdict(list)
     for name in datasets:
-        dataset = CustomDataset(root=root, name=name) # bugs
+        dataset = build_dataset(build_args_from_dict({'dataset': name}))
         data = dataset[0]
         nodes, edges = data.num_nodes, data.num_edges
         cluster_data = ClusterData(data, num_parts=1500, recursive=False, save_dir=dataset.processed_dir)
@@ -144,10 +144,10 @@ def test_loader_efficiency(datasets, batch_size=20, num_workers=0):
 
 if __name__ == "__main__":    
     graphsaint_data = ["ppi", "flickr", "reddit", "yelp", "amazon"]
-    neuroc_data = ['pubmed', 'amazon-photo', 'amazon-computers', 'coauthor-physics', 'com-amazon']
+    neuroc_data = ['pubmed', 'amazon-photo', 'amazon-computers', 'coauthor-physics']
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset', '-d', type=str, default='graphsaint')
+    parser.add_argument('--dataset', '-dt', type=str, default='graphsaint')
     args = parser.parse_args()
     
     datasets = graphsaint_data if args.dataset == 'graphsaint' else neuroc_data
@@ -162,4 +162,6 @@ if __name__ == "__main__":
     test_loader_efficiency(datasets, num_workers=12)
     for batch_size in cluster_batchs:
         test_loader_efficiency(datasets, batch_size=batch_size)
+    
+    
     

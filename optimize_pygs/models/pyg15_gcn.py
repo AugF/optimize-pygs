@@ -3,14 +3,13 @@ import torch
 import torch.nn.functional as F
 
 from tqdm import tqdm
+
 from optimize_pygs.layers import GCNConv
-from optimize_pygs.utils import gcn_cluster_norm
-from optimize_pygs.utils import nvtx_push, nvtx_pop, log_memory
+from optimize_pygs.utils.pyg15_utils import gcn_cluster_norm
+from optimize_pygs.utils.pyg15_utils import nvtx_push, nvtx_pop, log_memory
 from . import BaseModel, register_model
 
-"""
-暂时搁置，先查看结果，然后再进一步行动
-"""
+
 @register_model("pyg15_gcn")
 class GCN(BaseModel):
     """
@@ -21,43 +20,69 @@ class GCN(BaseModel):
     def add_args(parser):
         """Add model-specific arguments to the parser.
         """
+        # fmt: off
         parser.add_argument("--num-features", type=int)
         parser.add_argument("--num-classes", type=int)
+        parser.add_argument("--norm", type=torch.Tensor)
         parser.add_argument("--hidden-size", type=int, default=64)
         parser.add_argument("--num-layers", type=int, default=2)
-        parser.add_argument("--dropout", type=float, default=0.5)
-        parser.add_argument("--norm", type=torch.Tensor)
-        parser.add_argument("--memory_flag", type=bool)
-        parser.add_argument("--cluster_flag", tyep=bool) # inductive learning, norm需要现算
-
-    
-    def __init__(self, layers, n_features, n_classes, hidden_dims, dropout=0.5, memory_flag=False, cluster_flag=False): # add adj
+        # fmt: on
+        
+    @classmethod
+    def build_model_from_args(cls, args):
+        return cls(
+            args.num_layers,
+            args.num_features,
+            args.num_classes,
+            args.hidden_size,
+            norm=args.norm,
+        )
+        
+    def __init__(self, layers, n_features, n_classes, hidden_dims, norm=None, dropout=0.5,
+                 gpu=False, device="cpu", flag=False, infer_flag=False, cluster_flag=False,
+                 cached_flag=True):
+        """
+        gpu: True表示启动torch.cuda.nvtx运行时间统计
+        device: 其值表示内存数据统计中指定的GPU设备
+        flag: True表示启动Training阶段GPU内存数据统计
+        infer_flag: True表示启动inference阶段GPU内存数据统计
+        cluster_flag: True表示训练时采用的是cluster sampler, 需要特殊处理
+        """
         super(GCN, self).__init__()
         self.n_features, self.n_classes = n_features, n_classes
         self.layers, self.hidden_dims = layers, hidden_dims
         self.dropout = dropout
+        self.gpu = gpu
+        self.flag, self.infer_flag = flag, infer_flag
+        self.device = device
 
         shapes = [n_features] + [hidden_dims] * (layers - 1) + [n_classes]
         self.convs = torch.nn.ModuleList(
             [
-                GCNConv(in_channels=shapes[layer], out_channels=shapes[layer + 1], gpu=gpu, cached=True)
+                GCNConv(in_channels=shapes[layer], out_channels=shapes[layer + 1], gpu=gpu, device=device, cached=cached_flag)
                 for layer in range(layers)
             ]
         )
+        if norm is not None:
+            self.norm = norm.to(device)
         self.cluster_flag = cluster_flag
     
-    def forward(self, x, adjs, norm=None):
+    def reset_parameters(self):
+        for conv in self.convs:
+            conv.reset_parameters()
+            
+    def forward(self, x, adjs):
         """
         修改意见：https://github.com/THUDM/cogdl/blob/master/cogdl/models/nn/pyg_gcn.py
-        :param x:
-        :param edge_index:
-        :return:
+        :param x: [num_nodes, num_features]
+        :param edge_index: [num_nodes, num_features]
+        :return: x
         """
         device = self.device
         if isinstance(adjs, list):
             for i, (edge_index, e_id, size) in enumerate(adjs):
                 nvtx_push(self.gpu, "layer" + str(i))
-                x = self.convs[i](x, edge_index, size=size[1], norm=norm[e_id])
+                x = self.convs[i](x, edge_index, size=size[1], norm=self.norm[e_id])
                 if i != self.layers - 1:
                     x = F.relu(x)
                     x = F.dropout(x, p=self.dropout, training=self.training)
@@ -77,7 +102,7 @@ class GCN(BaseModel):
                 nvtx_pop(self.gpu)
                 log_memory(self.flag, device, 'layer' + str(i))
                 
-        return x
+        return x # loss使用默认的交叉熵
 
     def inference(self, x_all, subgraph_loader):        
         pbar = tqdm(total=x_all.size(0) * self.layers)

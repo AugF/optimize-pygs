@@ -3,14 +3,13 @@ reference:
 https://github.com/rusty1s/pytorch_geometric/blob/1.5.0/torch_geometric/nn/conv/gated_graph_conv.py
 """
 import torch
-from torch import Tensor
-from torch.nn import Parameter as Param
-from message_passing import MessagePassing
 import torch.nn.functional as F
 
-from inits import uniform
-
-from utils import nvtx_push, nvtx_pop, log_memory
+from torch import Tensor
+from torch.nn import Parameter as Param
+from optimize_pygs.layers.message_passing import MessagePassing
+from optimize_pygs.utils.inits import glorot, zeros, uniform
+from optimize_pygs.utils.pyg15_utils import nvtx_push, nvtx_pop, log_memory
 
 
 class GatedGraphConv(MessagePassing):
@@ -47,13 +46,15 @@ class GatedGraphConv(MessagePassing):
                  num_layers,
                  aggr='add',
                  bias=True,
-                 gpu=False, flag=False):
-        super(GatedGraphConv, self).__init__(aggr=aggr, gpu=gpu)
+                 gpu=False, flag=False,
+                 infer_flag=False, device=None):
+        super(GatedGraphConv, self).__init__(aggr=aggr)
 
         self.out_channels = out_channels
         self.num_layers = num_layers
         self.gpu = gpu
-        self.flag = flag
+        self.flag, self.infer_flag = flag, infer_flag
+        self.device = device
 
         self.weight = Param(Tensor(num_layers, out_channels, out_channels))
         self.rnn = torch.nn.GRUCell(out_channels, out_channels, bias=bias) # gru是共享权重的
@@ -65,7 +66,6 @@ class GatedGraphConv(MessagePassing):
         self.rnn.reset_parameters()
 
     def forward(self, x, adjs, edge_weight=None, size=None):
-        """"""
         device = torch.device('cuda' if self.gpu else 'cpu')
         h = x if x.dim() == 2 else x.unsqueeze(-1)
         if h.size(1) > self.out_channels:
@@ -107,30 +107,53 @@ class GatedGraphConv(MessagePassing):
         return h
     
 
-    def inference(self, x_all, subgraph_loader, pbar):
-        device = torch.device('cuda' if self.gpu else 'cpu')
-
-        # Compute representations of nodes layer by layer, using *all*
-        # available edges. This leads to faster computation in contrast to
-        # immediately computing the final representations of each batch.
+    def inference(self, x_all, subgraph_loader):
+        device = torch.device(self.device if self.gpu else 'cpu')
+        flag = self.infer_flag
+        
+        sampling_time, to_time, train_time = 0.0, 0.0, 0.0
+        total_batches = len(subgraph_loader)
+        
         for i in range(self.num_layers):
-            xs = []
-            for batch_size, n_id, adj in subgraph_loader:
-                edge_index, _, size = adj.to(device)
-                x = x_all[n_id].to(device)
-                
-                # GRU单元
-                m = torch.matmul(x, self.weight[i]) # vertex cal
-                m = self.propagate(edge_index, x=(m, m[:size[1]]), edge_weight=None) # edge cal
-                x = self.rnn(m, x[:size[1]]) # vertex cal todo: 这里也有改变
-                
-                if i != self.num_layers - 1:
-                    x = F.relu(x)
-                xs.append(x.cpu())
-                pbar.update(batch_size)
+            log_memory(flag, device, f'layer{i} start')
 
+            xs = []
+            loader_iter = iter(subgraph_loader)
+            while True:
+                try:
+                    et0 = time.time()
+                    batch_size, n_id, adj = next(loader_iter)
+                    log_memory(flag, device, 'batch start') 
+
+                    et1 = time.time()
+                    edge_index, _, size = adj.to(device)
+                    x = x_all[n_id].to(device)
+                    log_memory(flag, device, 'to end') 
+
+                    et2 = time.time()
+                    # GRU单元
+                    m = torch.matmul(x, self.weight[i]) # vertex cal
+                    m = self.propagate(edge_index, x=(m, m[:size[1]]), edge_weight=None) # edge cal
+                    x = self.rnn(m, x[:size[1]]) # vertex cal todo: 这里也有改变
+                
+                    if i != self.num_layers - 1:
+                        x = F.relu(x)
+                    xs.append(x.cpu())
+                    log_memory(flag, device, 'batch end') 
+        
+                    sampling_time += et1 - et0
+                    to_time += et2 - et1
+                    train_time += time.time() - et2
+                except StopIteration:
+                    break
             x_all = torch.cat(xs, dim=0)
 
+        sampling_time /= total_batches
+        to_time /= total_batches
+        train_time /= total_batches
+        
+        log_memory(flag, device, 'inference end') 
+        print(f"avg_batch_train_time: {train_time}, avg_batch_sampling_time:{sampling_time}, avg_batch_to_time: {to_time}")
         return x_all
     
     

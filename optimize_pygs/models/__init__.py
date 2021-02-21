@@ -41,5 +41,12 @@ def build_model(args):
         
         
 SUPPORED_MODELS = {
-    "gat": "",
+    "template_model": "optimize_pygs.models.template_model",
+    "pyg_gcn": "optimize_pygs.models.pyg_gcn",
+    "pyg_gat": "optimize_pygs.models.pyg_gat",
+    "pyg_sage": "optimize_pygs.models.pyg_sage",
+    "pyg15_gcn": "optimize_pygs.models.pyg15_gcn",
+    "pyg15_ggnn": "optimize_pygs.models.pyg15_ggnn",
+    "pyg15_gat": "optimize_pygs.models.pyg15_gat",
+    "pyg15_gaan": "optimize_pygs.models.pyg15_gaan",
 }
