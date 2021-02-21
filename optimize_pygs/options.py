@@ -1,4 +1,8 @@
 import argparse
+import sys
+
+from optimize_pygs.datasets import DATASET_REGISTRY, try_import_dataset
+from optimize_pygs.models import MODEL_REGISTRY, try_import_model
 
 def get_parser():
     parser = argparse.ArgumentParser(conflict_handler="resolve")
@@ -64,11 +68,46 @@ def add_trainer_args(parser):
 
 def get_training_parser():
     parser = get_parser()
-    add_task_args(parser)
+    # add_task_args(parser)
     add_dataset_args(parser)
     add_model_args(parser)
-    add_trainer_args(parser)
+    # add_trainer_args(parser)
     return parser
 
 
+def get_default_args(dataset, model, **kwargs): # device_id, dataset, model, seed类型都是list
+    if not isinstance(dataset, list):
+        dataset = [dataset]
+    if not isinstance(model, list):
+        model = [model]
+    sys.argv = [sys.argv[0], "-m"] + model + ["-dt"] + dataset
+    parser = get_training_parser()
+    args, _ = parser.parse_known_args()
+    args = parse_args_and_arch(parser, args)
+    for key, value in kwargs.items():
+        args.__setattr__(key, value)
+    return args
 
+
+def parse_args_and_arch(parser, args):
+    """The parser doesn't know about model-specific args, so we parse twice."""
+    # args, _ = parser.parse_known_args()
+
+    # Add *-specific args to parser.
+    # TASK_REGISTRY[args.task].add_args(parser)
+    for model in args.model:
+        if try_import_model(model):
+            MODEL_REGISTRY[model].add_args(parser)
+    for dataset in args.dataset:
+        if try_import_dataset(dataset):
+            if hasattr(DATASET_REGISTRY[dataset], "add_args"):
+                DATASET_REGISTRY[dataset].add_args(parser)
+    # if "trainer" in args and args.trainer is not None:
+    #     for trainer in args.trainer:
+    #         if try_import_universal_trainer(trainer):
+    #             if hasattr(UNIVERSAL_TRAINER_REGISTRY[trainer], "add_args"):
+    #                 UNIVERSAL_TRAINER_REGISTRY[trainer].add_args(parser)
+    # Parse a second time.
+    args = parser.parse_args()
+
+    return args
