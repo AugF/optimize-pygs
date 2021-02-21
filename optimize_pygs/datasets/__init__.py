@@ -1,7 +1,6 @@
 import importlib 
 
-from .dataset import Dataset
-from .custom_dataset import CustomDataset # added
+from optimize_pygs.datasets.custom_dataset import CustomDataset # added
 
 try:
     import torch_geometric
@@ -27,7 +26,7 @@ def register_dataset(name):
         name(str): the name of the dataset
     """
     def register_dataset_cls(cls):
-        if not issubclass(cls, Dataset) and (pyg and not issubclass(cls, torch_geometric.data.Dataset)):
+        if not issubclass(cls, CustomDataset) and (pyg and not issubclass(cls, torch_geometric.data.Dataset)):
             raise ValueError(f"Dataset ({name}: {cls.__name__}) must extend optimize_pygs.datasets.Dataset")
         DATASET_REGISTRY[name] = cls
         return cls
@@ -46,10 +45,10 @@ def try_import_dataset(dataset):
         
 def build_dataset(args):
     if not try_import_dataset(args.dataset):
-        assert hasattr(args, "task")
-        dataset = build_dataset_from_path(args.dataset, args.task)
-        if dataset is not None:
-            return dataset
+        # assert hasattr(args, "task")
+        # dataset = build_dataset_from_path(args.dataset, args.task)
+        # if dataset is not None:
+        #     return dataset
         exit(1)
     return DATASET_REGISTRY[args.dataset]()
 
@@ -68,6 +67,18 @@ def build_dataset_from_path(data_path, task):
     else:
         return None
 
+
 SUPPORTED_DATASETS = {
-    'amazon': '',
+    'ppi': 'optimize_pygs.datasets.graphsaint_data',
+    'ppi-large': 'optimize_pygs.datasets.graphsaint_data',
+    'flickr': 'optimize_pygs.datasets.graphsaint_data',
+    'reddit': 'optimize_pygs.datasets.graphsaint_data',
+    'yelp': 'optimize_pygs.datasets.graphsaint_data',
+    'amazon': 'optimize_pygs.datasets.graphsaint_data',
+    'cora': 'optimize_pygs.datasets.neuroc_data',
+    'pubmed': 'optimize_pygs.datasets.neuroc_data',
+    'amazon-computers': 'optimize_pygs.datasets.neuroc_data',
+    'amazon-photo': 'optimize_pygs.datasets.neuroc_data',
+    'coauthor-physics': 'optimize_pygs.datasets.neuroc_data',
+    'com-amazon': 'optimize_pygs.datasets.neuroc_data',
 }    

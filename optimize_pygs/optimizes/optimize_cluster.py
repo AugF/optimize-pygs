@@ -2,6 +2,7 @@ import copy
 import random
 import torch
 import time
+import sys
 
 from collections import defaultdict
 from tabulate import tabulate
@@ -11,7 +12,7 @@ from torch_sparse import cat
 from ogb.nodeproppred import PygNodePropPredDataset
 from optimize_pygs.datasets import CustomDataset
 from optimize_pygs.global_configs import dataset_root as root
-from optimize_pygs.utils import tabulate_results
+from optimize_pygs.utils.utils import tabulate_results
 
 class ClusterOptimizerLoader(torch.utils.data.DataLoader):
     def __init__(self, cluster_data, **kwargs):
@@ -81,20 +82,18 @@ def test_correct():
     print(tabulate(tab_data, headers=["Batch Size", "Row", "Col", "EdgeIndex"], tablefmt="github"))
 
 
-def test_efficiency(batch_size=20):
-    # 这里选graphsaint的数据集进行实验
-    graphsaint_data = ["ppi", "flickr", "reddit", "yelp", "amazon"]
-    
-    print(f"optimize_cluster, batch_size={batch_size}")
+def test_efficiency(datasets, batch_size=20):
+    print(f"{sys._getframe().f_code.co_name}, batch_size={batch_size}")
     results_dict = defaultdict(list)
-    for name in graphsaint_data:
-        dataset = CustomDataset(root=root, name=name)
+    for name in datasets:
+        dataset = CustomDataset(root=root, name=name) # bugs
         data = dataset[0]
         nodes, edges = data.num_nodes, data.num_edges
         cluster_data = ClusterData(data, num_parts=1500, recursive=False, save_dir=dataset.processed_dir)
         adj = cluster_data.data.adj
-            
-        for _ in range(10):
+        print(name, nodes, edges)
+
+        for _ in range(5):
             # prepare
             batch = random.sample(range(0, len(cluster_data.partptr) - 1), batch_size)
             batch = torch.tensor(batch)
@@ -113,20 +112,19 @@ def test_efficiency(batch_size=20):
             results_dict[(name, nodes, edges)].append({'Base Time(s)': base_time, 'Optmize Time(s)': optimize_time, 'Ratio(%)': ratio})
     
     tab_data = tabulate_results(results_dict)
-    print(tabulate(tab_data, headers=["Dataset", "Base Time(s)", "Optmize Time(s)", "Ratio(%)"], tablefmt="github"))
+    print(tabulate(tab_data, headers=["(Dataset, nodes, edges)", "Base Time(s)", "Optmize Time(s)", "Ratio(%)"], tablefmt="github"))
 
 
-def test_loader_efficiency(batch_size=20, num_workers=0):
-    # 这里选graphsaint的数据集进行实验
-    graphsaint_data = ["ppi", "flickr", "reddit", "yelp", "amazon"]
-    
-    print(f"optimize_cluster, batch_size={batch_size}, num_workers={num_workers}")
+def test_loader_efficiency(datasets, batch_size=20, num_workers=0):    
+    print(f"{sys._getframe().f_code.co_name}, batch_size={batch_size}, num_workers={num_workers}")
     results_dict = defaultdict(list)
-    for name in graphsaint_data:
-        for _ in range(10):
-            dataset = CustomDataset(root=root, name=name)
-            data = dataset[0]
-            cluster_data = ClusterData(data, num_parts=1500, recursive=False, save_dir=dataset.processed_dir)
+    for name in datasets:
+        dataset = CustomDataset(root=root, name=name) # bugs
+        data = dataset[0]
+        nodes, edges = data.num_nodes, data.num_edges
+        cluster_data = ClusterData(data, num_parts=1500, recursive=False, save_dir=dataset.processed_dir)
+        print(name, nodes, edges)
+        for _ in range(5):
             # default下，num_workers为0，表示只保留在主线程
             # 单线程测试
             loader = ClusterLoader(cluster_data, batch_size=batch_size, shuffle=True, num_workers=num_workers) 
@@ -138,22 +136,30 @@ def test_loader_efficiency(batch_size=20, num_workers=0):
             t3 = time.time()
             base_time, optimize_time = t2 - t1, t3 - t2
             ratio = 100 * (base_time - optimize_time) / base_time
-            results_dict[name].append({'Base Time(s)': base_time, 'Optmize Time(s)': optimize_time, 'Ratio(%)': ratio})
+            results_dict[(name, nodes, edges)].append({'Base Time(s)': base_time, 'Optmize Time(s)': optimize_time, 'Ratio(%)': ratio})
     
     tab_data = tabulate_results(results_dict)
     print(tabulate(tab_data, headers=["(Dataset, nodes, edges)", "Base Time(s)", "Optmize Time(s)", "Ratio(%)"], tablefmt="github"))
     
 
-if __name__ == "__main__":
-    # test_loader_efficiency(num_workers=0)
-    # test_loader_efficiency(num_workers=12)
+if __name__ == "__main__":    
+    graphsaint_data = ["ppi", "flickr", "reddit", "yelp", "amazon"]
+    neuroc_data = ['pubmed', 'amazon-photo', 'amazon-computers', 'coauthor-physics', 'com-amazon']
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--dataset', '-d', type=str, default='graphsaint')
+    args = parser.parse_args()
     
-    print("test_efficiency")
+    datasets = graphsaint_data if args.dataset == 'graphsaint' else neuroc_data
+    print(datasets)
+    print("测试Change模块")
     cluster_batchs = [15, 45, 90, 150, 375, 750]
     for batch_size in cluster_batchs:
-        test_efficiency(batch_size=batch_size)
+        test_efficiency(datasets, batch_size=batch_size)
     
-    
-    # graph_50k_
-    degrees = []
+    print("测试Loader模块")
+    test_loader_efficiency(datasets, num_workers=0)
+    test_loader_efficiency(datasets, num_workers=12)
+    for batch_size in cluster_batchs:
+        test_loader_efficiency(datasets, batch_size=batch_size)
     

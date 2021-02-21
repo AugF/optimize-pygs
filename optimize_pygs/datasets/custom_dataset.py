@@ -8,6 +8,7 @@ import scipy.sparse as sp
 from optimize_pygs.datasets.in_memory_dataset import InMemoryDataset
 from optimize_pygs.data.data import Data
 from optimize_pygs.global_configs import dataset_root as root
+from optimize_pygs.utils import get_evaluator, get_loss_fn
 
 class CustomDataset(InMemoryDataset):
     r"""
@@ -26,9 +27,10 @@ class CustomDataset(InMemoryDataset):
             being saved to disk. (default: :obj:`None`)
     """
 
-    def __init__(self, root, name, transform=None, pre_transform=None):
+    def __init__(self, root, name, metric="accuracy", transform=None, pre_transform=None):
         root = osp.join(root, name)
         super(CustomDataset, self).__init__(root, transform, pre_transform)
+        self.metric = metric
         self.data, self.slices = torch.load(self.processed_paths[0]) # 直接这里返回就可以
 
     @property
@@ -76,8 +78,30 @@ class CustomDataset(InMemoryDataset):
 
         torch.save(self.collate([data]), self.processed_paths[0])
 
+    def get_evaluator(self):
+        evaluator = get_evaluator(self.metric)
+        if evaluator == None:
+            return NotImplementedError
+        return evaluator
+
+    def get_loss_fn(self):
+        loss_fn = get_loss_fn(self.metric)
+        if loss_fn == None:
+            return NotImplementedError
+        return loss_fn
+    
     def __repr__(self):
         return '{}()'.format(self.__class__.__name__)
+
+
+"""examples
+@register_dataset("ppi")
+class PPIDataset(CustomDataset):
+    def __init__(self):
+        dataset = "ppi"
+        metric = "accuracy"
+        super(PPIDataset, self).__init__(dataset_root, dataset, metric)
+"""
 
 
 def test_custom_dataset():
@@ -85,6 +109,7 @@ def test_custom_dataset():
         dataset = CustomDataset(root, name)
         data = dataset[0]
         print(len(dataset), name, data)
+
 
 if __name__ == "__main__":
     test_custom_dataset()

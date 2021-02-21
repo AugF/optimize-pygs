@@ -41,4 +41,24 @@ def bce_with_logits_loss(y_pred, y_true, reduction="mean"):
     y_true = y_true.float()
     loss = torch.nn.BCEWithLogitsLoss(reduction=reduction)(y_pred, y_true)
     if reduction == "none":
-        loss = to
+        loss = torch.sum(torch.mean(loss, dim=0))
+    return loss        
+
+def get_evaluator(metric):
+    if metric == "accuracy":
+        return accuracy
+    elif metric == "multilabel_f1":
+        return multilabel_f1
+    elif metric == "multiclass_f1":
+        return multiclass_f1
+    else:
+        return None
+
+
+def get_loss_fn(metric):
+    if metric in ("accuracy", "multiclass_f1"):
+        return cross_entropy_loss
+    elif metric == "multilabel_f1":
+        return bce_with_logits_loss
+    else:
+        return None

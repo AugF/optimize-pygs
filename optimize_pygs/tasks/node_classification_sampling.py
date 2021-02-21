@@ -6,6 +6,7 @@ import numpy as np
 import torch
 from tqdm import tqdm
 
+import torch.nn.functional as F
 from optimize_pygs.datasets import build_dataset
 from optimize_pygs.models import build_model
 from . import BaseTask, register_task

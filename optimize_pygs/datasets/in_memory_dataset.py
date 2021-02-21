@@ -4,7 +4,7 @@ from itertools import repeat, product
 
 import torch
 from torch import Tensor
-from optimize_pygs.datasets.dataset import Dataset
+from torch_geometric.data.dataset import Dataset
 
 class InMemoryDataset(Dataset):
     r"""Dataset base class for creating graph datasets which fit completely

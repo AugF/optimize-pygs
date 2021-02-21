@@ -33,7 +33,8 @@ def create_random_dataset(
     f = sp.csr_matrix(([1] * len(row), (row, col)), shape=(nodes, nodes)) # directed -> undirected, edges*2
     np.savez(raw_dir + "/adj_full", data=f.data, indptr=f.indptr, indices=f.indices, shape=f.shape)
     gen_graph(raw_dir, nodes, edges, features, classes, split_train, split_val)
-        
+
+    
 # https://snap.stanford.edu/snappy/doc/reference/GenRMat.html
 def gen_graph(raw_dir, nodes, edges, features=32, classes=10, split_train=0.70, split_val=0.15, seed=1):
     np.random.seed(seed)
@@ -61,3 +62,6 @@ def gen_graph(raw_dir, nodes, edges, features=32, classes=10, split_train=0.70, 
     feats = np.random.randn(nodes, features)
     np.save(raw_dir + "/feats", feats)
     
+
+def test_io():
+    pass

@@ -7,6 +7,7 @@ import numpy as np
 
 import torch
 import torch.nn.functional as F
+from urllib import request
 
 
 class ArgClass(object):
@@ -146,6 +147,40 @@ def tabulate_results(results_dict):
             )
         )
     return tab_data
+
+
+def download_url(url, folder, name=None, log=True):
+    r"""Downloads the content of an URL to a specific folder.
+    Args:
+        url (string): The url.
+        folder (string): The folder.
+        name (string): saved filename.
+        log (bool, optional): If :obj:`False`, will not print anything to the
+            console. (default: :obj:`True`)
+    """
+    if log:
+        print("Downloading", url)
+
+    makedirs(folder)
+
+    try:
+        data = request.urlopen(url)
+    except Exception as e:
+        print(e)
+        print("Failed to download the dataset.")
+        print(f"Please download the dataset manually and put it under {folder}.")
+        exit(1)
+
+    if name is None:
+        filename = url.rpartition("/")[2]
+    else:
+        filename = name
+    path = osp.join(folder, filename)
+
+    with open(path, "wb") as f:
+        f.write(data.read())
+
+    return path
 
 
 def test_tabulate_results():

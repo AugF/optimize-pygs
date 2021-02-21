@@ -1,1 +1,1 @@
-dataset_root = "/mnt/data/wangzhaokang/wangyunpan/datasets"
+dataset_root = "/mnt/data/wangzhaokang/wangyunpan/data"
