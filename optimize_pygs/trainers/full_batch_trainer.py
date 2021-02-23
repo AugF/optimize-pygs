@@ -36,4 +36,5 @@ class FullBatchTrainer(BaseTrainer):
         loss = model.loss_fn(logits[mask], data.y[mask])
         acc = model.evaluator(logits[mask], data.y[mask]) 
         return acc, loss.item()
+    
             
