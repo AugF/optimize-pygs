@@ -109,7 +109,7 @@ class GatedGraphConv(MessagePassing):
     
 
     def inference(self, x_all, subgraph_loader):
-        device = torch.device(self.device if  else 'cpu')
+        device = torch.device(self.device)
         flag = self.infer_flag
         
         sampling_time, to_time, train_time = 0.0, 0.0, 0.0

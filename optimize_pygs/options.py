@@ -14,7 +14,15 @@ def get_parser():
     parser.add_argument('--lr', default=0.01, type=float)
     parser.add_argument('--weight-decay', default=5e-4, type=float)
     parser.add_argument('--cpu', action='store_true', help='use CPU instead of CUDA')
-    parser.add_argument('--device-id', default=0)
+    parser.add_argument('--device-id', default=1)
+    
+    # analysis
+    parser.add_argument('--nvtx_flag', type=bool, required=False, default=False)
+    parser.add_argument('--memory_flag', type=bool, required=False, default=False)
+    parser.add_argument('--infer_flag', type=bool, required=False, default=False)
+    
+    # special
+    parser.add_argument('--infer_layer', type=bool, required=False, default=False)
     # fmt: on
     return parser
 
@@ -42,12 +50,14 @@ def get_training_parser():
     return parser
 
 
-def get_default_args(**kwargs): # 程序为大
+def get_default_args(model, dataset, **kwargs): # 函数调用的优先级最高!
     parser = get_training_parser()
     args = parser.parse_args()
+    args.model, args.dataset = model, dataset
+    args = parse_args_and_arch(parser, args)
+        
     for key, value in kwargs.items():
         args.__setattr__(key, value)
-    args = parse_args_and_arch(parser, args)
     if args.sampler == "cluster":
         args.trainer = "graph"
     else:

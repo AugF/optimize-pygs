@@ -12,7 +12,7 @@ class NoStoppingWithAccCriterion(EarlyStoppingCriterion):
     def should_stop(self, epoch, val_loss, val_acc, model=None):
         if val_acc > self.val_acc_max:
             self.val_acc_max = val_acc
-            self.best_model = copy.deepcopy(model.state_dict())
+            self.best_model = copy.deepcopy(model)
         return False
 
 
@@ -25,5 +25,5 @@ class NoStoppingWithLossCriterion(EarlyStoppingCriterion):
     def should_stop(self, epoch, val_loss, val_acc, model=None):
         if val_loss < self.val_loss_min:
             self.val_loss_min = val_loss
-            self.best_model = copy.deepcopy(model.state_dict())
+            self.best_model = copy.deepcopy(model)
         return False

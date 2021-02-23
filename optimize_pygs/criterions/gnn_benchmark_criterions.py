@@ -14,7 +14,7 @@ class GCNCriterion(EarlyStoppingCriterion):
 
         if epoch >= self.patience and self.val_losses[-1] > np.mean(
             self.val_losses[-(self.patience + 1):-1]):
-            self.best_model = copy.deepcopy(model.state_dict())
+            self.best_model = copy.deepcopy(model)
             return True
         return False
 
@@ -36,7 +36,7 @@ class GATCriterion(EarlyStoppingCriterion):
             self.val_acc_max = np.max((val_acc, self.val_acc_max))
             self.val_loss_min = np.min((val_loss, self.val_loss_min))
             self.patience_step = 0
-            self.best_model = copy.deepcopy(model.state_dict())
+            self.best_model = copy.deepcopy(model)
         else:
             self.patience_step += 1
 
@@ -62,7 +62,7 @@ class KDDCriterion(EarlyStoppingCriterion):
             # val loss improved
             self.val_loss_min = np.min((val_loss, self.val_loss_min))
             self.patience_step = 0
-            self.best_model = copy.deepcopy(model.state_dict())
+            self.best_model = copy.deepcopy(model)
         else:
             self.patience_step += 1
 
@@ -85,7 +85,7 @@ class GATCriterionWithTolerance(GATCriterion):
             # either val accuracy or val loss improved, so we have a new best state
             self.val_acc_max = np.max((val_acc, self.val_acc_max))
             self.val_loss_min = np.min((val_loss, self.val_loss_min))
-            self.best_step = copy.deepcopy(model.state_dict())
+            self.best_step = copy.deepcopy(model)
 
             # But only reset patience if accuracy or loss improved by a certain degree. This avoids long-running
             # convergence processes like for the LabelPropagation algorithm.

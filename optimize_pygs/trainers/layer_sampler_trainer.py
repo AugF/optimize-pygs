@@ -22,6 +22,10 @@ class LayerSampledTrainer(SampledTrainer):
         {'batch_size':, 'x':, 'adjs':, 'y':}
         """
         batch_size, x, adjs, y = data['batch_size'], data['x'], data['adjs'], data['y']
+        
+        adjs = [adj.to(self.device) for adj in adjs] 
+        x, y = x.to(self.device), y.to(self.device)
+        
         self.optimizer.zero_grad()
         logits = model(x, adjs)
         loss = model.loss_fn(logits, y)
@@ -33,6 +37,10 @@ class LayerSampledTrainer(SampledTrainer):
     def _test_step(self, model, data, split):
         with torch.no_grad():
             batch_size, x, adjs, y = data['batch_size'], data['x'], data['adjs'], data['y']
+            
+            adjs = [adj.to(self.device) for adj in adjs] 
+            x, y = x.to(self.device), y.to(self.device)
+            
             logits = model(x, adjs)
             loss = model.loss_fn(logits, y)
             acc = model.evaluator(logits, y) / batch_size
