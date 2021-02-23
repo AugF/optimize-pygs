@@ -20,11 +20,11 @@ print(args)
 train_loader = build_sampler_from_name(args.sampler, dataset=dataset, 
                 num_parts=args.num_parts, batch_size=args.batch_size, num_workers=args.num_workers, 
                 **TRAIN_CONFIG[args.sampler])
-subgraph_loader = build_sampler_from_name(args.infer_sampler, dataset=dataset,
+subgraph_loader = build_sampler_from_name(args.infer_sampler, dataset=dataset, sizes=[-1]*args.num_layers,
                 batch_size=args.infer_batch_size, num_workers=args.num_workers, 
                 **INFER_CONFIG[args.infer_sampler])
 
-num_batches = len(train_loader)
+num_batches = train_loader.get_num_batches()
 train_loader.reset_iter()
 for i in range(num_batches):
     batch = train_loader.get_next_batch()

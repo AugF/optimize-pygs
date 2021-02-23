@@ -37,6 +37,6 @@ class ClusterSampler(BaseSampler):
                     shuffle=shuffle, num_workers=num_workers)
         super().__init__(loader)
     
-    def __next__(self): # batch is a data
+    def get_next_batch(self): # batch is a data
         batch = next(self.iter)
         return batch

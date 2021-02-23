@@ -19,7 +19,7 @@ class LayerSampledTrainer(SampledTrainer):
     
     def _train_step(self, model, data):
         """
-        {'batch_size':, 'x':, 'edge_index':, 'y':}
+        {'batch_size':, 'x':, 'adjs':, 'y':}
         """
         batch_size, x, adjs, y = data['batch_size'], data['x'], data['adjs'], data['y']
         self.optimizer.zero_grad()
