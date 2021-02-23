@@ -18,7 +18,7 @@ TRAIN_CONFIG = {
 INFER_CONFIG = {
     'graphsage': {
         'node_idx': None,
-        'sizes': [-1], 
+        # 'sizes': [-1, -1], 
         # 'batch_size': 1024,
         'shuffle': False,
         # 'num_workers': 12

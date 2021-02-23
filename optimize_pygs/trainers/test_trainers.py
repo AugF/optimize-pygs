@@ -5,7 +5,7 @@ from optimize_pygs.loaders import build_sampler_from_name
 from optimize_pygs.loaders.configs import TRAIN_CONFIG, INFER_CONFIG
 from optimize_pygs.trainers import build_trainer
 
-args = get_default_args(model="pyg15_gcn", dataset="flickr", sampler="graphsage")
+args = get_default_args(model="pyg15_gcn", dataset="flickr", sampler="cluster")
 # step1. load dataset
 dataset = build_dataset(args) # dataset_args
 data = dataset[0]
@@ -21,9 +21,15 @@ print(args)
 train_loader = build_sampler_from_name(args.sampler, dataset=dataset, 
                 num_parts=args.num_parts, batch_size=args.batch_size, num_workers=args.num_workers, 
                 **TRAIN_CONFIG[args.sampler])
-subgraph_loader = build_sampler_from_name(args.infer_sampler, dataset=dataset,
+
+subgraph_loader = build_sampler_from_name(args.infer_sampler, dataset=dataset, sizes=[-1] * args.num_layers,
+                batch_size=args.infer_batch_size, num_workers=args.num_workers, 
+                **INFER_CONFIG[args.infer_sampler])
+
+infer_loader = build_sampler_from_name(args.infer_sampler, dataset=dataset, sizes=[-1],
                 batch_size=args.infer_batch_size, num_workers=args.num_workers, 
                 **INFER_CONFIG[args.infer_sampler])
 
 trainer = build_trainer(args)
-trainer.fit(model, data, train_loader, subgraph_loader)
+trainer.fit(model, data, train_loader, infer_loader, infer_flag=True)
+# trainer.predict(data, subgraph_loader)

@@ -4,7 +4,7 @@ from optimize_pygs.models import build_model
 from optimize_pygs.loaders import build_sampler_from_name
 from optimize_pygs.loaders.configs import TRAIN_CONFIG, INFER_CONFIG
 
-args = get_default_args(model="pyg15_gcn", dataset="flickr", sampler="graphsage")
+args = get_default_args(model="pyg15_gcn", dataset="flickr", sampler="cluster")
 print(args)
 # step1. load dataset
 dataset = build_dataset(args) # dataset_args
@@ -24,11 +24,11 @@ subgraph_loader = build_sampler_from_name(args.infer_sampler, dataset=dataset,
                 batch_size=args.infer_batch_size, num_workers=args.num_workers, 
                 **INFER_CONFIG[args.infer_sampler])
 
-# num_batches = train_loader.get_num_batches()
-# train_loader.reset_iter()
-# for i in range(num_batches):
-#     batch = train_loader.get_next_batch()
-#     print(batch)
+num_batches = len(train_loader)
+train_loader.reset_iter()
+for i in range(num_batches):
+    batch = train_loader.get_next_batch()
+    print(batch)
 
 # num_batches = subgraph_loader.get_num_batches()
 # subgraph_loader.reset_iter()

@@ -35,7 +35,7 @@ class GGNN(BaseModel):
             args.num_layers,
         )
         
-    def __init__(self, num_features, hidden_size, num_classes, num_layers, gpu=False, device=None, flag=False, infer_flag=False):
+    def __init__(self, num_features, hidden_size, num_classes, num_layers, gpu=False, device="cpu", flag=False, infer_flag=False):
         super(GGNN, self).__init__()
         self.num_features, self.num_classes = num_features, num_classes
         self.num_layers, self.hidden_size = num_layers, hidden_size

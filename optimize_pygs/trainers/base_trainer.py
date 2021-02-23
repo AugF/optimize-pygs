@@ -25,14 +25,17 @@ class BaseTrainer:
         self.early_stopping = build_criterion_from_name(args.criterion) # 只保留这俩
         self.optimizer, self.best_model, self.test_acc = None, None, None
     
-    def fit(self, model, data, train_loader=None, val_loader=None, optimizer="Adam"):
+    def fit(self, model, data, train_loader=None, val_loader=None, optimizer="Adam", infer_flag=False):
         epoch_iter = tqdm(range(self.max_epoch))
         self.optimizer = torch.optim.Adam(model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
 
         self.early_stopping.reset()
         for i, epoch in enumerate(epoch_iter):
             train_acc, _ = self.train_step(model, data, train_loader)
-            val_acc, val_loss = self.test_step(model, data, split="val", loader=None)
+            if infer_flag: # 开启infer_flag选项
+                val_acc, val_loss = self.infer_step(model, data, split="val", loader=val_loader)
+            else:
+                val_acc, val_loss = self.test_step(model, data, split="val", loader=val_loader)
             epoch_iter.set_description(f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}")
             if self.early_stopping.should_stop(i, val_acc, val_loss, model):
                 print("early_stopping ...")
@@ -52,3 +55,6 @@ class BaseTrainer:
 
     def test_step(self, model, data, split, loader=None):
         raise NotImplementedError
+    
+    def infer_step(self, model, data, split, loader=None):
+        return self.test_step(model, data, split, loader)

@@ -26,7 +26,7 @@ class SampledTrainer(BaseTrainer):
             batch = loader.get_next_batch()
             acc, loss = self._train_step(model, batch)
             all_acc.append(acc)
-            all_loss.append(loss.item())
+            all_loss.append(loss)
         return np.mean(all_acc), np.mean(all_loss)
 
     def test_step(self, model, data, split, loader=None):
@@ -40,20 +40,20 @@ class SampledTrainer(BaseTrainer):
                 batch = loader.get_next_batch()
                 acc, loss = self._test_step(model, batch, split)
                 all_acc.append(acc)
-                all_loss.append(loss.item())
+                all_loss.append(loss)
             return np.mean(all_acc), np.mean(all_loss)  
     
-    def infer_step(self, model, data, loader=None):
+    def infer_step(self, model, data, split, loader=None):
         with torch.no_grad():
             model.eval()
             y_pred = model.inference(data.x, loader)
             y_true = data.y.cpu()
-
-            accs = []
-            for mask in [data.train_mask, data.val_mask, data.test_mask]:
-                correct = y_pred[mask].eq(y_true[mask]).sum().item()
-                accs.append(correct / mask.sum().item())
-        return accs
+            
+            mask = getattr(data, split + "_mask")
+            loss = model.loss_fn(y_pred[mask], y_true[mask])
+            acc = y_pred[mask].eq(y_true[mask]).sum().item()
+                
+        return acc, loss
 
     def _train_step(self, model, data):
         return NotImplementedError

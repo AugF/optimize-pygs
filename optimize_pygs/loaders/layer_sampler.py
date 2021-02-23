@@ -34,11 +34,11 @@ class NeighborSampler(BaseSampler):
                     batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
         super(NeighborSampler, self).__init__(loader)
     
-    def get_next_batch(self):
+    def __next__(self):
         batch_size, n_id, adjs = next(self.iter)
         return {
             'batch_size': batch_size,
             'x': self.data.x[n_id],
-            'edge_index': adjs,
+            'adjs': adjs,
             'y': self.data.y[n_id[:batch_size]],
         }
