@@ -42,7 +42,11 @@ class GaAN(BaseModel):
             args.heads,
             args.d_v,
             args.d_a,
-            args.d_m
+            args.d_m,
+            device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id,
+            gpu=args.nvtx_flag,
+            flag=args.memory_flag,
+            infer_flag=args.infer_flag
         )
         
     def __init__(self, num_features, hidden_size, num_classes, num_layers, 
@@ -102,7 +106,7 @@ class GaAN(BaseModel):
         total_batches = len(subgraph_loader)
         
         log_memory(flag, device, 'inference start') 
-        for i in range(self.num_layers):
+        for i in range(self.layers):
             log_memory(flag, device, f'layer{i} start')
 
             xs = []
@@ -120,7 +124,7 @@ class GaAN(BaseModel):
                     
                     et2 = time.time()
                     x = self.convs[i](x, edge_index, size=size[1])
-                    if i != self.num_layers - 1:
+                    if i != self.layers - 1:
                         x = F.leaky_relu(x, self.negative_slop)
                         x = F.dropout(x, p=self.dropout, training=self.training)
                     xs.append(x.cpu())

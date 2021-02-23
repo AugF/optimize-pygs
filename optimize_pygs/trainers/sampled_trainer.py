@@ -51,7 +51,7 @@ class SampledTrainer(BaseTrainer):
             
             mask = getattr(data, split + "_mask")
             loss = model.loss_fn(y_pred[mask], y_true[mask])
-            acc = y_pred[mask].eq(y_true[mask]).sum().item()
+            acc = model.evaluator(y_pred[mask], y_true[mask]) 
                 
         return acc, loss
 

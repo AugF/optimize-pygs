@@ -33,7 +33,7 @@ class BaseTrainer:
         for i, epoch in enumerate(epoch_iter):
             train_acc, _ = self.train_step(model, data, train_loader)
             if infer_flag: # 开启infer_flag选项
-                val_acc, val_loss = self.infer_step(model, data, split="val", loader=val_loader)
+                val_acc, val_loss = self.infer_step(model, data, split="val", loader=val_loader.get_loader())
             else:
                 val_acc, val_loss = self.test_step(model, data, split="val", loader=val_loader)
             epoch_iter.set_description(f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}")

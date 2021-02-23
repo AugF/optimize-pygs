@@ -3,6 +3,7 @@ reference:
 https://github.com/rusty1s/pytorch_geometric/blob/1.5.0/torch_geometric/nn/conv/gated_graph_conv.py
 """
 import torch
+import time
 import torch.nn.functional as F
 
 from torch import Tensor
@@ -108,7 +109,7 @@ class GatedGraphConv(MessagePassing):
     
 
     def inference(self, x_all, subgraph_loader):
-        device = torch.device(self.device if self.gpu else 'cpu')
+        device = torch.device(self.device if  else 'cpu')
         flag = self.infer_flag
         
         sampling_time, to_time, train_time = 0.0, 0.0, 0.0

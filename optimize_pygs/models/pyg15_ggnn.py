@@ -1,5 +1,4 @@
 import torch
-import time
 
 import torch.nn.functional as F
 from torch.nn import Parameter, Module
@@ -33,6 +32,10 @@ class GGNN(BaseModel):
             args.hidden_size,
             args.num_classes,
             args.num_layers,
+            device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id,
+            gpu=args.nvtx_flag,
+            flag=args.memory_flag,
+            infer_flag=args.infer_flag
         )
         
     def __init__(self, num_features, hidden_size, num_classes, num_layers, gpu=False, device="cpu", flag=False, infer_flag=False):
