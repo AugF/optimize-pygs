@@ -5,3 +5,4 @@ BEST_CONFIGS = {
         'cora': {}
     }
 }
+

@@ -1,5 +1,5 @@
 import torch
-import tqdm
+from tqdm import tqdm
 
 from optimize_pygs.criterions import build_criterion_from_name
 
@@ -16,7 +16,7 @@ class BaseTrainer:
 
     def __init__(self, args): # must args
         super().__init__()
-        self.device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id[0]
+        self.device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id
         self.patience = args.patience // 5
         self.max_epoch = args.max_epoch
         self.lr = args.lr
@@ -26,8 +26,8 @@ class BaseTrainer:
         self.optimizer, self.best_model, self.test_acc = None, None, None
     
     def fit(self, model, data, train_loader=None, val_loader=None, optimizer="Adam"):
-        epoch_iter = tqdm(self.max_epoch)
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+        epoch_iter = tqdm(range(self.max_epoch))
+        self.optimizer = torch.optim.Adam(model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
 
         self.early_stopping.reset()
         for i, epoch in enumerate(epoch_iter):

@@ -1,8 +1,9 @@
 import torch
-from optimize_pygs.loaders import BaseSampler
 from optimize_pygs.trainers.sampled_trainer import SampledTrainer
+from optimize_pygs.trainers import BaseTrainer, register_trainer
 
 
+@register_trainer("graph")
 class GraphSampledTrainer(SampledTrainer):
     @staticmethod
     def add_args(parser):
@@ -25,11 +26,11 @@ class GraphSampledTrainer(SampledTrainer):
         acc = model.evaluator(logits[data.train_mask], data.y[data.train_mask])
         return acc, loss.item()    
 
-    @torch_no_grad
     def _test_step(self, model, data, split): #??
-        logits = model(data.x, data.edge_index)
-        mask = getattr(data, split + "_mask")
-        loss = model.loss_fn(logits[mask], data.y[mask])
-        loss.backward()
-        acc = model.evaluator(logits[mask], data.y[mask])
+        with torch.no_grad():
+            logits = model(data.x, data.edge_index)
+            mask = getattr(data, split + "_mask")
+            loss = model.loss_fn(logits[mask], data.y[mask])
+            loss.backward()
+            acc = model.evaluator(logits[mask], data.y[mask])
         return acc, loss.item()    

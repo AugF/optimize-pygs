@@ -10,11 +10,11 @@ class ClusterSampler(BaseSampler):
         """Add sampler-specific arguments to the parser."""
         # fmt: off
         parser.add_argument("--sampler_data", type=torch.utils.data.Dataset)
-        parser.add_argument("--recursive", type=bool, default=False)
-        parser.add_argument("--shuffle", type=bool, default=True)
-        parser.add_argument("--num-parts", type=int, default=1500)
-        parser.add_argument("--batch_size", type=int, default=20)
-        parser.add_argument("--num-workers", type=int, default=40)
+        parser.add_argument("--cluster_recursive", type=bool, default=False)
+        parser.add_argument("--cluster_shuffle", type=bool, default=True)
+        parser.add_argument("--cluster_num_parts", type=int, default=1500)
+        parser.add_argument("--cluster_batch_size", type=int, default=20)
+        parser.add_argument("--cluster_num_workers", type=int, default=40)
         # fmt: on
     
     @classmethod
@@ -30,7 +30,7 @@ class ClusterSampler(BaseSampler):
             num_workers=args.num_workers
         )
 
-    def __init__(self, dataset, num_parts, recursive, batch_size, shuffle, num_workers=0):
+    def __init__(self, dataset, num_parts, recursive, batch_size, shuffle, num_workers=0, **args):
         cluster_data = ClusterData(dataset[0], num_parts=num_parts, 
         recursive=recursive, save_dir=dataset.processed_dir)
         loader = ClusterLoader(cluster_data, batch_size=batch_size, 

@@ -1,9 +1,10 @@
 import torch
 import tqdm
 import numpy as np
-from optimize_pygs.trainers.base_trainer import BaseTrainer
+from optimize_pygs.trainers import BaseTrainer, register_trainer
 
 
+@register_trainer("full")
 class FullBatchTrainer(BaseTrainer):
     @staticmethod
     def add_args(parser):
@@ -17,7 +18,6 @@ class FullBatchTrainer(BaseTrainer):
     def __init__(self, args): # must args
         super().__init__(args)
 
-
     def train_step(self, model, data, loader=None):
         assert loader == None
         self.optimizer.zero_grad()
@@ -28,13 +28,13 @@ class FullBatchTrainer(BaseTrainer):
         acc = model.evaluator(logits[data.train_mask], data.y[data.train_mask])
         return acc, loss.item()    
 
-    @torch_no_grad
     def test_step(self, model, data, split, loader=None):
         assert loader == None
-        logits = model.predict(data)
-        mask = getattr(data, split + "_mask") # 魔法方法
-        loss = model.loss_fn(logits[mask], data.y[mask])
-        acc = model.evaluator(logits[mask], data.y[mask]) 
+        with torch.no_grad():
+            logits = model.predict(data)
+            mask = getattr(data, split + "_mask") # 魔法方法
+            loss = model.loss_fn(logits[mask], data.y[mask])
+            acc = model.evaluator(logits[mask], data.y[mask]) 
         return acc, loss.item()
     
             
