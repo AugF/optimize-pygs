@@ -31,7 +31,7 @@ class SAGE(BaseModel):
             args.dropout,
         )
 
-    def __init__(self, num_features, num_classes, hidden_size, num_layers, dropout):
+    def __init__(self, num_features, hidden_size, num_classes, num_layers, dropout):
         super(SAGE, self).__init__()
         
         self.num_features = num_features

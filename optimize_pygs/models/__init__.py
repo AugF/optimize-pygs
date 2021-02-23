@@ -34,12 +34,19 @@ def try_import_model(model):
             return False
     return True
 
-def build_model(args):
+
+def build_model(args): 
     if not try_import_model(args.model):
         exit(1)
     return MODEL_REGISTRY[args.model].build_model_from_args(args)
-        
-        
+
+
+def build_model_from_name(model, **args): 
+    if not try_import_model(model):
+        exit(1)
+    return MODEL_REGISTRY[model](**args)
+
+
 SUPPORED_MODELS = {
     "template_model": "optimize_pygs.models.template_model",
     "pyg_gcn": "optimize_pygs.models.pyg_gcn",

@@ -65,7 +65,7 @@ def get_dataset(name, normalize_features=False, transform=None): #
         elif name == "coauthor-physics":
             dataset = Coauthor(path, name[9:])
         else:  # [com-amazon, com-lj, flickr, reddit, yelp]
-            dataset = DataProcess(root=path)
+            dataset = DataProcess(path)
 
     if transform is not None and normalize_features:
         dataset.transform = T.Compose([T.NormalizeFeatures(), transform])

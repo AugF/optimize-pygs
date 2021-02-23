@@ -29,23 +29,23 @@ class GGNN(BaseModel):
     @classmethod
     def build_model_from_args(cls, args):
         return cls(
-            args.num_layers,
             args.num_features,
-            args.num_classes,
             args.hidden_size,
+            args.num_classes,
+            args.num_layers,
         )
         
-    def __init__(self, layers, n_features, n_classes, hidden_dims, gpu=False, device=None, flag=False, infer_flag=False):
+    def __init__(self, num_features, hidden_size, num_classes, num_layers, gpu=False, device=None, flag=False, infer_flag=False):
         super(GGNN, self).__init__()
-        self.n_features, self.n_classes = n_features, n_classes
-        self.layers, self.hidden_dims = layers, hidden_dims
+        self.num_features, self.num_classes = num_features, num_classes
+        self.num_layers, self.hidden_size = num_layers, hidden_size
         self.gpu = gpu
         self.device = device
         self.flag, self.infer_flag = flag, infer_flag
 
-        self.weight_in = Parameter(torch.Tensor(n_features, hidden_dims))
-        self.weight_out = Parameter(torch.Tensor(hidden_dims, n_classes))
-        self.convs = torch.nn.ModuleList([GatedGraphConv(out_channels=hidden_dims, num_layers=layers, gpu=gpu,
+        self.weight_in = Parameter(torch.Tensor(num_features, hidden_size))
+        self.weight_out = Parameter(torch.Tensor(hidden_size, num_classes))
+        self.convs = torch.nn.ModuleList([GatedGraphConv(out_channels=hidden_size, num_layers=num_layers, gpu=gpu,
                                                          flag=flag, infer_flag=infer_flag, device=device)])
         glorot(self.weight_in)
         glorot(self.weight_out)
@@ -82,7 +82,7 @@ class GGNN(BaseModel):
         return x_all.cpu()
     
     def __repr__(self):
-        return '{}(layers={}, n_features={}, n_classes={}, hidden_dims={}, gpu={})'.format(
-            self.__class__.__name__, self.layers, self.n_features, self.n_classes,
-            self.hidden_dims, self.gpu) + '\n' + str(self.convs)
+        return '{}(layers={}, num_features={}, num_classes={}, hidden_size={}, gpu={})'.format(
+            self.__class__.__name__, self.num_layers, self.num_features, self.num_classes,
+            self.hidden_size, self.gpu) + '\n' + str(self.convs)
 

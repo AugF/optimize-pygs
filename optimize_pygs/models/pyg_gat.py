@@ -28,15 +28,15 @@ class GAT(BaseModel):
             args.dropout,
         )
 
-    def __init__(self, in_feats, hidden_size, out_feats, num_heads, dropout):
+    def __init__(self, num_features, hidden_size, num_classes, num_heads, dropout):
         super(GAT, self).__init__()
-        self.in_feats = in_feats
-        self.out_feats = out_feats
+        self.num_features = num_features
+        self.num_classes = num_classes
         self.hidden_size = hidden_size
         self.num_heads = num_heads
         self.dropout = dropout
-        self.conv1 = GATConv(in_feats, hidden_size, heads=num_heads, dropout=dropout)
-        self.conv2 = GATConv(hidden_size * num_heads, out_feats, dropout=dropout)
+        self.conv1 = GATConv(num_features, hidden_size, heads=num_heads, dropout=dropout)
+        self.conv2 = GATConv(hidden_size * num_heads, num_classes, dropout=dropout)
 
     def forward(self, x, edge_index):
         x = F.dropout(x, p=self.dropout, training=self.training)

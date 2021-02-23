@@ -59,15 +59,6 @@ def build_dataset_from_name(dataset):
     return DATASET_REGISTRY[dataset]()
 
 
-def build_dataset_from_path(data_path, task):
-    if "node_classification" in task:
-        pass
-    elif "graph_classification" in task:
-        pass
-    else:
-        return None
-
-
 SUPPORTED_DATASETS = {
     'ppi': 'optimize_pygs.datasets.graphsaint_data',
     'ppi-large': 'optimize_pygs.datasets.graphsaint_data',

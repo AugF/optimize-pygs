@@ -35,34 +35,34 @@ class GaAN(BaseModel):
     @classmethod
     def build_model_from_args(cls, args):
         return cls(
-            args.num_layers,
             args.num_features,
-            args.num_classes,
             args.hidden_size,
+            args.num_layers,
+            args.num_classes,
             args.heads,
             args.d_v,
             args.d_a,
             args.d_m
         )
         
-    def __init__(self, layers, n_features, n_classes, hidden_dims,
+    def __init__(self, num_features, hidden_size, num_classes, num_layers, 
                  heads, d_v, d_a, d_m, dropout=0.1, negative_slop=0.1,
                  gpu=False, device="cpu", flag=False, infer_flag=False):
         super(GaAN, self).__init__()
-        self.n_features, self.n_classes = n_features, n_classes
-        self.layers, self.hidden_dims, self.heads = layers, hidden_dims, heads
+        self.num_features, self.num_classes = num_features, num_classes
+        self.num_layers, self.hidden_size, self.heads = num_layers, hidden_size, heads
         self.dropout, self.negative_slop = dropout, negative_slop
         self.d_v, self.d_a, self.d_m = d_v, d_a, d_m
         self.gpu = gpu
         self.device = device
         self.flag, self.infer_flag = flag, infer_flag
 
-        shapes = [n_features] + [hidden_dims] * (layers - 1) + [n_classes]
+        shapes = [num_features] + [hidden_size] * (num_layers - 1) + [num_classes]
         self.convs = torch.nn.ModuleList(
             [
                 GaANConv(in_channels=shapes[layer], out_channels=shapes[layer + 1],
                          d_a=d_a, d_m=d_m, d_v=d_v, heads=heads, gpu=gpu)
-                for layer in range(layers)
+                for layer in range(num_layers)
             ]
         )
 
@@ -77,16 +77,16 @@ class GaAN(BaseModel):
             for i, (edge_index, _, size) in enumerate(adjs):
                 nvtx_push(self.gpu, "layer" + str(i))
                 x = self.convs[i](x, edge_index, size=size[1])
-                if i != self.layers - 1:
+                if i != self.num_layers - 1:
                     x = F.leaky_relu(x, self.negative_slop)
                     x = F.dropout(x, p=self.dropout, training=self.training)
                 nvtx_pop(self.gpu)
                 log_memory(self.flag, device, 'layer' + str(i))
         else:
-            for i in range(self.layers):
+            for i in range(self.num_layers):
                 nvtx_push(self.gpu, "layer" + str(i))
                 x = self.convs[i](x, adjs)
-                if i != self.layers - 1:
+                if i != self.num_layers - 1:
                     x = F.leaky_relu(x, self.negative_slop)
                     x = F.dropout(x, p=self.dropout, training=self.training)
                 nvtx_pop(self.gpu)
@@ -102,7 +102,7 @@ class GaAN(BaseModel):
         total_batches = len(subgraph_loader)
         
         log_memory(flag, device, 'inference start') 
-        for i in range(self.layers):
+        for i in range(self.num_layers):
             log_memory(flag, device, f'layer{i} start')
 
             xs = []
@@ -120,7 +120,7 @@ class GaAN(BaseModel):
                     
                     et2 = time.time()
                     x = self.convs[i](x, edge_index, size=size[1])
-                    if i != self.layers - 1:
+                    if i != self.num_layers - 1:
                         x = F.leaky_relu(x, self.negative_slop)
                         x = F.dropout(x, p=self.dropout, training=self.training)
                     xs.append(x.cpu())
@@ -143,10 +143,10 @@ class GaAN(BaseModel):
         return x_all
     
     def __repr__(self):
-        return '{}(layers={}, n_features={}, n_classes={}, hidden_dims={}, heads={},' \
+        return '{}(layers={}, num_features={}, num_classes={}, hidden_size={}, heads={},' \
                'd_v={}, d_a={}, d_m={}, dropout={}, negative_slop={}, gpu={})'.format(
-            self.__class__.__name__, self.layers, self.n_features, self.n_classes,
-            self.hidden_dims, self.heads, self.d_v, self.d_a, self.d_m, self.dropout,
+            self.__class__.__name__, self.num_layers, self.num_features, self.num_classes,
+            self.hidden_size, self.heads, self.d_v, self.d_a, self.d_m, self.dropout,
             self.negative_slop, self.gpu) + '\nLayer(conv->leaky_relu->dropout)\n' + str(self.convs[0])
 
 

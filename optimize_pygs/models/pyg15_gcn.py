@@ -31,14 +31,14 @@ class GCN(BaseModel):
     @classmethod
     def build_model_from_args(cls, args):
         return cls(
-            args.num_layers,
             args.num_features,
-            args.num_classes,
             args.hidden_size,
+            args.num_classes,
+            args.num_layers,
             norm=args.norm,
         )
         
-    def __init__(self, layers, n_features, n_classes, hidden_dims, norm=None, dropout=0.5,
+    def __init__(self, num_features, hidden_size, num_classes, num_layers, norm=None, dropout=0.5,
                  gpu=False, device="cpu", flag=False, infer_flag=False, cluster_flag=False,
                  cached_flag=True):
         """
@@ -49,18 +49,18 @@ class GCN(BaseModel):
         cluster_flag: True表示训练时采用的是cluster sampler, 需要特殊处理
         """
         super(GCN, self).__init__()
-        self.n_features, self.n_classes = n_features, n_classes
-        self.layers, self.hidden_dims = layers, hidden_dims
+        self.num_features, self.num_classes = num_features, num_classes
+        self.num_layers, self.hidden_size = num_layers, hidden_size
         self.dropout = dropout
         self.gpu = gpu
         self.flag, self.infer_flag = flag, infer_flag
         self.device = device
 
-        shapes = [n_features] + [hidden_dims] * (layers - 1) + [n_classes]
+        shapes = [num_features] + [hidden_size] * (num_layers - 1) + [num_classes]
         self.convs = torch.nn.ModuleList(
             [
                 GCNConv(in_channels=shapes[layer], out_channels=shapes[layer + 1], gpu=gpu, device=device, cached=cached_flag)
-                for layer in range(layers)
+                for layer in range(num_layers)
             ]
         )
         if norm is not None:
@@ -83,7 +83,7 @@ class GCN(BaseModel):
             for i, (edge_index, e_id, size) in enumerate(adjs):
                 nvtx_push(self.gpu, "layer" + str(i))
                 x = self.convs[i](x, edge_index, size=size[1], norm=self.norm[e_id])
-                if i != self.layers - 1:
+                if i != self.num_layers - 1:
                     x = F.relu(x)
                     x = F.dropout(x, p=self.dropout, training=self.training)
                 nvtx_pop(self.gpu)
@@ -93,10 +93,10 @@ class GCN(BaseModel):
                 norm = gcn_cluster_norm(adjs, x.size(0), None, False, x.dtype)
             else:
                 norm = None
-            for i in range(self.layers):
+            for i in range(self.num_layers):
                 nvtx_push(self.gpu, "layer" + str(i))
                 x = self.convs[i](x, adjs, norm=norm)
-                if i != self.layers - 1:
+                if i != self.num_layers - 1:
                     x = F.relu(x)
                     x = F.dropout(x, p=self.dropout, training=self.training)
                 nvtx_pop(self.gpu)
@@ -105,19 +105,19 @@ class GCN(BaseModel):
         return x # loss使用默认的交叉熵
 
     def inference(self, x_all, subgraph_loader):        
-        pbar = tqdm(total=x_all.size(0) * self.layers)
+        pbar = tqdm(total=x_all.size(0) * self.num_layers)
         pbar.set_description('Evaluating')
 
         # Compute representations of nodes layer by layer, using *all*
         # available edges. This leads to faster computation in contrast to
         # immediately computing the final representations of each batch.
-        for i in range(self.layers):
+        for i in range(self.num_layers):
             xs = []
             for batch_size, n_id, adj in subgraph_loader:
                 edge_index, e_id, size = adj.to(self.device)
                 x = x_all[n_id].to(self.device)
                 x = self.convs[i](x, edge_index, size=size[1], norm=self.norm[e_id])
-                if i != self.layers - 1:
+                if i != self.num_layers - 1:
                     x = F.relu(x)
                     x = F.dropout(x, p=self.dropout, training=self.training)
                 xs.append(x.cpu())

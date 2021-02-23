@@ -31,34 +31,34 @@ class GAT(BaseModel):
     @classmethod
     def build_model_from_args(cls, args):
         return cls(
-            args.num_layers,
             args.num_features,
             args.num_classes,
+            args.num_layers,
             args.head_size,
             args.heads,
         )
         
-    def __init__(self, layers, n_features, n_classes, head_dims,
+    def __init__(self, num_features, num_classes, num_layers, head_size,
                  heads, dropout=0.6, attention_dropout=0.6, negative_slop=0.2,
                  gpu=False, device="cpu", flag=False, infer_flag=False, sparse_flag=False):
         super(GAT, self).__init__()
-        self.n_features, self.n_classes = n_features, n_classes
-        self.layers, self.head_dims, self.heads = layers, head_dims, heads
+        self.num_features, self.num_classes = num_features, num_classes
+        self.num_layers, self.head_size, self.heads = num_layers, head_size, heads
         self.dropout, self.negative_slop = dropout, negative_slop
         self.gpu = gpu
         self.device = device
         self.flag, self.infer_flag = flag, infer_flag
         self.sparse_flag = sparse_flag        
 
-        in_shapes = [n_features] + [head_dims * heads] * (layers - 1)
-        out_shapes = [head_dims] * (layers - 1) + [n_classes]
-        head_shape = [heads] * (layers - 1) + [1]
+        in_shapes = [num_features] + [head_size * heads] * (num_layers - 1)
+        out_shapes = [head_size] * (num_layers - 1) + [num_classes]
+        head_shape = [heads] * (num_layers - 1) + [1]
         self.convs = torch.nn.ModuleList(
             [
                 GATConv(in_channels=in_shapes[layer], out_channels=out_shapes[layer],
                         heads=head_shape[layer], dropout=attention_dropout, negative_slope=negative_slop,
-                        concat=layer != layers - 1)
-                for layer in range(layers)
+                        concat=layer != num_layers - 1)
+                for layer in range(num_layers)
              ]
         )
 
@@ -75,17 +75,17 @@ class GAT(BaseModel):
                 if not self.sparse_flag:
                     x = F.dropout(x, p=self.dropout, training=self.training)
                 x = self.convs[i]((x, x[:size[1]]), edge_index)
-                if i != self.layers - 1:
+                if i != self.num_layers - 1:
                     x = F.elu(x)
                 nvtx_pop(self.gpu)
                 log_memory(self.flag, device, 'layer' + str(i))
         else:
-            for i in range(self.layers):
+            for i in range(self.num_layers):
                 nvtx_push(self.gpu, "layer" + str(i))
                 if not self.sparse_flag:
                     x = F.dropout(x, p=self.dropout, training=self.training)
                 x = self.convs[i](x, adjs)
-                if i != self.layers - 1:
+                if i != self.num_layers - 1:
                     x = F.elu(x)
                 nvtx_pop(self.gpu)
                 log_memory(self.flag, device, 'layer' + str(i))
@@ -100,7 +100,7 @@ class GAT(BaseModel):
         total_batches = len(subgraph_loader)
 
         log_memory(flag, device, 'inference start')     
-        for i in range(self.layers):
+        for i in range(self.num_layers):
             log_memory(flag, device, f'layer{i} start')
 
             xs = []
@@ -120,7 +120,7 @@ class GAT(BaseModel):
                     x = F.dropout(x, p=self.dropout, training=self.training)
                     # x_target = x[:size[1]]
                     x = self.convs[i]((x, x[:size[1]]), edge_index)
-                    if i != self.layers - 1:
+                    if i != self.num_layers - 1:
                         x = F.elu(x)
                     xs.append(x.cpu())
                     log_memory(flag, device, 'batch end')                    
@@ -142,9 +142,9 @@ class GAT(BaseModel):
         return x_all
     
     def __repr__(self):
-        return '{}(layers={}, n_features={}, n_classes={}, head_dims={}, heads={}' \
+        return '{}(layers={}, num_features={}, num_classes={}, head_size={}, heads={}' \
                ', dropout={}, negative_slop={}, gpu={})'.format(
-            self.__class__.__name__, self.layers, self.n_features, self.n_classes, self.head_dims,
+            self.__class__.__name__, self.num_layers, self.num_features, self.num_classes, self.head_size,
             self.heads, self.dropout, self.negative_slop, self.gpu) + '\nLayer(dropout->conv->elu)\n' + str(self.convs)
 
 
