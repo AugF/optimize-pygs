@@ -28,9 +28,9 @@ class NeighborSampler(BaseSampler):
             num_workers=args.num_workers
         )
 
-    def __init__(self, dataset, node_idx, sizes, batch_size, shuffle, num_workers, **args):
-        self.data = dataset[0]
-        loader = NeighborLoader(self.data.edge_index, node_idx=node_idx, sizes=sizes,
+    def __init__(self, data, node_idx, sizes, batch_size, shuffle, num_workers, **args):
+        self.data = data
+        loader = NeighborLoader(data.edge_index, node_idx=node_idx, sizes=sizes,
                     batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
         super(NeighborSampler, self).__init__(loader)
     

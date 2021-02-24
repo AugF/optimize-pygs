@@ -32,7 +32,7 @@ class GGNN(BaseModel):
             args.hidden_size,
             args.num_classes,
             args.num_layers,
-            device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id,
+            device = "cpu" if not torch.cuda.is_available() or args.cpu else f'cuda:{args.device_id}',
             gpu=args.nvtx_flag,
             flag=args.memory_flag,
             infer_flag=args.infer_flag

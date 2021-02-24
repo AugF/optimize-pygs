@@ -16,7 +16,7 @@ class BaseTrainer:
 
     def __init__(self, args): # must args
         super().__init__()
-        self.device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id
+        self.device = "cpu" if not torch.cuda.is_available() or args.cpu else f'cuda:{args.device_id}'
         self.patience = args.patience // 5
         self.max_epoch = args.max_epoch
         self.lr = args.lr
@@ -44,11 +44,14 @@ class BaseTrainer:
         self.early_stopping.after_stopping()
         # self.best_model = torch.load_state_dict(self.early_stopping.get_best_model())
         self.best_model = self.early_stopping.get_best_model()
-        self.best_acc = self.predict(data, val_loader)
+        self.best_acc = self.predict(data, val_loader, infer_layer)
         print(f"Final Test: {self.best_acc:.4f}")
 
-    def predict(self, data, loader=None):
-        acc, _ = self.test_step(self.best_model, data, split="test", loader=loader)
+    def predict(self, data, loader=None, infer_layer=False):
+        if infer_layer:
+            acc, _ = self.infer_step(self.best_model, data, split="test", loader=loader.get_loader())
+        else:
+            acc, _ = self.test_step(self.best_model, data, split="test", loader=loader)
         return acc
     
     def train_step(self, model, data, loader=None):

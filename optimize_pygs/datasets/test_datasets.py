@@ -17,4 +17,5 @@ def test_all_datasets():
 
 
 if __name__ == "__main__":
+    # test_dataset("coauthor-physics")
     test_all_datasets()

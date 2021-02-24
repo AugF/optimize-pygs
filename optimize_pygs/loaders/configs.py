@@ -1,7 +1,7 @@
 TRAIN_CONFIG = {
     'cluster': {
         # 'num_parts': 1500,
-        'recursive': True,
+        'recursive': False,
         # 'batch_size': 20,
         'shuffle': True,
         # 'num_workers': 12

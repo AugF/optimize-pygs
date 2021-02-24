@@ -1,5 +1,6 @@
 import os.path as osp
 import torch
+import json
 import torch.cuda.nvtx as nvtx
 
 import torch_geometric.transforms as T
@@ -95,3 +96,17 @@ def get_datasets(name, normalize_features=False, transform=None):  # pyg15
         dataset.transform = transform
 
     return dataset
+
+def get_split_by_file(file_path, nodes): # 通过读取roles.json文件来获取train, val, test mask
+    with open(file_path) as f:
+        role = json.load(f)
+
+    train_mask = torch.zeros(nodes, dtype=torch.bool)
+    train_mask[torch.tensor(role['tr'])] = True
+
+    val_mask = torch.zeros(nodes, dtype=torch.bool)
+    val_mask[torch.tensor(role['va'])] = True
+
+    test_mask = torch.zeros(nodes, dtype=torch.bool)
+    test_mask[torch.tensor(role['te'])] = True
+    return train_mask, val_mask, test_mask

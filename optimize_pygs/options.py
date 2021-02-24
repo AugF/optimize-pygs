@@ -34,7 +34,8 @@ def add_sampler_args(parser):
     parser.add_argument('--infer_sampler', type=str, required=False, default="graphsage", 
                        help='Val/Test Loader: infer_sampler')
     parser.add_argument('--num_parts', type=int, required=False, default=1500)
-    parser.add_argument('--batch_size', type=int, required=False, default=20)
+    parser.add_argument('--batch_partitions', type=int, required=False, default=150)
+    parser.add_argument('--batch_size', type=int, required=False, default=1024)
     parser.add_argument('--infer_batch_size', type=int, required=False, default=1024)
     parser.add_argument('--num_workers', type=int, required=False, default=12)
     # fmt: on
@@ -55,7 +56,8 @@ def get_default_args(model, dataset, **kwargs): # 函数调用的优先级最高
     args = parser.parse_args()
     args.model, args.dataset = model, dataset
     args = parse_args_and_arch(parser, args)
-        
+    args.model, args.dataset = model, dataset # 需要赋值两次
+
     for key, value in kwargs.items():
         args.__setattr__(key, value)
     if args.sampler == "cluster":

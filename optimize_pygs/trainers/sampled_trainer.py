@@ -25,6 +25,7 @@ class SampledTrainer(BaseTrainer):
         for i in range(num_batches):
             batch = loader.get_next_batch()
             acc, loss = self._train_step(model, batch)
+            # print(f"batch {i}, train acc: {acc}, train loss: {loss}")
             all_acc.append(acc)
             all_loss.append(loss)
         return np.mean(all_acc), np.mean(all_loss)
@@ -39,6 +40,7 @@ class SampledTrainer(BaseTrainer):
             for i in range(num_batches):
                 batch = loader.get_next_batch()
                 acc, loss = self._test_step(model, batch, split)
+                # print(f"batch {i}, {split} acc: {acc}, {split} loss: {loss}")
                 all_acc.append(acc)
                 all_loss.append(loss)
             return np.mean(all_acc), np.mean(all_loss)  

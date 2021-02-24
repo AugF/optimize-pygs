@@ -37,7 +37,7 @@ class GCN(BaseModel):
             args.num_classes,
             args.num_layers,
             norm=args.norm,
-            device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id,
+            device = "cpu" if not torch.cuda.is_available() or args.cpu else f'cuda:{args.device_id}',
             nvtx_flag=args.nvtx_flag,
             memory_flag=args.memory_flag,
             infer_flag=args.infer_flag
@@ -45,7 +45,7 @@ class GCN(BaseModel):
         
     def __init__(self, num_features, hidden_size, num_classes, num_layers, norm=None, dropout=0.5,
                  nvtx_flag=False, device="cpu", memory_flag=False, infer_flag=False, cluster_flag=False,
-                 cached_flag=True):
+                 cached_flag=False):
         """
         device: 其值表示内存数据统计中指定的GPU设备
         nvtx_flag: True表示启动torch.cuda.nvtx运行时间统计
@@ -117,7 +117,7 @@ class GCN(BaseModel):
         total_batches = len(subgraph_loader)
 
         log_memory(flag, device, 'inference start')       
-        for i in range(self.layers):
+        for i in range(self.num_layers):
             log_memory(flag, device, f'layer{i} start')
 
             xs = []
@@ -135,7 +135,7 @@ class GCN(BaseModel):
                     
                     et2 = time.time()
                     x = self.convs[i](x, edge_index, size=size[1], norm=self.norm[e_id])
-                    if i != self.layers - 1:
+                    if i != self.num_layers - 1:
                         x = F.relu(x)
                         x = F.dropout(x, p=self.dropout, training=self.training)
                     xs.append(x.cpu())

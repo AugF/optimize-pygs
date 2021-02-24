@@ -72,13 +72,13 @@ if dataset_info[0] in small_datasets and len(dataset_info) > 1:
 
 dataset = get_dataset(args.dataset, normalize_features=True)
 data = dataset[0]
-sys.exit(0)
 
 # add train, val, test split
 if args.dataset in ['amazon-computers', 'amazon-photo', 'coauthor-physics']:
     file_path = osp.join('/mnt/data/wangzhaokang/wangyunpan/datasets', args.dataset + "/raw/role.json")
     data.train_mask, data.val_mask, data.test_mask = get_split_by_file(file_path, data.num_nodes)
 
+# com-amazon features 实验
 num_features = dataset.num_features
 if dataset_info[0] in small_datasets and len(dataset_info) > 1:
     file_path = osp.join('/mnt/data/wangzhaokang/wangyunpan/datasets', "data/feats_x/" + '_'.join(dataset_info) + '_feats.npy')
@@ -86,6 +86,7 @@ if dataset_info[0] in small_datasets and len(dataset_info) > 1:
         data.x = torch.from_numpy(np.load(file_path)).to(torch.float) # 因为这里是随机生成的，不考虑normal features
         num_features = data.x.size(1)
 
+print(args.dataset)
 # 2. set sampling
 # 2.1 test_data
 subgraph_loader = NeighborSampler(data.edge_index, sizes=[-1], batch_size=args.batch_size,
@@ -142,7 +143,7 @@ elif args.model == 'gaan':
     )
 
 model, data = model.to(device), data.to(device)
-
+print(data)
 optimizer = torch.optim.Adam([
     dict(params=model.convs[i].parameters(), weight_decay=args.weight_decay if i == 0 else 0)
     for i in range(1 if args.model == "ggnn" else args.layers)]
@@ -173,6 +174,7 @@ def train(epoch):
                 batch = batch.to(device)
                 nodes, edges = batch.x.shape[0], batch.edge_index.shape[1]
                 print(f"nodes: {nodes}, edges: {edges}")
+                print(batch)
                 t2 = time.time()
                 to_time = t2 - t1
                 optimizer.zero_grad()
@@ -190,6 +192,7 @@ def train(epoch):
                 batch_size = batch.train_mask.sum().item()
             elif args.mode == 'graphsage':
                 batch_size, n_id, adjs = batch
+                print("adjs", adjs)
                 adjs = [adj.to(device) for adj in adjs] 
                 nodes, edges = adjs[0][2][0], adjs[0][0].shape[1]
                 print(f"nodes: {nodes}, edges: {edges}")

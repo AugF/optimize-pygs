@@ -36,7 +36,7 @@ class GAT(BaseModel):
             args.num_layers,
             args.head_size,
             args.heads,
-            device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id,
+            device = "cpu" if not torch.cuda.is_available() or args.cpu else f'cuda:{args.device_id}',
             gpu=args.nvtx_flag,
             flag=args.memory_flag,
             infer_flag=args.infer_flag
@@ -104,7 +104,7 @@ class GAT(BaseModel):
         total_batches = len(subgraph_loader)
 
         log_memory(flag, device, 'inference start')     
-        for i in range(self.layers):
+        for i in range(self.num_layers):
             log_memory(flag, device, f'layer{i} start')
 
             xs = []
@@ -124,7 +124,7 @@ class GAT(BaseModel):
                     x = F.dropout(x, p=self.dropout, training=self.training)
                     # x_target = x[:size[1]]
                     x = self.convs[i]((x, x[:size[1]]), edge_index)
-                    if i != self.layers - 1:
+                    if i != self.num_layers - 1:
                         x = F.elu(x)
                     xs.append(x.cpu())
                     log_memory(flag, device, 'batch end')                    

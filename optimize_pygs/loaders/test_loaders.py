@@ -8,6 +8,7 @@ args = get_default_args(model="pyg15_gcn", dataset="flickr", sampler="cluster")
 print(args)
 # step1. load dataset
 dataset = build_dataset(args) # dataset_args
+data = dataset[0]
 
 # step2. load model
 args.num_features = dataset.num_features
@@ -17,10 +18,10 @@ model.set_loss_fn(dataset.get_loss_fn())
 model.set_evaluator(dataset.get_evaluator())
 
 print(args)
-train_loader = build_sampler_from_name(args.sampler, dataset=dataset, 
-                num_parts=args.num_parts, batch_size=args.batch_size, num_workers=args.num_workers, 
+train_loader = build_sampler_from_name(args.sampler, data=data, save_dir=dataset.processed_dir, batch_partitions=args.batch_partitions,
+                num_parts=args.num_parts, batch_size=args.batch_size, num_workers=args.num_workers,
                 **TRAIN_CONFIG[args.sampler])
-subgraph_loader = build_sampler_from_name(args.infer_sampler, dataset=dataset, sizes=[-1]*args.num_layers,
+subgraph_loader = build_sampler_from_name(args.infer_sampler, data=data, sizes=[-1]*args.num_layers,
                 batch_size=args.infer_batch_size, num_workers=args.num_workers, 
                 **INFER_CONFIG[args.infer_sampler])
 

@@ -56,3 +56,5 @@ from optimize_pygs.utils import build_args_from_dict
 data = build_dataset(build_args_from_dict({'dataset': 'mydataset'}))
 print(data[0])
 ```
+
+## TODO: 开放设置train_mask, val_mask, test_mask的接口
