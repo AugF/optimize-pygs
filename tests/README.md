@@ -1,1 +1,0 @@
-！每修改一次optimize_pygs中的代码，需要根目录下执行`python setup.py install --user`
