@@ -30,7 +30,7 @@ class BaseTrainer:
         self.optimizer = torch.optim.Adam(model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
 
         self.early_stopping.reset()
-        for i, epoch in enumerate(epoch_iter):
+        for epoch in epoch_iter:
             train_acc, _ = self.train_step(model, data, train_loader)
             if infer_layer: # 开启infer_flag选项
                 val_acc, val_loss = self.infer_step(model, data, split="val", loader=val_loader.get_loader())

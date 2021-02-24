@@ -1,10 +1,10 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='code',
+    name='neuroc_pygs',
     packages=find_packages(),
     version='0.1.0',
-    description='optimze pygs',
+    description='neuroc pygs',
     author='AugF',
     author_email='wangyp@smail.nju.edu.cn',
     license='MIT',

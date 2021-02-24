@@ -1,5 +1,3 @@
-## Introduction
+base_trainer设计如下:
 
-## Usage
-
-## TODO
+- fit: 同scikit-learn一般

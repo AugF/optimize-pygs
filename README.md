@@ -6,7 +6,10 @@
 
 #### Installation
 
-1. `pip install -e .` 安装包; `python setup.py install --user`
+1. `python setup.py install --user`
+
+不起作用时，删除本地库中的包
+/home/wangzhaokang/.local/lib/python3.7/site-packages/code-0.1.0-py3.7.egg/neuroc_pygs/utils/datasets.py
 
 #### Usage
 
