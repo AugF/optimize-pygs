@@ -14,6 +14,7 @@ from torch_geometric.datasets.coauthor import Coauthor
 
 from neuroc_pygs.utils.datasets import DataProcess
 from neuroc_pygs.utils.citation_datasets import Planetoid
+from neuroc_pygs.configs import dataset_root
 
 
 memory_labels = ["allocated_bytes.all.current", "allocated_bytes.all.peak", "reserved_bytes.all.current", "reserved_bytes.all.peak"]
@@ -56,10 +57,10 @@ def build_args_from_dict(dic):
 
 def get_dataset(name, normalize_features=False, transform=None): #
     if name in ["cora", "pubmed"]:
-        path = osp.join('/mnt/data/wangzhaokang/wangyunpan/datasets')
+        path = osp.join(dataset_root)
         dataset = Planetoid(path, name, split='full')
     else:
-        path = osp.join('/mnt/data/wangzhaokang/wangyunpan/datasets', name)
+        path = osp.join(dataset_root, name)
         if name in ["amazon-computers", "amazon-photo"]:
             dataset = Amazon(path, name[7:])
         elif name == "coauthor-physics":

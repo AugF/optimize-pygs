@@ -1,5 +1,6 @@
 import argparse
 import torch
+import os
 import numpy as np
 import os.path as osp
 from neuroc_pygs.utils import get_dataset, gcn_norm, normalize, get_split_by_file, small_datasets
@@ -63,17 +64,20 @@ def get_args():
                         help='number of Data Loader partitions')
     parser.add_argument('--infer_layer', type=bool,
                         default=True, help='Choose how to inference')
+    parser.add_argument('--pin_memory', type=bool,
+                        default=True, help='pin_memory')
     args = parser.parse_args()
     args.gpu = not args.cpu and torch.cuda.is_available()
     args.flag = not args.json_path == ''
     args.infer_flag = not args.infer_json_path == ''
 
+    os.environ["CUDA_VISIBLE_DEVICES"] = '1,2'
     # 0. set manual seed
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
     if args.gpu:
         torch.cuda.manual_seed(args.seed)
-
+    
     args.device = torch.device(args.device if args.gpu else 'cpu')
     return args
 
@@ -103,26 +107,28 @@ def build_dataset(args):
                 torch.float)  # 因为这里是随机生成的，不考虑normal features
             num_features = data.x.size(1)
 
-    args.num_features, args.num_classes = num_features, dataset.num_classes
+    args.num_features, args.num_classes, args.cluster_save_dir = num_features, dataset.num_classes, dataset.processed_dir
+    return data
 
-    # step2 get loader
+
+def build_loader(args, data):
     if args.infer_layer:
         subgraph_loader = NeighborSampler(data.edge_index, sizes=[-1], batch_size=args.batch_size,
-                                          shuffle=False, num_workers=args.num_workers)
+                                          shuffle=False, num_workers=args.num_workers, pin_memory=args.pin_memory)
     else:
         subgraph_loader = NeighborSampler(data.edge_index, sizes=[-1] * args.layers, batch_size=args.batch_size,
-                                          shuffle=False, num_workers=args.num_workers)
+                                          shuffle=False, num_workers=args.num_workers, pin_memory=args.pin_memory)
 
     if args.mode == 'cluster':
         cluster_data = ClusterData(data, num_parts=args.cluster_partitions, recursive=False,
-                                   save_dir=dataset.processed_dir)
+                                   save_dir=args.cluster_save_dir)
         train_loader = ClusterLoader(cluster_data, batch_size=args.batch_partitions, shuffle=True,
-                                     num_workers=args.num_workers)
+                                     num_workers=args.num_workers, pin_memory=args.pin_memory)
     elif args.mode == 'graphsage':
         train_loader = NeighborSampler(data.edge_index, node_idx=None,
                                        sizes=[25, 10], batch_size=args.batch_size, shuffle=True,
-                                       num_workers=args.num_workers)
-    return data, train_loader, subgraph_loader
+                                       num_workers=args.num_workers, pin_memory=args.pin_memory)
+    return train_loader, subgraph_loader
 
 
 def build_model(args, data):

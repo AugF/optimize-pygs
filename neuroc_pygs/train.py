@@ -1,12 +1,15 @@
 import copy
 import numpy as np
 from neuroc_pygs.train_step import train, test, infer
-from neuroc_pygs.options import get_args, build_dataset, build_model
+from neuroc_pygs.options import get_args, build_dataset, build_loader, build_model
+
+from neuroc_pygs.opt_train_step import train as opt_train
 
 
 args = get_args()
 print(args)
-data, train_loader, subgraph_loader = build_dataset(args)
+data = build_dataset(args)
+train_loader, subgraph_loader = build_loader(args, data)
 model, optimizer = build_model(args, data) 
 model, data = model.to(args.device), data.to(args.device)
 
@@ -15,7 +18,7 @@ model, data = model.to(args.device), data.to(args.device)
 best_val_acc = 0
 best_model = None
 for epoch in range(args.epochs):
-    train_acc = train(model, data, train_loader, optimizer, args.mode, args.device)
+    train_acc = opt_train(model, data, train_loader, optimizer, args.mode, args.device)
     if args.infer_layer:
         val_acc, _ = infer(model, data, subgraph_loader, args.device, split="val")
     else:

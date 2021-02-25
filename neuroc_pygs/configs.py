@@ -1,4 +1,5 @@
-dataset_root = "/mnt/data/wangzhaokang/wangyunpan/datasets"
+dataset_root = "/mnt/data/wangzhaokang/wangyunpan/data"
+
 
 DATASET_METRIC = {
     'cora': 'accuracy',
@@ -13,3 +14,8 @@ DATASET_METRIC = {
     'yelp': 'multilabel_f1',
     'amazon': 'multilabel_f1',
 }
+
+ALL_MODELS = ['gcn', 'gat', 'ggnn', 'gaan']
+MODES = ['cluster', 'graphsage']
+PROJECT_PATH = "/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs"
+EXP_DATASET = ['pubmed', 'amazon-photo', 'amazon-computers', 'ppi', 'flickr', 'reddit', 'yelp', 'amazon']

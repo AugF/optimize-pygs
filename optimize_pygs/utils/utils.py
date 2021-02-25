@@ -129,6 +129,7 @@ def tabulate_results(results_dict):
         'variant1': [1, 2, 3], 
         'variant2': [2, 3, 4]
     }
+    return: 
     """
     # Average for different seeds
     tab_data = []

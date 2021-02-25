@@ -21,7 +21,6 @@ def train(model, data, train_loader, optimizer, mode, device):
             # task1
             batch_size, n_id, adjs = next(loader_iter)
             x, y = data.x[n_id], data.y[n_id[:batch_size]]
-            # task2
             x, y = x.to(device), y.to(device)
             adjs = [adj.to(device) for adj in adjs]
             # task3
