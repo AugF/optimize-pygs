@@ -9,7 +9,7 @@ from torch.nn import Parameter as Param
 import torch.nn.functional as F
 
 from torch_geometric.nn.conv import MessagePassing
-from neuroc_pygs.utils import glorot, uniform, zeros, nvtx_push, nvtx_pop, log_memory
+from neuroc_pygs.utils import glorot, uniform, zeros, nvtx_push, nvtx_pop, log_memory, BatchLogger
 
 
 class GatedGraphConv(MessagePassing):
@@ -107,7 +107,7 @@ class GatedGraphConv(MessagePassing):
         return h
     
 
-    def inference(self, x_all, subgraph_loader):
+    def inference(self, x_all, subgraph_loader, log_batch=False):
         device = torch.device(self.device if self.gpu else 'cpu')
         flag = self.infer_flag
         
@@ -153,7 +153,8 @@ class GatedGraphConv(MessagePassing):
         train_time /= total_batches
         
         log_memory(flag, device, 'inference end') 
-        # print(f"avg_batch_train_time: {train_time}, avg_batch_sampling_time:{sampling_time}, avg_batch_to_time: {to_time}")
+        if log_batch:
+            print(f"avg_batch_train_time: {train_time}, avg_batch_sampling_time:{sampling_time}, avg_batch_to_time: {to_time}")
         return x_all
     
     

@@ -74,7 +74,7 @@ class GCN(Module):
                 
         return x
 
-    def inference(self, x_all, subgraph_loader):
+    def inference(self, x_all, subgraph_loader, log_batch=False):
         device = torch.device(self.device)
         flag = self.infer_flag
         
@@ -118,7 +118,8 @@ class GCN(Module):
         train_time /= total_batches
         
         log_memory(flag, device, 'inference end') 
-        # print(f"avg_batch_train_time: {train_time}, avg_batch_sampling_time:{sampling_time}, avg_batch_to_time: {to_time}")
+        if log_batch:
+            print(f"avg_batch_train_time: {train_time}, avg_batch_sampling_time:{sampling_time}, avg_batch_to_time: {to_time}")
         return x_all
 
     def set_loss_fn(self, loss_fn):

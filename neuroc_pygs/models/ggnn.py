@@ -4,8 +4,7 @@ import time
 import torch.nn.functional as F
 from torch.nn import Parameter, Module
 from neuroc_pygs.models.ggnn_layers import GatedGraphConv
-from optimize_pygs.utils.inits import glorot, zeros
-from optimize_pygs.utils.pyg15_utils import nvtx_push, nvtx_pop, log_memory
+from neuroc_pygs.utils import glorot, zeros, nvtx_push, nvtx_pop, log_memory, gcn_cluster_norm
 
 
 class GGNN(Module):
@@ -47,13 +46,13 @@ class GGNN(Module):
         log_memory(self.flag, device, "output-transform")
         return x
 
-    def inference(self, x_all, subgraph_loader):
+    def inference(self, x_all, subgraph_loader, log_batch=False):
         device = torch.device(self.device)
 
         x_all = torch.matmul(x_all.to(device), self.weight_in) # 尽最大可能第键槽内存
         log_memory(self.infer_flag, device, "input-transform")
         
-        x_all = self.convs[0].inference(x_all.cpu(), subgraph_loader)
+        x_all = self.convs[0].inference(x_all.cpu(), subgraph_loader, log_batch)
         
         x_all = torch.matmul(x_all.to(device), self.weight_out)
         log_memory(self.infer_flag, device, "output-transform")

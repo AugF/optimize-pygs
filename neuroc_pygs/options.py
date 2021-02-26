@@ -1,13 +1,15 @@
 import argparse
 import torch
 import os
+import json
 import numpy as np
 import os.path as osp
 from neuroc_pygs.utils import get_dataset, gcn_norm, normalize, get_split_by_file, small_datasets
 from torch_geometric.data import ClusterData, ClusterLoader, NeighborSampler
 from neuroc_pygs.models import GCN, GGNN, GAT, GaAN
 from neuroc_pygs.utils.evaluator import get_evaluator, get_loss_fn
-from neuroc_pygs.configs import DATASET_METRIC, dataset_root
+from neuroc_pygs.configs import DATASET_METRIC, dataset_root, ALL_MODELS, EXP_DATASET, MODES, EXP_RELATIVE_BATCH_SIZE, PROJECT_PATH
+from tabulate import tabulate
 
 
 def get_args():
@@ -54,6 +56,10 @@ def get_args():
                         help="inference stage: json file path for memory")
     parser.add_argument('--mode', type=str, default='cluster',
                         help='sampling: [cluster, graphsage]')
+    parser.add_argument('--relative_batch_size', type=float,
+                            help='number of cluster partitions per batch') # relative batch size
+    parser.add_argument('--infer_batch_size', type=int, default=1024,
+                            help='number of cluster partitions per batch') # inference batch size
     parser.add_argument('--batch_size', type=int,
                         default=1024, help='batch size')
     parser.add_argument('--batch_partitions', type=int, default=20,
@@ -66,6 +72,14 @@ def get_args():
                         default=True, help='Choose how to inference')
     parser.add_argument('--pin_memory', type=bool,
                         default=True, help='pin_memory')
+    parser.add_argument('--log_batch', type=bool,
+                        default=False, help='log batch')
+    parser.add_argument('--log_epoch', type=bool,
+                        default=False, help='log epoch')
+    parser.add_argument('--log_batch_dir', type=str,
+                        default=None, help='log epoch dir')
+    parser.add_argument('--log_epoch_dir', type=str,
+                        default=None, help='log epoch dir')
     args = parser.parse_args()
     args.gpu = not args.cpu and torch.cuda.is_available()
     args.flag = not args.json_path == ''
@@ -112,8 +126,12 @@ def build_dataset(args):
 
 
 def build_loader(args, data):
+    if args.relative_batch_size:
+        args.batch_size = int(data.x.shape[0] * args.relative_batch_size)
+        args.batch_partitions = int(args.cluster_partitions * args.relative_batch_size)
+
     if args.infer_layer:
-        subgraph_loader = NeighborSampler(data.edge_index, sizes=[-1], batch_size=args.batch_size,
+        subgraph_loader = NeighborSampler(data.edge_index, sizes=[-1], batch_size=args.infer_batch_size,
                                           shuffle=False, num_workers=args.num_workers, pin_memory=args.pin_memory)
     else:
         subgraph_loader = NeighborSampler(data.edge_index, sizes=[-1] * args.layers, batch_size=args.batch_size,
@@ -178,5 +196,87 @@ def build_model(args, data):
     return model, optimizer
 
 
+def prepare_trainer(**kwargs):
+    args = get_args()
+    for key, value in kwargs.items():
+        if key in args.__dict__.keys():
+            args.__setattr__(key, value)
+    print(args)
+    data = build_dataset(args)
+    train_loader, subgraph_loader = build_loader(args, data)
+    model, optimizer = build_model(args, data)  
+    return data, train_loader, subgraph_loader, model, optimizer, args
+
+
+def run(func, runs=3, path="run.out", model='gcn', dataset='pubmed', mode='cluster', relative_batch_size=None):
+    if not isinstance(model, list):
+        model = [model]
+    if not isinstance(dataset, list):
+        dataset = [dataset]
+    if not isinstance(mode, list):
+        model = [mode]
+    if not isinstance(relative_batch_size, list):
+        relative_batch_size = [relative_batch_size]
+    run_all(func, runs, path, exp_datasets=dataset, exp_models=model, exp_modes=mode, exp_relative_batch_size=relative_batch_size)
+
+
+def run_all(func, runs=3, path='run_all.out', exp_datasets=EXP_DATASET, exp_models=ALL_MODELS, exp_modes=MODES, exp_relative_batch_sizes=EXP_RELATIVE_BATCH_SIZE):
+    real_path = osp.join(PROJECT_PATH, 'log', path)
+    if osp.exists(real_path):
+        tab_data = json.load(open(real_path))
+    else: 
+        tab_data, success_tabs = {}, []
+
+    # 读取上次已经成功的数据
+    fp = open(real_path + '.keys', 'a+')
+    success_tabs = fp.read().strip().split('\n')
+
+    args = get_args()
+    for exp_data in exp_datasets:
+        args.dataset = exp_data
+        data = build_dataset(args) # step1 data
+        print('build data success!')
+        for exp_model in exp_models:
+            args.model = exp_model
+            data = data.to('cpu')
+            model, optimizer = build_model(args, data) # step2 build model
+            print('build model success!')
+            for exp_relative_batch_size in exp_relative_batch_sizes:
+                args.relative_batch_size = exp_relative_batch_size # step3 set batch size
+                for exp_mode in exp_modes:
+                    data = data.to('cpu')
+                    train_loader, subgraph_loader = build_loader(args, data) # step4 loader
+                    print('build loader success!')
+                    file_name = '_'.join([exp_data, exp_model, exp_mode, str(exp_relative_batch_size)])
+                    print(file_name)
+                    if file_name in success_tabs: # 避免重复实验
+                        continue
+                    try:
+                        base_times, opt_times, ratios = [], [], []
+                        for _ in range(runs):
+                            base_time, opt_time, ratio = func(data, train_loader, subgraph_loader, model, optimizer, args) # fit
+                            base_times.append(base_time)
+                            opt_times.append(opt_time)
+                            ratios.append(ratio)
+                        tab_data[file_name] = [file_name, np.mean(base_times), np.mean(opt_times), np.mean(ratios)]
+                        print(tab_data[file_name])
+                        fp.write(file_name + '\n') # 实时写入文件
+                    except Exception as e:
+                        print(e)
+
+                    torch.cuda.empty_cache()
+                    del train_loader, subgraph_loader # 内存使用需要慎重
+            del model
+        del data
+
+    fp.close() # 关闭文件
+    json.dump(tab_data, open(real_path, 'w'))
+    print(tabulate(list(tab_data.values()), headers=["(mode, relative_batch_size, model, data)", "Base Time(s)", "Optmize Time(s)", "Ratio(%)"],
+            tablefmt="github"))
+    
+
+
 if __name__ == "__main__":
+    import sys
+    sys.argv = [sys.argv[0], '--dataset', 'amazon', '--model', 'gaan']
     print(get_args())

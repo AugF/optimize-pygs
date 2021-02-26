@@ -1,6 +1,5 @@
 dataset_root = "/mnt/data/wangzhaokang/wangyunpan/data"
 
-
 DATASET_METRIC = {
     'cora': 'accuracy',
     'pubmed': 'accuracy',
@@ -19,3 +18,4 @@ ALL_MODELS = ['gcn', 'gat', 'ggnn', 'gaan']
 MODES = ['cluster', 'graphsage']
 PROJECT_PATH = "/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs"
 EXP_DATASET = ['pubmed', 'amazon-photo', 'amazon-computers', 'ppi', 'flickr', 'reddit', 'yelp', 'amazon']
+EXP_RELATIVE_BATCH_SIZE = [0.01, 0.03, 0.06, 0.1, 0.25, 0.5]

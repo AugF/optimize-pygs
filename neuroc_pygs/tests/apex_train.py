@@ -45,7 +45,12 @@ class DataPrefetcher(): # cluster
     
 
 
-def cluster_train_pipeline(loader, device, optimizer, model):
+def opt_train(model, data, train_loader, optimizer, mode, device, print_flag=False):
+    if mode == "cluster":
+        return cluster_train_pipeline(train_loader, device, optimizer, model, print_flag)
+
+
+def cluster_train_pipeline(loader, device, optimizer, model, print_flag):
     loader_num = len(loader)
     prefetcher = DataPrefetcher(loader)
     batch = prefetcher.next()
