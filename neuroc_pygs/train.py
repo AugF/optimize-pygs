@@ -27,17 +27,21 @@ def trainer(*info, train_func=train, test_func=test, infer_func=infer): # 训练
         if val_acc > best_val_acc:
             best_val_acc = val_acc
             best_model = copy.deepcopy(model)
-
+        if epoch >= 2:
+            break
     # step2 predict
     if args.infer_layer:
-        test_acc, _ = infer(best_model, data, subgraph_loader, args, split="val")
+        test_acc, _ = infer(best_model, data, subgraph_loader, args, split="test")
     else:
-        test_acc, _ = test(best_model, data, subgraph_loader, args, split="val")
+        test_acc, _ = test(best_model, data, subgraph_loader, args, split="test")
     print(f"final test acc: {test_acc:.4f}")
     return
 
 
 if __name__ == "__main__":
     import sys 
+    t1 = time.time()
     info = prepare_trainer()
     trainer(*info)
+    t2 = time.time()
+    print(f'use time: {t2-t1}')

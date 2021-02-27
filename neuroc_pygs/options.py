@@ -15,11 +15,11 @@ from tabulate import tabulate
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset', type=str, default='reddit', help="dataset: [flickr, com-amazon, reddit, com-lj,"
+    parser.add_argument('--dataset', type=str, default='pubmed', help="dataset: [flickr, com-amazon, reddit, com-lj,"
                         "amazon-computers, amazon-photo, coauthor-physics, pubmed]")
-    parser.add_argument('--model', type=str, default='gat',
+    parser.add_argument('--model', type=str, default='gcn',
                         help="gnn models: [gcn, ggnn, gat, gaan]")
-    parser.add_argument('--epochs', type=int, default=20,
+    parser.add_argument('--epochs', type=int, default=9,
                         help="epochs for training")
     parser.add_argument('--layers', type=int, default=2,
                         help="layers for hidden layer")
@@ -42,7 +42,7 @@ def get_args():
 
     parser.add_argument('--seed', type=int, default=1, help="random seed")
     parser.add_argument('--device', type=str,
-                        default='cuda:2', help='[cpu, cuda:id]')
+                        default='cuda:1', help='[cpu, cuda:id]')
     parser.add_argument('--cpu', action='store_true',
                         default=False, help='use cpu, not use gpu')
     parser.add_argument('--lr', type=float, default=0.01,
@@ -134,7 +134,23 @@ def build_dataset(args):
     return data
 
 
-def build_loader(args, data, Cluster_Loader=ClusterLoader, Neighbor_Loader=NeighborSampler):
+def build_train_loader(args, data, Cluster_Loader=ClusterLoader, Neighbor_Loader=NeighborSampler):
+    if args.relative_batch_size:
+        args.batch_size = int(data.x.shape[0] * args.relative_batch_size)
+        args.batch_partitions = int(args.cluster_partitions * args.relative_batch_size)
+    if args.mode == 'cluster':
+        cluster_data = ClusterData(data, num_parts=args.cluster_partitions, recursive=False,
+                                   save_dir=args.cluster_save_dir)
+        train_loader = Cluster_Loader(cluster_data, batch_size=args.batch_partitions, shuffle=True,
+                                     num_workers=args.num_workers, pin_memory=args.pin_memory)
+    elif args.mode == 'graphsage':
+        train_loader = Neighbor_Loader(data.edge_index, node_idx=None,
+                                       sizes=[25, 10], batch_size=args.batch_size, shuffle=True,
+                                       num_workers=args.num_workers, pin_memory=args.pin_memory)
+    return train_loader
+
+
+def build_subgraphloader(args, data, Neighbor_Loader=NeighborSampler):
     if args.relative_batch_size:
         args.batch_size = int(data.x.shape[0] * args.relative_batch_size)
         args.batch_partitions = int(args.cluster_partitions * args.relative_batch_size)
@@ -145,17 +161,21 @@ def build_loader(args, data, Cluster_Loader=ClusterLoader, Neighbor_Loader=Neigh
     else:
         subgraph_loader = Neighbor_Loader(data.edge_index, sizes=[-1] * args.layers, batch_size=args.batch_size,
                                           shuffle=False, num_workers=args.num_workers, pin_memory=args.pin_memory)
+    return subgraph_loader
 
-    if args.mode == 'cluster':
-        cluster_data = ClusterData(data, num_parts=args.cluster_partitions, recursive=False,
-                                   save_dir=args.cluster_save_dir)
-        train_loader = Cluster_Loader(cluster_data, batch_size=args.batch_partitions, shuffle=True,
-                                     num_workers=args.num_workers, pin_memory=args.pin_memory)
-    elif args.mode == 'graphsage':
-        train_loader = Neighbor_Loader(data.edge_index, node_idx=None,
-                                       sizes=[25, 10], batch_size=args.batch_size, shuffle=True,
-                                       num_workers=args.num_workers, pin_memory=args.pin_memory)
+
+def build_loader(args, data, Cluster_Loader=ClusterLoader, Neighbor_Loader=NeighborSampler):
+    train_loader = build_train_loader(args, data)
+    subgraph_loader = build_subgraphloader(args, data)
     return train_loader, subgraph_loader
+
+
+def build_optimizer(args, model):
+    optimizer = torch.optim.Adam([
+    dict(params=model.convs[i].parameters(),
+            weight_decay=args.weight_decay if i == 0 else 0)
+    for i in range(1 if args.model == "ggnn" else args.layers)], lr=args.lr)  # Only perform weight-decay on first convolution, 参考了pytorch_geometric中的gcn.py的例子: https://github.com/rusty1s/pytorch_geometric/blob/master/examples/gcn.py
+    return optimizer
 
 
 def build_model(args, data):
@@ -193,15 +213,15 @@ def build_model(args, data):
             flag=args.flag, infer_flag=args.infer_flag, device=args.device
         )
 
-    # step2 optimizer
-    optimizer = torch.optim.Adam([
-        dict(params=model.convs[i].parameters(),
-             weight_decay=args.weight_decay if i == 0 else 0)
-        for i in range(1 if args.model == "ggnn" else args.layers)], lr=args.lr)  # Only perform weight-decay on first convolution, 参考了pytorch_geometric中的gcn.py的例子: https://github.com/rusty1s/pytorch_geometric/blob/master/examples/gcn.py
-
-    # step3 set loss_fn and evaluator
+    # step2 set loss_fn and evaluator
     model.set_loss_fn(get_loss_fn(DATASET_METRIC[args.dataset]))
     model.set_evaluator(get_evaluator(DATASET_METRIC[args.dataset]))
+    return model
+
+
+def build_model_optimizer(args, data):
+    model = build_model(args, data)
+    optimizer = build_optimizer(args, model)
     return model, optimizer
 
 
@@ -213,7 +233,7 @@ def prepare_trainer(**kwargs):
     print(args)
     data = build_dataset(args)
     train_loader, subgraph_loader = build_loader(args, data)
-    model, optimizer = build_model(args, data)  
+    model, optimizer = build_model_optimizer(args, data)  
     return data, train_loader, subgraph_loader, model, optimizer, args
 
 
@@ -248,7 +268,7 @@ def run_all(func, runs=3, path='run_all.out', exp_datasets=EXP_DATASET, exp_mode
         for exp_model in exp_models:
             args.model = exp_model
             data = data.to('cpu')
-            model, optimizer = build_model(args, data) # step2 build model
+            model, optimizer = build_model_optimizer(args, data) # step2 build model
             print('build model success!')
             for exp_relative_batch_size in exp_relative_batch_sizes:
                 args.relative_batch_size = exp_relative_batch_size # step3 set batch size
