@@ -64,6 +64,9 @@ BatchSize(%): 1, 3, 6, 10, 25, 50
 
 对比实验后续需要设置num_workers, pin_memory等指标进行一起比较
 
+找回之前的指标，然后
+
+
 #### opt_epoch
 
 python读取和保存数据最快的方式

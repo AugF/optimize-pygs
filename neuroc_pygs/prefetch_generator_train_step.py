@@ -26,6 +26,8 @@ def func(data, train_loader, subgraph_loader, model, optimizer, args):
 if __name__ == '__main__':
     from neuroc_pygs.configs import ALL_MODELS, EXP_DATASET, MODES, EXP_RELATIVE_BATCH_SIZE
     from neuroc_pygs.options import run, run_all 
+    import sys
+    sys.argv = [sys.argv[0], '--num_workers', '0']
     run_all(func, runs=3, path='prefetch_generator_all.out')
     # run(func, runs=1, path='preloader_models.out', model=ALL_MODELS)
     # run(func, runs=1, path='preloader_datasets.out', dataset=EXP_DATASET)

@@ -19,7 +19,7 @@ def get_args():
                         "amazon-computers, amazon-photo, coauthor-physics, pubmed]")
     parser.add_argument('--model', type=str, default='gat',
                         help="gnn models: [gcn, ggnn, gat, gaan]")
-    parser.add_argument('--epochs', type=int, default=11,
+    parser.add_argument('--epochs', type=int, default=20,
                         help="epochs for training")
     parser.add_argument('--layers', type=int, default=2,
                         help="layers for hidden layer")
@@ -73,6 +73,7 @@ def get_args():
                         default=True, help='Choose how to inference')
     parser.add_argument('--pin_memory', type=bool,
                         default=True, help='pin_memory')
+    # for log
     parser.add_argument('--log_batch', type=bool,
                         default=False, help='log batch')
     parser.add_argument('--log_epoch', type=bool,
@@ -81,6 +82,13 @@ def get_args():
                         default=None, help='log epoch dir')
     parser.add_argument('--log_epoch_dir', type=str,
                         default=None, help='log epoch dir')
+    # for train
+    parser.add_argument('--log_step', type=int,
+                        default=1, help='log step')
+    parser.add_argument('--eval_step', type=int,
+                        default=1, help='eval step')
+    parser.add_argument('--checkpoint_dir', type=str,
+                        default='/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/checkpoints', help='eval step')
     args = parser.parse_args()
     args.gpu = not args.cpu and torch.cuda.is_available()
     args.flag = not args.json_path == ''

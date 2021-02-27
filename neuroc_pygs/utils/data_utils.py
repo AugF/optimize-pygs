@@ -78,11 +78,11 @@ class EpochLogger: # Epoch, 时间只需要均摊到每个Epoch即可
         self.name = name
         self.cnt = 0
         self.train_time, self.eval_time = [], []
-        self.avg_sample_time, self.avg_train_time = 0, 0
+        self.avg_train_time, self.avg_eval_time = 0, 0
     
     def add_epoch(self, train_time, eval_time):
         self.train_time.append(train_time)
-        self.sample_time.append(eval_time)
+        self.eval_time.append(eval_time)
         self.cnt += 1
 
     def print_epoch(self):

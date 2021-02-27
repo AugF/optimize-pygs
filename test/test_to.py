@@ -1,32 +1,24 @@
-from neuroc_pygs.utils import to
-from neuroc_pygs.options import prepare_trainer
+import pyinotify
+import asyncio
 
 
+class EventHandler(pyinotify.ProcessEvent):
+    def process_IN_CREATE(self, event):
+        if not event.dir:
+            print("Got new file: ", event.pathname)
 
-data, cluster_loader, subgraph_loader, model, optimizer, args = prepare_trainer(mode='cluster')
-data, neighbor_loader, subgraph_loader, model, optimizer, args = prepare_trainer(mode='graphsage')
+wm = pyinotify.WatchManager()  # Watch Manager
+mask = pyinotify.IN_DELETE | pyinotify.IN_CREATE  # watched events
 
-cluster_iter = iter(cluster_loader)
-neighbor_iter = iter(neighbor_loader)
+loop = asyncio.get_event_loop()
 
-cluster_batch = cluster_iter.next()
-neighbor_batch = neighbor_iter.next()
+notifier = pyinotify.AsyncioNotifier(wm, loop, default_proc_fun=EventHandler())
+wdd = wm.add_watch('.', mask, rec=True, auto_add=True)
 
-print(cluster_batch, dir(cluster_batch), hasattr(cluster_batch, 'to'), hasattr(neighbor_batch[2][0], 'to'))
+try:
+    loop.run_forever()
+except:
+    print('\nshutting down...')
 
-from collections import Iterable
-def To(batch):
-    if hasattr(batch, 'to'):
-        return to(batch, device=args.device)
-    elif isinstance(batch, list):
-        for i, k in enumerate(batch):
-            batch[i] = To(k)
-    elif isinstance(batch, Iterable):
-        for k in batch:
-            batch[k] = To(batch[k])
-    return batch
-
-cluster_batch = To(cluster_batch)
-neighbor_batch = To(neighbor_batch)
-print(cluster_batch)
-print(neighbor_batch)
+loop.stop()
+notifier.stop()
