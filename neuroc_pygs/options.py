@@ -2,6 +2,7 @@ import argparse
 import torch
 import os
 import json
+import traceback
 import numpy as np
 import os.path as osp
 from neuroc_pygs.utils import get_dataset, gcn_norm, normalize, get_split_by_file, small_datasets
@@ -14,9 +15,9 @@ from tabulate import tabulate
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset', type=str, default='pubmed', help="dataset: [flickr, com-amazon, reddit, com-lj,"
+    parser.add_argument('--dataset', type=str, default='reddit', help="dataset: [flickr, com-amazon, reddit, com-lj,"
                         "amazon-computers, amazon-photo, coauthor-physics, pubmed]")
-    parser.add_argument('--model', type=str, default='gcn',
+    parser.add_argument('--model', type=str, default='gat',
                         help="gnn models: [gcn, ggnn, gat, gaan]")
     parser.add_argument('--epochs', type=int, default=11,
                         help="epochs for training")
@@ -125,25 +126,25 @@ def build_dataset(args):
     return data
 
 
-def build_loader(args, data):
+def build_loader(args, data, Cluster_Loader=ClusterLoader, Neighbor_Loader=NeighborSampler):
     if args.relative_batch_size:
         args.batch_size = int(data.x.shape[0] * args.relative_batch_size)
         args.batch_partitions = int(args.cluster_partitions * args.relative_batch_size)
 
     if args.infer_layer:
-        subgraph_loader = NeighborSampler(data.edge_index, sizes=[-1], batch_size=args.infer_batch_size,
+        subgraph_loader = Neighbor_Loader(data.edge_index, sizes=[-1], batch_size=args.infer_batch_size,
                                           shuffle=False, num_workers=args.num_workers, pin_memory=args.pin_memory)
     else:
-        subgraph_loader = NeighborSampler(data.edge_index, sizes=[-1] * args.layers, batch_size=args.batch_size,
+        subgraph_loader = Neighbor_Loader(data.edge_index, sizes=[-1] * args.layers, batch_size=args.batch_size,
                                           shuffle=False, num_workers=args.num_workers, pin_memory=args.pin_memory)
 
     if args.mode == 'cluster':
         cluster_data = ClusterData(data, num_parts=args.cluster_partitions, recursive=False,
                                    save_dir=args.cluster_save_dir)
-        train_loader = ClusterLoader(cluster_data, batch_size=args.batch_partitions, shuffle=True,
+        train_loader = Cluster_Loader(cluster_data, batch_size=args.batch_partitions, shuffle=True,
                                      num_workers=args.num_workers, pin_memory=args.pin_memory)
     elif args.mode == 'graphsage':
-        train_loader = NeighborSampler(data.edge_index, node_idx=None,
+        train_loader = Neighbor_Loader(data.edge_index, node_idx=None,
                                        sizes=[25, 10], batch_size=args.batch_size, shuffle=True,
                                        num_workers=args.num_workers, pin_memory=args.pin_memory)
     return train_loader, subgraph_loader
@@ -214,10 +215,10 @@ def run(func, runs=3, path="run.out", model='gcn', dataset='pubmed', mode='clust
     if not isinstance(dataset, list):
         dataset = [dataset]
     if not isinstance(mode, list):
-        model = [mode]
+        mode = [mode]
     if not isinstance(relative_batch_size, list):
         relative_batch_size = [relative_batch_size]
-    run_all(func, runs, path, exp_datasets=dataset, exp_models=model, exp_modes=mode, exp_relative_batch_size=relative_batch_size)
+    run_all(func, runs, path, exp_datasets=dataset, exp_models=model, exp_modes=mode, exp_relative_batch_sizes=relative_batch_size)
 
 
 def run_all(func, runs=3, path='run_all.out', exp_datasets=EXP_DATASET, exp_models=ALL_MODELS, exp_modes=MODES, exp_relative_batch_sizes=EXP_RELATIVE_BATCH_SIZE):
@@ -262,7 +263,9 @@ def run_all(func, runs=3, path='run_all.out', exp_datasets=EXP_DATASET, exp_mode
                         print(tab_data[file_name])
                         fp.write(file_name + '\n') # 实时写入文件
                     except Exception as e:
-                        print(e)
+                        print(e.args)
+                        print("======")
+                        print(traceback.format_exc())
 
                     torch.cuda.empty_cache()
                     del train_loader, subgraph_loader # 内存使用需要慎重
@@ -278,5 +281,5 @@ def run_all(func, runs=3, path='run_all.out', exp_datasets=EXP_DATASET, exp_mode
 
 if __name__ == "__main__":
     import sys
-    sys.argv = [sys.argv[0], '--dataset', 'amazon', '--model', 'gaan']
+    sys.argv = [sys.argv[0], '--dataset', 'amazon', '--log_batch', 'True']
     print(get_args())

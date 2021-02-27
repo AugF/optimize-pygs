@@ -37,7 +37,7 @@ class BatchLogger:
         self.name = name
         self.cnt = 0
         self.sample_time, self.to_time, self.train_time = [], [], []
-        self.avg_sample_time, self.avg_train_time = 0, 0, 0
+        self.avg_sample_time, self.avg_to_time, self.avg_train_time = 0, 0, 0
     
     def add_batch(self, sample_time, to_time, train_time):
         self.sample_time.append(sample_time)
@@ -48,13 +48,13 @@ class BatchLogger:
     def print_batch(self):
         for i in range(self.cnt):
             print(f"Batch {i}, sample_time: {self.sample_time[i]:.8f}, "
-                    "to_time: {self.to_time[i]:.8f}, train_time: {self.train_time[i]:.8f}")
+                    f"to_time: {self.to_time[i]:.8f}, train_time: {self.train_time[i]:.8f}")
         self.avg_sample_time = sum(self.sample_time) / self.cnt
         self.avg_to_time = sum(self.to_time) / self.cnt
         self.avg_train_time = sum(self.train_time) / self.cnt
         print(f"Avg: sample_time: {self.avg_sample_time:.8f}, "
-                    "to_time: {self.avg_to_time:.8f}, "
-                    "train_time: {self.avg_train_time:.8f}")
+                    f"to_time: {self.avg_to_time:.8f}, "
+                    f"train_time: {self.avg_train_time:.8f}")
 
     def reset(self):
         self.sample_time, self.to_time, self.train_time = [], [], []

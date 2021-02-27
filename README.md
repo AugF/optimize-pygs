@@ -46,10 +46,10 @@ model.to(non_blocking=True)
 > 统计最好情况的时间消耗
 #### opt_train计划
 
-任务: 先让总时间提上去再说
+1. 本文采用
 
-比较:
-> 直接与官方最快的版本比较
+
+2. 其他参考
 
 [tensor.to()官方文档](https://pytorch.org/docs/stable/tensors.html?highlight=#torch.Tensor.to)
 
@@ -58,7 +58,6 @@ model.to(non_blocking=True)
 [torch.cuda.stream](https://codesuche.com/python-examples/torch.cuda.stream/)
 
 [如何给你的DataLoader打鸡血](https://zhuanlan.zhihu.com/p/66145913)
-[训练加速](https://zhuanlan.zhihu.com/p/80695364)
 [Tools for easy mixed precision and distributed training in Pytorch](https://github.com/NVIDIA/apex)
 
 BatchSize(%): 1, 3, 6, 10, 25, 50

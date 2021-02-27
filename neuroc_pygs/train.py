@@ -10,16 +10,15 @@ from neuroc_pygs.configs import PROJECT_PATH
 
 def trainer(*info, train_func=train, test_func=test, infer_func=infer): # 训练函数可定制化
     data, train_loader, subgraph_loader, model, optimizer, args = info
-    
-    logger = EpochLogger('_'.join([args.data, args.model, args.mode, str(args.relative_batch_size)]))
-    model, data = model.to(args.device), data.to(args.device)
+    model = model.to(args.device)
+    logger = EpochLogger('_'.join([args.dataset, args.model, args.mode, str(args.relative_batch_size)]))
 
     # step1 fit
     best_val_acc = 0
     best_model = None
     for epoch in range(args.epochs):
         t1 = time.time()
-        train_acc, _ = train(model, data, train_loader, optimizer, args)
+        train_acc, _ = train(model, data, train_loader, optimizer, args) # data由训练负责
         t2 = time.time()
         if args.infer_layer:
             val_acc, _ = infer(model, data, subgraph_loader, args, split="val")
