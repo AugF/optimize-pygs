@@ -2,6 +2,7 @@
 *log*/
 *json
 *pth
+*csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
