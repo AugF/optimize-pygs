@@ -1,8 +1,11 @@
-import commands
- 
-status = commands.getstatus('cat /etc/passwd')
-print(status)
-output = commands.getoutput('cat /etc/passwd')
-print(output)
-(status, output) = commands.getstatusoutput('cat /etc/passwd')
-print(status, output)
+from collections import defaultdict
+
+res = defaultdict(list)
+x_train = defaultdict(list)
+res['a'].append(1)
+x_train['a'].append(1)
+x_train.update(res)
+# for k, v in res.items(): # update x_train
+#     print(x_train[k])
+#     x_train[k].extend(v)
+print(x_train)

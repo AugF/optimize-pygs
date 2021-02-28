@@ -133,5 +133,11 @@ class GCN(Module):
             self.__class__.__name__, self.layers, self.n_features, self.n_classes, self.hidden_dims,
             self.dropout, self.gpu) + '\nLayer(conv->relu->dropout)\n' + str(self.convs)
 
-
+    def get_hyper_paras(self):
+        return {
+            'layers': self.layers,
+            'n_features': self.n_features,
+            'n_classses': self.n_classes,
+            'hidden_dims': self.hidden_dims,
+        }
 

@@ -129,5 +129,12 @@ class GAT(Module):
             self.__class__.__name__, self.layers, self.n_features, self.n_classes, self.head_dims,
             self.heads, self.dropout, self.negative_slop, self.gpu) + '\nLayer(dropout->conv->elu)\n' + str(self.convs)
 
-
+    def get_hyper_paras(self):
+        return {
+            'layers': self.layers,
+            'n_features': self.n_features,
+            'n_classses': self.n_classes,
+            'head_dims': self.head_dims,
+            'heads': self.heads,
+        }
 

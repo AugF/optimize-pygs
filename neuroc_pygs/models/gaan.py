@@ -126,7 +126,17 @@ class GaAN(Module):
             self.hidden_dims, self.heads, self.d_v, self.d_a, self.d_m, self.dropout,
             self.negative_slop, self.gpu) + '\nLayer(conv->leaky_relu->dropout)\n' + str(self.convs[0])
 
-
+    def get_hyper_paras(self):
+        return {
+            'layers': self.layers,
+            'n_features': self.n_features,
+            'n_classses': self.n_classes,
+            'hidden_dims': self.hidden_dims,
+            'heads': self.heads,
+            'd_v': self.d_v,
+            'd_a': self.d_a,
+            'd_m': self.d_m
+        }
 
 
 

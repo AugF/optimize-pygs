@@ -172,6 +172,7 @@ def nvtx_pop(flag):
 
 def log_memory(flag, device, label):
     if flag:
+        print("error")
         res = torch.cuda.memory_stats(device)["allocated_bytes.all.peak"]
         torch.cuda.reset_max_memory_allocated(device)
         # print(res["allocated_bytes.all.current"])

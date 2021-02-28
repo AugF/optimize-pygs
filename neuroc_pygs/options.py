@@ -19,7 +19,7 @@ def get_args():
                         "amazon-computers, amazon-photo, coauthor-physics, pubmed]")
     parser.add_argument('--model', type=str, default='gcn',
                         help="gnn models: [gcn, ggnn, gat, gaan]")
-    parser.add_argument('--epochs', type=int, default=9,
+    parser.add_argument('--epochs', type=int, default=10,
                         help="epochs for training")
     parser.add_argument('--layers', type=int, default=2,
                         help="layers for hidden layer")
@@ -51,6 +51,8 @@ def get_args():
                         default=0.0005, help="adam's weight decay")
     parser.add_argument('--no_record_shapes', action='store_false',
                         default=True, help="nvtx or autograd's profile to record shape")
+    parser.add_argument('--nvtx_flag', type=bool, default=False,
+                        help="measure time")
     parser.add_argument('--json_path', type=str, default='',
                         help="json file path for memory")
     parser.add_argument('--infer_json_path', type=str, default='',
@@ -90,7 +92,7 @@ def get_args():
     parser.add_argument('--checkpoint_dir', type=str,
                         default='/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/checkpoints', help='eval step')
     args = parser.parse_args()
-    args.gpu = not args.cpu and torch.cuda.is_available()
+    args.gpu = args.nvtx_flag and torch.cuda.is_available() # nvtx
     args.flag = not args.json_path == ''
     args.infer_flag = not args.infer_json_path == ''
 
@@ -101,7 +103,7 @@ def get_args():
     if args.gpu:
         torch.cuda.manual_seed(args.seed)
     
-    args.device = torch.device(args.device if args.gpu else 'cpu')
+    args.device = torch.device(args.device if torch.cuda.is_available() else 'cpu')
     return args
 
 
@@ -230,7 +232,6 @@ def prepare_trainer(**kwargs):
     for key, value in kwargs.items():
         if key in args.__dict__.keys():
             args.__setattr__(key, value)
-    print(args)
     data = build_dataset(args)
     train_loader, subgraph_loader = build_loader(args, data)
     model, optimizer = build_model_optimizer(args, data)  
@@ -274,9 +275,10 @@ def run_all(func, runs=3, path='run_all.out', exp_datasets=EXP_DATASET, exp_mode
                 args.relative_batch_size = exp_relative_batch_size # step3 set batch size
                 for exp_mode in exp_modes:
                     data = data.to('cpu')
+                    args.mode = exp_mode
                     train_loader, subgraph_loader = build_loader(args, data) # step4 loader
                     print('build loader success!')
-                    file_name = '_'.join([exp_data, exp_model, exp_mode, str(exp_relative_batch_size)])
+                    file_name = '_'.join([args.dataset, args.model, str(args.exp_relative_batch_size), args.mode])
                     print(file_name)
                     if file_name in success_tabs: # 避免重复实验
                         continue

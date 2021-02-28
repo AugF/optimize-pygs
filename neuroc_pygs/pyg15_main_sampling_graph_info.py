@@ -20,7 +20,7 @@ from neuroc_pygs.configs import dataset_root
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', type=str, default='cora', help="dataset: [cora, flickr, com-amazon, reddit, com-lj,"
+parser.add_argument('--dataset', type=str, default='pubmed', help="dataset: [cora, flickr, com-amazon, reddit, com-lj,"
                                                                     "amazon-computers, amazon-photo, coauthor-physics, pubmed]")
 
 parser.add_argument('--model', type=str, default='gcn', help="gnn models: [gcn, ggnn, gat, gaan]")
@@ -53,7 +53,6 @@ flag = not args.json_path == ''
 infer_flag = not args.infer_json_path == ''
 
 print(args)
-st = time.time()
 
 # 0. set manual seed
 np.random.seed(args.seed)
@@ -141,7 +140,7 @@ elif args.model == 'gaan':
     )
 
 model, data = model.to(device), data.to(device)
-print(data)
+
 optimizer = torch.optim.Adam([
     dict(params=model.convs[i].parameters(), weight_decay=args.weight_decay if i == 0 else 0)
     for i in range(1 if args.model == "ggnn" else args.layers)]
@@ -150,7 +149,7 @@ optimizer = torch.optim.Adam([
 print("data load", torch.cuda.memory_stats(device)["allocated_bytes.all.peak"])
 torch.cuda.reset_max_memory_allocated(device)
 
-def train(epoch):
+def train():
     model.train()
     
     total_nodes = int(data.train_mask.sum())
@@ -172,13 +171,10 @@ def train(epoch):
                 batch = batch.to(device)
                 nodes, edges = batch.x.shape[0], batch.edge_index.shape[1]
                 print(f"nodes: {nodes}, edges: {edges}")
-                print(batch)
                 t2 = time.time()
                 to_time = t2 - t1
                 optimizer.zero_grad()
                 out = model(batch.x, batch.edge_index)
-                print("out", out, out.shape)
-                print("batch.y", batch.y, batch.y.shape)
                 if args.dataset in ['yelp']:
                     loss = torch.nn.BCEWithLogitsLoss()(out[batch.train_mask, :], batch.y[batch.train_mask, :])
                 else:
@@ -190,7 +186,6 @@ def train(epoch):
                 batch_size = batch.train_mask.sum().item()
             elif args.mode == 'graphsage':
                 batch_size, n_id, adjs = batch
-                print("adjs", adjs)
                 adjs = [adj.to(device) for adj in adjs] 
                 nodes, edges = adjs[0][2][0], adjs[0][0].shape[1]
                 print(f"nodes: {nodes}, edges: {edges}")
@@ -212,10 +207,10 @@ def train(epoch):
             optimizer.step()
             
             total_loss += loss.item() * batch_size            
-            train_time = time.time() - t2 # 
+            train_time = time.time() - t2 
             
             cnt += 1
-            print(f"cnt:{cnt}, sampling_time: {sampling_time}, to_time: {to_time}, train_time: {train_time}")
+            # print(f"cnt:{cnt}, sampling_time: {sampling_time}, to_time: {to_time}, train_time: {train_time}")
             # get max memory
             print("max memory(bytes): ", torch.cuda.memory_stats(device)["allocated_bytes.all.peak"])
             torch.cuda.reset_max_memory_allocated(device)
@@ -244,9 +239,6 @@ def test(epoch):  # Inference should be performed on the full graph.
     print(f"Epoch {epoch}, inference_time: {t1 - t0}s, other_time: {time.time() - t1}s")
     return accs
 
-cnt = len(subgraph_loader)
-for epoch in range(args.epochs):
-    t0 = time.time()
-    train(epoch)
 
-print(f"use_time: {time.time() - st}s")
+train()
+

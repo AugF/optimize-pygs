@@ -28,7 +28,7 @@ def accuracy(y_pred, y_true):
     preds = y_pred.max(1)[1].type_as(y_true)
     correct = preds.eq(y_true).double()
     correct = correct.sum().item()
-    return correct / len(y_true)
+    return correct / (len(y_true) if y_true.shape != torch.Size([]) else 1)
 
 
 def cross_entropy_loss(y_pred, y_true):

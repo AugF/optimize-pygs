@@ -10,7 +10,7 @@ from torch_scatter import scatter_add
 from torch_geometric.utils import add_remaining_self_loops
 
 from torch_geometric.nn.conv import MessagePassing
-from neuroc_pygs.utils import glorot, zeros, nvtx_push, nvtx_pop, log_memory
+from neuroc_pygs.utils import glorot, zeros, nvtx_push, nvtx_pop
 
 
 class GCNConv(MessagePassing):

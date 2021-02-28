@@ -12,17 +12,18 @@ from neuroc_pygs.options import get_args, build_dataset, build_subgraphloader, b
 
 
 def evaluate(model_path, best_val_acc, model, data, subgraph_loader, args):
-    t1 = time.time()
+    # t1 = time.time()
     save_dict = torch.load(model_path)
     model.load_state_dict(save_dict['model_state_dict'])
-    t2 = time.time()
+    # t2 = time.time()
     if args.infer_layer:
         val_acc, _ = infer(model, data, subgraph_loader, args, split="val")
     else:
         val_acc, _ = test(model, data, subgraph_loader, args, split="val")
     epoch, train_acc = save_dict['epoch'], save_dict['train_acc']
-    t3 = time.time()
-    print(f"Epoch: {epoch:03d}, Accuracy: Train: {train_acc:.4f}, Val: {val_acc:.4f}, eval_time: {(t3-t2):.4f}, overhead time: {(t2-t1):.4f}")
+    print(f"Epoch: {epoch:03d}, Accuracy: Train: {train_acc:.4f}, Val: {val_acc:.4f}")
+    # t3 = time.time()
+    # print(f"Epoch: {epoch:03d}, Accuracy: Train: {train_acc:.4f}, Val: {val_acc:.4f}, eval_time: {(t3-t2):.4f}, overhead time: {(t2-t1):.4f}")
     if val_acc > best_val_acc:
         best_val_acc = val_acc
         best_model = copy.deepcopy(model)
@@ -43,14 +44,13 @@ class CREATE_EventHandler(pyinotify.ProcessEvent):
             self.best_model, self.best_val_acc, stopping_flag = evaluate(
                 newest_file, self.best_val_acc, self.model, self.data, self.subgraph_loader, self.args)
             self.cur_epoch += self.args.eval_step
-            print(self.cur_epoch, stopping_flag)
             if stopping_flag or self.cur_epoch >= self.args.epochs:
                 if self.args.infer_layer:
                     test_acc, _ = infer(self.best_model, self.data, self.subgraph_loader, self.args, split="test")
                 else:
                     test_acc, _ = test(self.best_model, self.data, self.subgraph_loader, self.args, split="test")
                 print(f"final test acc: {test_acc:.4f}")
-                torch.save(self.best_model.state_dict(), os.path.join(self.args.checkpoint_dir, 'best_model.pth'))
+                torch.save(self.best_model.state_dict(), os.path.join(self.args.checkpoint_dir, 'opt_trainer_best_model.pth'))
                 self.loop.stop()
                 sys.exit(0)
         else:
@@ -64,7 +64,7 @@ def run_eval():
     model = build_model(args, data)
 
     model = model.to(args.device)
-    print("begin eval")
+    # print("begin eval")
     loop = asyncio.get_event_loop()
     wm = pyinotify.WatchManager()
     mask = pyinotify.IN_CLOSE_WRITE | pyinotify.IN_ACCESS

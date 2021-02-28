@@ -68,4 +68,12 @@ class GGNN(Module):
         return '{}(layers={}, n_features={}, n_classes={}, hidden_dims={}, gpu={})'.format(
             self.__class__.__name__, self.layers, self.n_features, self.n_classes,
             self.hidden_dims, self.gpu) + '\n' + str(self.convs)
+    
+    def get_hyper_paras(self):
+        return {
+            'layers': self.layers,
+            'n_features': self.n_features,
+            'n_classses': self.n_classes,
+            'hidden_dims': self.hidden_dims,
+        }
 
