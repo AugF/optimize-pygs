@@ -10,6 +10,7 @@ from neuroc_pygs.configs import PROJECT_PATH
 def train(model, data, train_loader, optimizer, args):
     mode, device, log_batch, log_batch_dir = args.mode, args.device, args.log_batch, args.log_batch_dir
     model.train()
+    print(args.device)
     logger = BatchLogger()
     all_acc, all_loss = [], []
     loader_iter, loader_num = iter(train_loader), len(train_loader)

@@ -21,6 +21,7 @@ def evaluate(model_path, best_val_acc, model, data, subgraph_loader, args):
     else:
         val_acc, _ = test(model, data, subgraph_loader, args, split="val")
     epoch, train_acc = save_dict['epoch'], save_dict['train_acc']
+    print('device', args.device)
     print(f"Epoch: {epoch:03d}, Accuracy: Train: {train_acc:.4f}, Val: {val_acc:.4f}")
     # t3 = time.time()
     # print(f"Epoch: {epoch:03d}, Accuracy: Train: {train_acc:.4f}, Val: {val_acc:.4f}, eval_time: {(t3-t2):.4f}, overhead time: {(t2-t1):.4f}")
@@ -59,10 +60,11 @@ class CREATE_EventHandler(pyinotify.ProcessEvent):
 
 def run_eval():
     args = get_args()
+    args.device = torch.device('cpu')
+
     data = build_dataset(args)
     subgraph_loader = build_subgraphloader(args, data)
     model = build_model(args, data)
-
     model = model.to(args.device)
     # print("begin eval")
     loop = asyncio.get_event_loop()

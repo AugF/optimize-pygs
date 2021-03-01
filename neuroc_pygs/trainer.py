@@ -10,8 +10,9 @@ from neuroc_pygs.configs import PROJECT_PATH
 
 def trainer(train_func=train, test_func=test, infer_func=infer): # 训练函数可定制化
     data, train_loader, subgraph_loader, model, optimizer, args = prepare_trainer()
+    print(args.device)
     model = model.to(args.device)
-    print(args)
+    print(args.device)
     # step1 fit
     best_val_acc = 0
     best_model = None

@@ -13,7 +13,6 @@ def run_train():
     model, optimizer = build_model_optimizer(args, data)
 
     model = model.to(args.device)
-    # print("begin train")
     for epoch in range(args.epochs):
         t1 = time.time()
         train_acc, train_loss = train(model, data, train_loader, optimizer, args)

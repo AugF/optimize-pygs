@@ -5,3 +5,7 @@
 
 尝试这种方法
 https://blog.csdn.net/jiongjiongxia123/article/details/113391369
+
+
+子图采样: 采用GraphSAINT方法
+问题: 如何进行测试

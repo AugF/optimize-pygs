@@ -3,16 +3,13 @@ from optimize_pygs.datasets import build_dataset_from_name
 
 
 def test_dataset(dataset_name):
-    data = build_dataset_from_name(dataset_name)
-    print(dataset_name, data[0])
+    dataset = build_dataset_from_name(dataset_name)
+    print(dataset_name, dataset.num_features, dataset.num_classes, dataset[0])
 
 
 def test_all_datasets():
-    graphsaint_data = ["ppi", "flickr", "reddit", "yelp", "amazon"]
-    neuroc_data = ['pubmed', 'amazon-photo', 'amazon-computers', 'coauthor-physics', 'com-amazon']
-
-    datasets = graphsaint_data + neuroc_data
-    for dataset_name in datasets:
+    EXP_DATASET = ['pubmed', 'amazon-photo', 'amazon-computers', 'ppi', 'flickr', 'reddit', 'yelp', 'amazon']
+    for dataset_name in EXP_DATASET:
         test_dataset(dataset_name)
 
 

@@ -103,7 +103,7 @@ def get_args():
     if args.gpu:
         torch.cuda.manual_seed(args.seed)
     
-    args.device = torch.device(args.device if torch.cuda.is_available() else 'cpu')
+    args.device = torch.device(args.device if torch.cuda.is_available() and not args.cpu else 'cpu')
     return args
 
 
@@ -229,6 +229,7 @@ def build_model_optimizer(args, data):
 
 def prepare_trainer(**kwargs):
     args = get_args()
+    print(args)
     for key, value in kwargs.items():
         if key in args.__dict__.keys():
             args.__setattr__(key, value)
