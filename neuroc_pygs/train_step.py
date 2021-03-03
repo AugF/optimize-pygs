@@ -5,15 +5,21 @@ import numpy as np
 
 from neuroc_pygs.utils import BatchLogger
 from neuroc_pygs.configs import PROJECT_PATH
+from neuroc_pygs.samplers.prefetch_generator import BackgroundGenerator
 
 
-def train(model, data, train_loader, optimizer, args):
+def train(model, data, train_loader, optimizer, args, opt_loader=False):
     mode, device, log_batch, log_batch_dir = args.mode, args.device, args.log_batch, args.log_batch_dir
     model.train()
-    print(args.device)
     logger = BatchLogger()
     all_acc, all_loss = [], []
+    st0 = time.time()
     loader_iter, loader_num = iter(train_loader), len(train_loader)
+    st1 = time.time()
+    if log_batch:
+        print("start", st1 - st0)
+    if opt_loader:
+        loader_iter = BackgroundGenerator(loader_iter)
     for i in range(loader_num):
         t1 = time.time()
         if mode == "cluster":
@@ -57,12 +63,14 @@ def train(model, data, train_loader, optimizer, args):
 
 
 @torch.no_grad()
-def test(model, data, subgraph_loader, args, split="val"):
+def test(model, data, subgraph_loader, args, split="val", opt_loader=False):
     device, log_batch, log_batch_dir = args.device, args.log_batch, args.log_batch_dir
     model.eval()
     logger = BatchLogger()
     all_loss, all_acc = [], []
     loader_iter, loader_num = iter(subgraph_loader), len(subgraph_loader)
+    if opt_loader:
+        loader_iter = BackgroundGenerator(loader_iter)
     for i in range(loader_num):
         # start 
         t1 = time.time()
@@ -91,13 +99,20 @@ def test(model, data, subgraph_loader, args, split="val"):
 
 
 @torch.no_grad()
-def infer(model, data, subgraph_loader, args, split="val"):
+def infer(model, data, subgraph_loader, args, split="val", opt_loader=False):
     device, log_batch, log_batch_dir = args.device, args.log_batch, args.log_batch_dir
     model.eval()
-    y_pred = model.inference(data.x, subgraph_loader, log_batch)
+    y_pred = model.inference(data.x, subgraph_loader, log_batch, opt_loader)
     y_true = data.y.cpu()
 
     mask = getattr(data, split + "_mask")
     loss = model.loss_fn(y_pred[mask], y_true[mask])
     acc = model.evaluator(y_pred[mask], y_true[mask]) 
     return acc, loss
+
+
+if __name__ == '__main__':
+    from neuroc_pygs.options import prepare_trainer
+    data, train_loader, subgraph_loader, model, optimizer, args = prepare_trainer(log_batch=True, mode='graphsage') # 观察一下
+    model = model.to(args.device)
+    train(model, data, train_loader, optimizer, args)

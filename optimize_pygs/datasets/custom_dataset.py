@@ -112,4 +112,5 @@ def test_custom_dataset():
 
 
 if __name__ == "__main__":
-    test_custom_dataset()
+    dataset = CustomDataset(root, 'snap_1000')
+    print(dataset[0])

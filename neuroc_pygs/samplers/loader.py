@@ -1,5 +1,5 @@
 from torch.utils.data import DataLoader
-from prefetch_generator import BackgroundGenerator
+from neuroc_pygs.samplers.prefetch_generator import BackgroundGenerator
 
 class DataLoaderX(DataLoader):
 

@@ -17,7 +17,7 @@ def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset', type=str, default='pubmed', help="dataset: [flickr, com-amazon, reddit, com-lj,"
                         "amazon-computers, amazon-photo, coauthor-physics, pubmed]")
-    parser.add_argument('--model', type=str, default='gcn',
+    parser.add_argument('--model', type=str, default='gat',
                         help="gnn models: [gcn, ggnn, gat, gaan]")
     parser.add_argument('--epochs', type=int, default=10,
                         help="epochs for training")
@@ -145,7 +145,7 @@ def build_train_loader(args, data, Cluster_Loader=ClusterLoader, Neighbor_Loader
                                    save_dir=args.cluster_save_dir)
         train_loader = Cluster_Loader(cluster_data, batch_size=args.batch_partitions, shuffle=True,
                                      num_workers=args.num_workers, pin_memory=args.pin_memory)
-    elif args.mode == 'graphsage':
+    elif args.mode == 'graphsage': # sizes
         train_loader = Neighbor_Loader(data.edge_index, node_idx=None,
                                        sizes=[25, 10], batch_size=args.batch_size, shuffle=True,
                                        num_workers=args.num_workers, pin_memory=args.pin_memory)
@@ -216,8 +216,16 @@ def build_model(args, data):
         )
 
     # step2 set loss_fn and evaluator
-    model.set_loss_fn(get_loss_fn(DATASET_METRIC[args.dataset]))
-    model.set_evaluator(get_evaluator(DATASET_METRIC[args.dataset]))
+    if 'fli' in args.dataset:
+        dataset_metric = 'flickr'
+    elif 'amc' in args.dataset:
+        dataset_metric = 'amazon-computers'
+    else:
+        dataset_metric = args.dataset
+
+    dataset_metric = DATASET_METRIC[dataset_metric]
+    model.set_loss_fn(get_loss_fn(dataset_metric))
+    model.set_evaluator(get_evaluator(dataset_metric))
     return model
 
 
@@ -227,9 +235,8 @@ def build_model_optimizer(args, data):
     return model, optimizer
 
 
-def prepare_trainer(**kwargs):
+def prepare_trainer(**kwargs): # 
     args = get_args()
-    print(args)
     for key, value in kwargs.items():
         if key in args.__dict__.keys():
             args.__setattr__(key, value)
@@ -279,7 +286,7 @@ def run_all(func, runs=3, path='run_all.out', exp_datasets=EXP_DATASET, exp_mode
                     args.mode = exp_mode
                     train_loader, subgraph_loader = build_loader(args, data) # step4 loader
                     print('build loader success!')
-                    file_name = '_'.join([args.dataset, args.model, str(args.exp_relative_batch_size), args.mode])
+                    file_name = '_'.join([args.dataset, args.model, str(args.relative_batch_size), args.mode])
                     print(file_name)
                     if file_name in success_tabs: # 避免重复实验
                         continue

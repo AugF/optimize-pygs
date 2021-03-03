@@ -91,16 +91,20 @@ class GraphSAINTSampler(torch.utils.data.DataLoader):
         adj, _ = self.adj.saint_subgraph(node_idx)
         return node_idx, adj
 
-    def __collate__(self, data_list):
+    def __collate__(self, data_list): # 可行
+        print('out', data_list)
         assert len(data_list) == 1
         node_idx, adj = data_list[0]
 
         data = self.data.__class__()
+        print('x1', data)
         data.num_nodes = node_idx.size(0)
         row, col, edge_idx = adj.coo()
         data.edge_index = torch.stack([row, col], dim=0)
+        print('x2', data)
 
         for key, item in self.data:
+            print(key, item)
             if isinstance(item, torch.Tensor) and item.size(0) == self.N:
                 data[key] = item[node_idx]
             elif isinstance(item, torch.Tensor) and item.size(0) == self.E:
@@ -108,6 +112,7 @@ class GraphSAINTSampler(torch.utils.data.DataLoader):
             else:
                 data[key] = item
 
+        print('end', data)
         if self.sample_coverage > 0:
             data.node_norm = self.node_norm[node_idx]
             data.edge_norm = self.edge_norm[edge_idx]

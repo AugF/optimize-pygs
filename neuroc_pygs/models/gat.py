@@ -67,7 +67,7 @@ class GAT(Module):
                 
         return x
     
-    def inference(self, x_all, subgraph_loader, log_batch):
+    def inference(self, x_all, subgraph_loader, log_batch=False, opt_loader=False):
         device = torch.device(self.device)
         flag = self.infer_flag
         
@@ -79,7 +79,10 @@ class GAT(Module):
             log_memory(flag, device, f'layer{i} start')
 
             xs = []
-            loader_iter = iter(subgraph_loader)
+            if opt_loader:
+                loader_iter = BackgroundGenerator(iter(subgraph_loader))
+            else:
+                loader_iter = iter(subgraph_loader)
             while True:
                 try:
                     et0 = time.time()

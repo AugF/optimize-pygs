@@ -22,10 +22,11 @@ t3 = time.time()
 print(f'use time: {t2-t1}, {t3-t2}')
 
 # print(automl.show_models())
-# predictions = automl.predict(X_test)
-# print("R2 score:", sklearn.metrics.r2_score(y_test, predictions))
+predictions = automl.predict(X_test)
+print("R2 score:", sklearn.metrics.r2_score(y_test, predictions))
 
 # from joblib import dump, load
 # dump(automl, 'filename.joblib') 
-
 # clf = load('filename.joblib') 
+
+#?是否还有其他指标

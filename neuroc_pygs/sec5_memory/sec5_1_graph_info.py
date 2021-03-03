@@ -67,16 +67,16 @@ def run_all(exp_datasets=EXP_DATASET, exp_models=ALL_MODELS, exp_modes=MODES, ex
     df = defaultdict(defaultdict)
     args = get_args()
     print(f"device: {args.device}")
-    for exp_data in EXP_DATASET:
+    for exp_data in ['reddit', 'yelp', 'amazon']:
         args.dataset = exp_data
         data = build_dataset(args)
         print('build data success')
-        for exp_model in ALL_MODELS:
+        for exp_model in ['gcn', 'gat']:
             args.model = exp_model
             data = data.to('cpu')
             model, optimizer = build_model_optimizer(args, data)
             print(model)
-            for exp_relative_batch_size in EXP_RELATIVE_BATCH_SIZE:
+            for exp_relative_batch_size in [0.002, 0.004, 0.006]:
                 args.relative_batch_size = exp_relative_batch_size
                 for exp_mode in MODES:
                     args.mode = exp_mode
@@ -85,12 +85,13 @@ def run_all(exp_datasets=EXP_DATASET, exp_models=ALL_MODELS, exp_modes=MODES, ex
                     file_name = '_'.join([args.dataset, args.model, str(args.relative_batch_size), args.mode])
                     torch.cuda.reset_max_memory_allocated(args.device) # 避免dataloader带来的影响
                     print(file_name)
-                    real_path = os.path.join(PROJECT_PATH, 'sec5_memory/batch_memory_info', file_name) + '.csv'
+                    real_path = os.path.join(PROJECT_PATH, 'sec5_memory/motivation', file_name) + '.csv'
                     if os.path.exists(real_path):
                         res = pd.read_csv(real_path, index_col=0).to_dict(orient='list')
                         continue
                     else:
                         try:
+                            print('start...')
                             res = defaultdict(list)
                             cnt = 0
                             for _ in range(20):

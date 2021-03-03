@@ -21,7 +21,6 @@ def evaluate(model_path, best_val_acc, model, data, subgraph_loader, args):
     else:
         val_acc, _ = test(model, data, subgraph_loader, args, split="val")
     epoch, train_acc = save_dict['epoch'], save_dict['train_acc']
-    print('device', args.device)
     print(f"Epoch: {epoch:03d}, Accuracy: Train: {train_acc:.4f}, Val: {val_acc:.4f}")
     # t3 = time.time()
     # print(f"Epoch: {epoch:03d}, Accuracy: Train: {train_acc:.4f}, Val: {val_acc:.4f}, eval_time: {(t3-t2):.4f}, overhead time: {(t2-t1):.4f}")

@@ -25,11 +25,11 @@ subgraph_loader = build_sampler_from_name(args.infer_sampler, data=data, sizes=[
                 batch_size=args.infer_batch_size, num_workers=args.num_workers, 
                 **INFER_CONFIG[args.infer_sampler])
 
-num_batches = train_loader.get_num_batches()
-train_loader.reset_iter()
-for i in range(num_batches):
-    batch = train_loader.get_next_batch()
-    print(batch)
+# num_batches = train_loader.get_num_batches()
+# train_loader.reset_iter()
+# for i in range(num_batches):
+#     batch = train_loader.get_next_batch()
+#     print(batch)
 
 # num_batches = subgraph_loader.get_num_batches()
 # subgraph_loader.reset_iter()

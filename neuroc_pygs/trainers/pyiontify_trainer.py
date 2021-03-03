@@ -24,7 +24,7 @@ def run(models='gcn', datasets='pubmed'):
         datasets = [datasets]
     for model in models:
         for data in datasets:
-            sys.argv = [sys.argv[0], '--model', model, '--dataset', data]
+            sys.argv = [sys.argv[0], '--model', model, '--dataset', data, '--device', 'cuda:2']
             print('base trainer')
             t1 = time.time()
             trainer()

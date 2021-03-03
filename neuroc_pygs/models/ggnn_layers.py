@@ -107,7 +107,7 @@ class GatedGraphConv(MessagePassing):
         return h
     
 
-    def inference(self, x_all, subgraph_loader, log_batch=False):
+    def inference(self, x_all, subgraph_loader, log_batch=False, opt_loader=False):
         device = torch.device(self.device if self.gpu else 'cpu')
         flag = self.infer_flag
         
