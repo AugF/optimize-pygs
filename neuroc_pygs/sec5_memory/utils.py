@@ -5,7 +5,7 @@ import pandas as pd
 from typing import List, Optional, Tuple, NamedTuple, Union, Callable
 from torch import Tensor
 from torch_sparse import SparseTensor
-from neuroc_pygs.configs import PROJECT_PATH
+from neuroc_pygs.configs import PROJECT_PATH, EXP_DATASET
 
 
 class EdgeIndex(NamedTuple):
@@ -21,11 +21,16 @@ class EdgeIndex(NamedTuple):
 # 合并文件
 def get_datasets(model_name='gat'):
     dir_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'sec5_2_memory_log')
-    df = pd.read_csv(dir_path + '/{model_name}_datasets.csv', index_col=0)
-    y = df['memory'].values
+    df = pd.read_csv(dir_path + '/{model_name}_train_datasets.csv', index_col=0)
+    y_train = df['memory'].values
     del df['memory']
-    X = df.values
-    return X, y
+    X_train = df.values
+
+    df = pd.read_csv(dir_path + '/{model_name}_test_datasets.csv', index_col=0)
+    y_test = df['memory'].values
+    del df['memory']
+    X_test = df.values
+    return X_train, y_train, X_test, y_test
 
 
 def get_dataset_info():

@@ -6,7 +6,7 @@ import scipy.sparse as sp
 # snap: 
 
 def create_random_dataset(
-    dataset_name, nodes, edges, expect_edges, seed=1, A_pro=.6, B_pro=.1, C_pro=.15, 
+    dataset_name, nodes, edges, expect_edges=None, seed=1, A_pro=.6, B_pro=.1, C_pro=.15, 
     features=32, classes=10, split_train=0.70, split_val=0.15,
     root="/mnt/data/wangzhaokang/wangyunpan/data"):
     """
@@ -66,8 +66,7 @@ def gen_graph(raw_dir, nodes, edges, features=32, classes=10, split_train=0.70, 
     np.save(raw_dir + "/feats", feats)
     
 
-
-if __name__ == '__main__':
+def prove_theroy():
     # amc,  0.7, 0.15, 0.15, 无向图
     nodes, edges, expect_edges = 13752, 300000, 491722
     cnt = 0
@@ -89,4 +88,34 @@ if __name__ == '__main__':
                 features=500, classes=7, split_train=0.50, split_val=0.25,
                 root="/mnt/data/wangzhaokang/wangyunpan/data")
                 cnt += 1
+
+
+def gen_random_data():
+    # memory随nodes变化的实验
+    edges = 400000
+    expect_edges = 500000
+    for node in [1] + np.arange(2.5, 50, 2.5).tolist():
+        nodes = int(node * 1000)
+        create_random_dataset(f'random_{node}_500k', nodes=nodes, edges=edges, expect_edges=expect_edges,
+        features=500, classes=7, split_train=0.50, split_val=0.25,
+                root="/mnt/data/wangzhaokang/wangyunpan/data")
+    
+    # memory随edges变化的实验
+    nodes = 10000
+    for degree in np.arange(1, 10).tolist() + np.arange(10, 71, 5).tolist():
+        expect_edges = int(degree * 10000)
+        edges = expect_edges * 0.75
+        create_random_dataset(f'random_10k_{degree}', nodes=nodes, edges=edges, expect_edges=expect_edges,
+                features=500, classes=7, split_train=0.50, split_val=0.25,
+                        root="/mnt/data/wangzhaokang/wangyunpan/data")
+
+
+if __name__ == '__main__':
+    # [10k, 10k]
+    for nodes in range(5000, 100001, 5000):
+        for expect_edges in range(5000, 100001, 5000):
+            edges = expect_edges * 0.75
+            create_random_dataset(f'random_{int(nodes/1000)}k_{int(expect_edges/1000)}k', nodes=nodes, edges=edges, expect_edges=expect_edges,
+                features=500, classes=7, split_train=0.50, split_val=0.25,
+                        root="/mnt/data/wangzhaokang/wangyunpan/data")
     

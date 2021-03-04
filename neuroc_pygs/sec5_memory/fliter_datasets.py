@@ -1,11 +1,17 @@
 import os
 import torch
+import sys
+
 import numpy as np 
+import matplotlib.pyplot as plt
+
+from tabulate import tabulate
 from collections import defaultdict
-
 from neuroc_pygs.options import build_dataset, get_args, build_dataset, build_model_optimizer
-root = '/mnt/data/wangzhaokang/wangyunpan/data'
+from neuroc_pygs.configs import PROJECT_PATH
 
+
+root = '/mnt/data/wangzhaokang/wangyunpan/data'
 datasets = ['amc', 'fli']
 
 def test_equal():
@@ -30,7 +36,6 @@ def train(model, batch, optimizer):
     model.train()
     optimizer.zero_grad()
     logits = model(batch.x, batch.edge_index)
-    print(model.loss_fn)
     loss = model.loss_fn(logits[batch.train_mask], batch.y[batch.train_mask])
     loss.backward()
     optimizer.step()
@@ -53,6 +58,7 @@ def run():
     model = model.to(args.device)
     memory = torch.cuda.memory_stats(args.device)["allocated_bytes.all.peak"]
     torch.cuda.reset_max_memory_allocated(args.device)
+    print(f'device: {args.device}, model memory: {memory}, model: {args.model}')
 
     data = data.to(args.device)
     for epoch in range(1): # 实验测试都一样
@@ -62,10 +68,47 @@ def run():
 
     peak_memory = torch.cuda.memory_stats(args.device)["allocated_bytes.all.peak"]
     torch.cuda.reset_max_memory_allocated(args.device)
-    print(args.dataset, peak_memory)
+    print(args.dataset, peak_memory, '\n')
+    return [args.dataset, data.num_nodes, data.num_edges, peak_memory]
 
 
-if __name__ == '__main__':
-    import sys
-    sys.argv = [sys.argv[0], '--dataset', 'random_fli0']
-    run()
+def prove_memory():
+    amc_datasets = ['amazon-computers'] + [f'random_amc{i}' for i in range(40)]
+    fli_datasets = ['flickr'] + [f'random_fli{i}' for i in range(40)]
+
+    tab_data = []
+    for exp_datasets in [amc_datasets, fli_datasets]:
+        for exp_data in exp_datasets:
+            sys.argv = [sys.argv[0], '--dataset', exp_data]
+            tab_data.append(run())
+    print(tabulate(tab_data, headers=['Name', 'Nodes', 'Edges', 'Peak Memory'], tablefmt='github'))
+
+
+def get_memory_curve():
+    nodes_datasets = [1] + np.arange(2.5, 50, 2.5).tolist()
+    edges_datasets = np.arange(1, 10).tolist() + np.arange(10, 71, 5).tolist()
+
+    tab_data = []
+    for i, exp_datasets in enumerate([nodes_datasets, edges_datasets]):
+        for var in exp_datasets:
+            exp_data = f'random_{var}_500k' if not i else f'random_10k_{var}'
+            sys.argv = [sys.argv[0], '--dataset', exp_data, '--device', 'cuda:2']
+            tab_data.append(run())
+    np.save(os.path.join(PROJECT_PATH, 'sec5_memory', 'log', 'gat_memory_curve_data.npy'), tab_data)
+    print(tabulate(tab_data, headers=['Name', 'Nodes', 'Edges', 'Peak Memory'], tablefmt='github'))
+
+
+def pics_memory_curve():
+    tab_data = np.load(os.path.join(PROJECT_PATH, 'sec5_memory', 'log', 'gat_memory_curve_data.npy'))
+    tab_data = np.array(tab_data)[:,3]
+    tab_data = list(map(lambda x: int(x), tab_data))
+    # 
+    nodes_x = [1] + np.arange(2.5, 50, 2.5).tolist()
+    edges_x = np.arange(1, 10).tolist() + np.arange(10, 71, 5).tolist()
+    
+    plt.style.use("ggplot")
+    fig, axes = plt.subplots(1, 2, figsize=(7 * 2, 5), tight_layout=True)
+    axes[0].plot(nodes_x, tab_data[:20], marker='o')
+    axes[1].plot(edges_x, tab_data[20:], marker='D')
+    fig.savefig(os.path.join(PROJECT_PATH, 'sec5_memory', 'log', 'gat_memory_curve.png'))
+

@@ -65,6 +65,8 @@ def get_args():
                             help='number of cluster partitions per batch') # inference batch size
     parser.add_argument('--batch_size', type=int,
                         default=1024, help='batch size')
+    parser.add_argument('--sizes', type=list,
+                        default=[25, 10], help='batch size')
     parser.add_argument('--batch_partitions', type=int, default=20,
                         help='number of cluster partitions per batch')
     parser.add_argument('--cluster_partitions', type=int,
@@ -147,7 +149,7 @@ def build_train_loader(args, data, Cluster_Loader=ClusterLoader, Neighbor_Loader
                                      num_workers=args.num_workers, pin_memory=args.pin_memory)
     elif args.mode == 'graphsage': # sizes
         train_loader = Neighbor_Loader(data.edge_index, node_idx=None,
-                                       sizes=[25, 10], batch_size=args.batch_size, shuffle=True,
+                                       sizes=args.sizes, batch_size=args.batch_size, shuffle=True,
                                        num_workers=args.num_workers, pin_memory=args.pin_memory)
     return train_loader
 
@@ -216,14 +218,12 @@ def build_model(args, data):
         )
 
     # step2 set loss_fn and evaluator
-    if 'fli' in args.dataset:
-        dataset_metric = 'flickr'
-    elif 'amc' in args.dataset:
-        dataset_metric = 'amazon-computers'
+    if 'fli' in args.dataset or 'amc' in args.dataset or 'random' in args.dataset:
+        dataset_name = 'flickr'
     else:
-        dataset_metric = args.dataset
+        dataset_name = args.dataset
 
-    dataset_metric = DATASET_METRIC[dataset_metric]
+    dataset_metric = DATASET_METRIC[dataset_name]
     model.set_loss_fn(get_loss_fn(dataset_metric))
     model.set_evaluator(get_evaluator(dataset_metric))
     return model
