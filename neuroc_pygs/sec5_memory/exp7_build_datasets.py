@@ -57,7 +57,7 @@ def train(model, data, train_loader, optimizer, args, df, cnt):
 
 def build_model_datasets(args, datasets, file_type='train'):
     x_train = defaultdict(list)
-    print("build for train dataset")
+    print(f"build for {file_type} dataset")
     for exp_data in datasets:
         args.dataset = exp_data
         data = build_dataset(args)
@@ -107,8 +107,8 @@ def build_model_datasets(args, datasets, file_type='train'):
 
 if __name__ == '__main__':
     args = get_args()
-    args.model = 'gcn'
     print(args)
-    print('build train datasets...')
-    build_model_datasets(args, datasets=['amazon-photo', 'amazon-computers', 'ppi', 'pubmed', 'flickr'], file_type='train')
-    build_model_datasets(args, datasets=['reddit', 'yelp', 'amazon'], file_type='test')
+    # build_model_datasets(args, datasets=['amazon-photo', 'amazon-computers', 'ppi', 'pubmed', 'flickr'], file_type='train')
+    for model in ['gcn', 'gat']:
+        args.model = model
+        build_model_datasets(args, datasets=['reddit', 'yelp', 'amazon'], file_type='test')

@@ -1,16 +1,21 @@
-# 学习线性模型
-
+import os
 import numpy as np
 from sklearn.linear_model import LinearRegression
-X = np.array([[1, 1], [1, 2], [2, 2], [2, 3]])
-# y = 1 * x_0 + 2 * x_1 + 3
-y = np.dot(X, np.array([1, 2])) + 3
-reg = LinearRegression().fit(X, y)
-print(reg.score(X, y))
+from neuroc_pygs.configs import PROJECT_PATH
+
+
+tab_data = np.load(os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_res', 'gat_memory_2dims_curve_data.npy'))
+nodes = list(map(lambda x: int(x), tab_data[:, 1]))
+edges = list(map(lambda x: int(x), tab_data[:, 2]))
+memory = list(map(lambda x: int(x) / (1024*1024), tab_data[:, 3]))
+
+X = np.array([nodes, edges]).T
+y = np.array(memory)
+
+X_train, y_train = X[:300], y[:300]
+X_test, y_test = X[300:], y[300:]
+
+reg = LinearRegression().fit(X_train, y_train)
 
 print(reg.coef_)
-
-print(reg.intercept_)
-
-print(reg.predict(np.array([[3, 5]])))
-
+print(reg.predict(X_test), y_test)

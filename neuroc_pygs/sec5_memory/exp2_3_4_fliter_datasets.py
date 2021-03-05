@@ -10,7 +10,6 @@ from collections import defaultdict
 from neuroc_pygs.options import build_dataset, get_args, build_dataset, build_model_optimizer
 from neuroc_pygs.configs import PROJECT_PATH
 
-
 root = '/mnt/data/wangzhaokang/wangyunpan/data'
 datasets = ['amc', 'fli']
 
@@ -84,7 +83,7 @@ def prove_memory():
     print(tabulate(tab_data, headers=['Name', 'Nodes', 'Edges', 'Peak Memory'], tablefmt='github'))
 
 
-def get_memory_curve():
+def get_linear_memory_curve():
     nodes_datasets = [1] + np.arange(2.5, 50, 2.5).tolist()
     edges_datasets = np.arange(1, 10).tolist() + np.arange(10, 71, 5).tolist()
 
@@ -98,7 +97,7 @@ def get_memory_curve():
     print(tabulate(tab_data, headers=['Name', 'Nodes', 'Edges', 'Peak Memory'], tablefmt='github'))
 
 
-def pics_memory_curve():
+def pics_linear_memory_curve():
     tab_data = np.load(os.path.join(PROJECT_PATH, 'sec5_memory', 'log', 'gat_memory_curve_data.npy'))
     tab_data = np.array(tab_data)[:,3]
     tab_data = list(map(lambda x: int(x), tab_data))
@@ -112,3 +111,30 @@ def pics_memory_curve():
     axes[1].plot(edges_x, tab_data[20:], marker='D')
     fig.savefig(os.path.join(PROJECT_PATH, 'sec5_memory', 'log', 'gat_memory_curve.png'))
 
+
+def get_2dims_memory_curve():
+    tab_data = []
+    for nodes in range(5000, 100001, 5000):
+        for expect_edges in range(5000, 100001, 5000):
+            exp_data = f'random_{int(nodes/1000)}k_{int(expect_edges/1000)}k'
+            sys.argv = [sys.argv[0], '--dataset', exp_data, '--device', 'cuda:2']
+            tab_data.append(run())
+    np.save(os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_res', 'gat_memory_2dims_curve_data.npy'), tab_data)
+    print(tabulate(tab_data, headers=['Name', 'Nodes', 'Edges', 'Peak Memory'], tablefmt='github'))
+
+
+def pics_2dims_curve_data():
+    tab_data = np.load(os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_res', 'gat_memory_2dims_curve_data.npy'))
+    nodes = list(map(lambda x: int(x), tab_data[:, 1]))
+    edges = list(map(lambda x: int(x), tab_data[:, 2]))
+    memory = list(map(lambda x: int(x) / (1024*1024), tab_data[:, 3]))
+    print(nodes, edges, memory)
+
+    # from mpl_toolkits.mplot3d import Axes3D
+    fig = plt.figure()
+    ax = plt.axes(projection='3d')
+    ax.set_xlabel('Number of Vertices', fontsize=12)
+    ax.set_ylabel('Number of Edges', fontsize=12)
+    ax.set_zlabel('Peak Memory (MB)', fontsize=12)
+    ax.scatter3D(nodes, edges, memory, cmap='Blues')
+    fig.savefig(os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_figs', 'gat_memory_2dims_curve_data.png'))
