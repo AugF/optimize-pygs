@@ -112,19 +112,19 @@ def pics_linear_memory_curve():
     fig.savefig(os.path.join(PROJECT_PATH, 'sec5_memory', 'log', 'gat_memory_curve.png'))
 
 
-def get_2dims_memory_curve():
+def get_2dims_memory_curve(model='gat'):
     tab_data = []
     for nodes in range(5000, 100001, 5000):
         for expect_edges in range(5000, 100001, 5000):
             exp_data = f'random_{int(nodes/1000)}k_{int(expect_edges/1000)}k'
-            sys.argv = [sys.argv[0], '--dataset', exp_data, '--device', 'cuda:2']
+            sys.argv = [sys.argv[0], '--dataset', exp_data, '--device', 'cuda:2', '--model', model]
             tab_data.append(run())
-    np.save(os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_res', 'gat_memory_2dims_curve_data.npy'), tab_data)
+    np.save(os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_res', f'{model}_memory_2dims_curve_data.npy'), tab_data)
     print(tabulate(tab_data, headers=['Name', 'Nodes', 'Edges', 'Peak Memory'], tablefmt='github'))
 
 
-def pics_2dims_curve_data():
-    tab_data = np.load(os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_res', 'gat_memory_2dims_curve_data.npy'))
+def pics_2dims_curve_data(model='gat'):
+    tab_data = np.load(os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_res', f'{model}_memory_2dims_curve_data.npy'))
     nodes = list(map(lambda x: int(x), tab_data[:, 1]))
     edges = list(map(lambda x: int(x), tab_data[:, 2]))
     memory = list(map(lambda x: int(x) / (1024*1024), tab_data[:, 3]))
@@ -137,4 +137,7 @@ def pics_2dims_curve_data():
     ax.set_ylabel('Number of Edges', fontsize=12)
     ax.set_zlabel('Peak Memory (MB)', fontsize=12)
     ax.scatter3D(nodes, edges, memory, cmap='Blues')
-    fig.savefig(os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_figs', 'gat_memory_2dims_curve_data.png'))
+    fig.savefig(os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_figs', f'{model}_memory_2dims_curve_data.png'))
+
+
+pics_2dims_curve_data(model='gcn')

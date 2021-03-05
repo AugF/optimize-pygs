@@ -41,6 +41,4 @@ def trainer(train_func=train, test_func=test, infer_func=infer): # 训练函数�
 
 
 if __name__ == "__main__":
-    data, train_loader, subgraph_loader, model, optimizer, args = prepare_trainer()
-    for batch in iter(train_loader):
-        print(batch)
+    trainer()

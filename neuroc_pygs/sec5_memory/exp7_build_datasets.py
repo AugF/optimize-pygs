@@ -102,13 +102,14 @@ def build_model_datasets(args, datasets, file_type='train'):
                                 print(e.args)
                                 print(traceback.format_exc())
 
-    pd.DataFrame(x_train).to_csv(PROJECT_PATH + f'/sec5_memory/sec5_2_memory_log/{args.model}_{file_type}_datasets.csv')
+    pd.DataFrame(x_train).to_csv(PROJECT_PATH + f'/sec5_memory/exp_res/{args.model}_{file_type}_datasets.csv')
 
 
 if __name__ == '__main__':
     args = get_args()
     print(args)
     # build_model_datasets(args, datasets=['amazon-photo', 'amazon-computers', 'ppi', 'pubmed', 'flickr'], file_type='train')
-    for model in ['gcn', 'gat']:
-        args.model = model
-        build_model_datasets(args, datasets=['reddit', 'yelp', 'amazon'], file_type='test')
+    for dataset in ['amazon-photo', 'amazon-computers', 'ppi', 'pubmed', 'flickr', 'yelp', 'amazon', 'reddit']:
+        for model in ['gcn', 'gat']:
+            args.model = model
+            build_model_datasets(args, datasets=[dataset], file_type=dataset)
