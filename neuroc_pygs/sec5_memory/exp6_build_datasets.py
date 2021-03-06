@@ -105,11 +105,49 @@ def build_model_datasets(args, datasets, file_type='train'):
     pd.DataFrame(x_train).to_csv(PROJECT_PATH + f'/sec5_memory/exp_res/{args.model}_{file_type}_datasets.csv')
 
 
-if __name__ == '__main__':
+def run():
     args = get_args()
     print(args)
     # build_model_datasets(args, datasets=['amazon-photo', 'amazon-computers', 'ppi', 'pubmed', 'flickr'], file_type='train')
-    for dataset in ['amazon-photo', 'amazon-computers', 'ppi', 'pubmed', 'flickr', 'yelp', 'amazon', 'reddit']:
+    for dataset in ['amazon']:
         for model in ['gcn', 'gat']:
             args.model = model
+            file_path = PROJECT_PATH + f'/sec5_memory/exp_res/{model}_{dataset}_datasets.csv'
+            print(file_path)
+            if os.path.exists(PROJECT_PATH + f'/sec5_memory/exp_res/{model}_{dataset}_datasets.csv'):
+                continue
             build_model_datasets(args, datasets=[dataset], file_type=dataset)
+
+
+
+
+x_train = defaultdict(list)
+args = get_args()
+args.model = 'gcn'
+for exp_data in ['amazon']:
+    file_type = exp_data
+    args.dataset = exp_data
+    data = build_dataset(args)
+    print("build dataset success")
+    for para, para_values in MODEL_PARAS[args.model].items(): # model, paras
+        for p_v in para_values: #  paras: 13
+            setattr(args, para, p_v)
+            data = data.to('cpu')
+            model, optimizer = build_model_optimizer(args, data)
+            print("build model success")
+            for exp_relative_batch_size in [None] + EXP_RELATIVE_BATCH_SIZE: # 7
+                args.relative_batch_size = exp_relative_batch_size
+                for exp_mode in MODES: # 2
+                    args.mode = exp_mode
+                    data = data.to('cpu')
+                    print("build train loader success")
+                    print('_'.join([args.dataset, args.model, str(args.relative_batch_size), args.mode]))
+                    paras_dict = model.get_hyper_paras() # get other paras
+                    real_path = os.path.join(PROJECT_PATH, f'sec5_memory/sec5_2_{args.model}_memory_info', '_'.join([str(v) for v in paras_dict.values()] + [str(args.relative_batch_size), args.mode])) + '.csv'
+                    print(real_path)
+                    if os.path.exists(real_path):
+                        res = pd.read_csv(real_path, index_col=0).to_dict(orient='list')
+                        for k, v in res.items(): # update x_train
+                            x_train[k].extend(v)
+pd.DataFrame(x_train).to_csv(PROJECT_PATH + f'/sec5_memory/exp_res/{args.model}_{file_type}_datasets.csv')
+print('success!!')

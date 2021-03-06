@@ -15,7 +15,6 @@ def create_random_dataset(
     # 注意这里是伪随机的
     Rnd = snap.TRnd() # 默认是1
     nodes, edges = int(nodes), int(edges)
-    print("nodes={}, edges={}".format(nodes, edges))
     graph = snap.GenRMat(nodes, edges, A_pro, B_pro, C_pro, Rnd)
     raw_dir = root + "/" + dataset_name + "/raw"
     print(raw_dir)
@@ -32,7 +31,7 @@ def create_random_dataset(
     edges_list = set(edges_list)
     row = [i[0] for i in edges_list][:expect_edges]
     col = [i[1] for i in edges_list][:expect_edges]
-    print(edges, len(row))
+    print("nodes={}, edges={}".format(nodes, len(row)))
     f = sp.csr_matrix(([1] * len(row), (row, col)), shape=(nodes, nodes)) # directed -> undirected, edges*2
     np.savez(raw_dir + "/adj_full", data=f.data, indptr=f.indptr, indices=f.indices, shape=f.shape)
     gen_graph(raw_dir, nodes, edges, features, classes, split_train, split_val)
@@ -112,10 +111,14 @@ def gen_random_data():
 
 if __name__ == '__main__':
     # [10k, 10k]
-    for nodes in range(5000, 100001, 5000):
-        for expect_edges in range(5000, 100001, 5000):
+    root = "/mnt/data/wangzhaokang/wangyunpan/data"
+    for nodes in range(5000, 100001, 2000):
+        for expect_edges in range(5000, 100001, 2000):
             edges = expect_edges * 0.75
-            create_random_dataset(f'random_{int(nodes/1000)}k_{int(expect_edges/1000)}k', nodes=nodes, edges=edges, expect_edges=expect_edges,
-                features=500, classes=7, split_train=0.50, split_val=0.25,
-                        root="/mnt/data/wangzhaokang/wangyunpan/data")
+            file_name = f'random_{int(nodes/1000)}k_{int(expect_edges/1000)}k'
+            print(file_name)
+            if not os.path.exists(os.path.join(root, file_name)):
+                create_random_dataset(file_name, nodes=nodes, edges=edges, expect_edges=expect_edges,
+                    features=500, classes=7, split_train=0.50, split_val=0.25,
+                            root=root)
     

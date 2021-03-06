@@ -8,7 +8,7 @@ from neuroc_pygs.options import prepare_trainer
 from neuroc_pygs.configs import PROJECT_PATH
 
 
-def trainer(train_func=train, test_func=test, infer_func=infer): # 训练函数可定制化
+def trainer(): # 训练函数可定制化
     data, train_loader, subgraph_loader, model, optimizer, args = prepare_trainer()
     model = model.to(args.device)
     # step1 fit
@@ -28,15 +28,13 @@ def trainer(train_func=train, test_func=test, infer_func=infer): # 训练函数�
         if val_acc > best_val_acc:
             best_val_acc = val_acc
             best_model = copy.deepcopy(model)
-        if epoch >= 2:
-            break
     # step2 predict
     if args.infer_layer:
         test_acc, _ = infer(best_model, data, subgraph_loader, args, split="test")
     else:
         test_acc, _ = test(best_model, data, subgraph_loader, args, split="test")
     print(f"final test acc: {test_acc:.4f}")
-    torch.save(best_model.state_dict(), osp.join(args.checkpoint_dir, 'trainer_best_model.pth'))
+    torch.save(best_model.state_dict(), osp.join(args.checkpoint_dir, 'trainer_{args.model}_{args.dataset}_best_model.pth'))
     return
 
 

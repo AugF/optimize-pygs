@@ -140,4 +140,17 @@ def pics_2dims_curve_data(model='gat'):
     fig.savefig(os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_figs', f'{model}_memory_2dims_curve_data.png'))
 
 
-pics_2dims_curve_data(model='gcn')
+def pics_more():
+    vars_set = set(range(5000, 100001, 5000)).union(set(range(5000, 100001, 2000)))
+    for model in ['gcn', 'gat']:
+        tab_data = []
+        for nodes in vars_set:
+            for edges in vars_set:
+                exp_data = f'random_{int(nodes/1000)}k_{int(edges/1000)}k'
+                print(exp_data)
+                if not os.path.exists('/mnt/data/wangzhaokang/wangyunpan/data/' + exp_data):
+                    continue
+                sys.argv = [sys.argv[0], '--dataset', exp_data, '--device', 'cuda:2', '--model', model]
+                tab_data.append(run())
+        np.save(os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_res', f'{model}_memory_2dims_curve_data_final.npy'), tab_data)
+        print(model, tabulate(tab_data, headers=['Name', 'Nodes', 'Edges', 'Peak Memory'], tablefmt='github'))

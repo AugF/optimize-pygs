@@ -1,10 +1,12 @@
 import os
 import copy
 import torch
+import numpy as np
 import pandas as pd
 from typing import List, Optional, Tuple, NamedTuple, Union, Callable
 from torch import Tensor
 from torch_sparse import SparseTensor
+from sklearn.metrics import mean_squared_error
 from neuroc_pygs.configs import PROJECT_PATH, EXP_DATASET
 
 
@@ -17,20 +19,6 @@ class EdgeIndex(NamedTuple):
         edge_index = self.edge_index.to(*args, **kwargs)
         e_id = self.e_id.to(*args, **kwargs) if self.e_id is not None else None
         return EdgeIndex(edge_index, e_id, self.size)
-
-# 合并文件
-def get_datasets(model_name='gat'):
-    dir_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'sec5_2_memory_log')
-    df = pd.read_csv(dir_path + '/{model_name}_train_datasets.csv', index_col=0)
-    y_train = df['memory'].values
-    del df['memory']
-    X_train = df.values
-
-    df = pd.read_csv(dir_path + '/{model_name}_test_datasets.csv', index_col=0)
-    y_test = df['memory'].values
-    del df['memory']
-    X_test = df.values
-    return X_train, y_train, X_test, y_test
 
 
 def get_dataset_info():
@@ -90,6 +78,47 @@ def get_neighbor_sampler(data, size='1'):
     return EdgeIndex(edge_index, e_id, size)
 
 
-from neuroc_pygs.options import get_args, build_dataset
-data = build_dataset(get_args())
-get_adj(data, 10)
+def get_metrics(y_pred, y_test):
+    mse = mean_squared_error(y_pred, y_test)
+    num = len(y_pred)
+    bad_exps = 0
+    max_bias = 0
+    max_bias_percent = 0
+    for i in range(num):
+        if y_pred[i] > y_test[i]:
+            max_bias_percent = max(max_bias_percent, (y_pred[i] - y_test[i]) / y_test[i])
+            max_bias = max(max_bias, y_pred[i] - y_test[i])
+            bad_exps += 1
+    return mse, bad_exps / num, max_bias, max_bias_percent
+
+
+def get_automl_datasets(model='gcn'):
+    # 之后再灵活变化来做
+    train_datasets = ['amazon-photo', 'amazon-computers', 'pubmed', 'ppi', 'flickr']
+    test_datasets = ['reddit', 'yelp', 'amazon']
+
+    x_train, y_train = [], []
+    for data in train_datasets:
+        file_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_res', f'{model}_{data}_datasets.csv')
+        df = pd.read_csv(file_path, index_col=0)
+        y_train.extend(df['memory'].values)
+        del df['memory']
+        x_train.extend(df.values.tolist())
+
+    x_test, y_test = [], []
+    for data in test_datasets:
+        file_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_res', f'{model}_{data}_datasets.csv')
+        df = pd.read_csv(file_path, index_col=0)
+        y_test.extend(df['memory'].values)
+        del df['memory']
+        x_test.extend(df.values.tolist())     
+    return x_train, y_train, x_test, y_test
+
+
+def test():
+    for model in ['gcn', 'gat']:
+        print(model)
+        x_train, y_train, x_test, y_test = get_automl_datasets(model)
+        print(len(y_train), len(y_test))
+    # gcn: 15100, 3940
+    # gat: 11220 1700

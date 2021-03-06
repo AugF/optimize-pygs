@@ -21,7 +21,7 @@ print(args)
 train_loader = build_sampler_from_name(args.sampler, data=data, save_dir=dataset.processed_dir, batch_partitions=args.batch_partitions,
                 num_parts=args.num_parts, batch_size=args.batch_size, num_workers=args.num_workers,
                 **TRAIN_CONFIG[args.sampler])
-subgraph_loader = build_sampler_from_name(args.infer_sampler, data=data, sizes=[-1]*args.num_layers,
+subgraph_loader = build_sampler_from_name(args.infer_sampler, data=data, sizes=[-1],
                 batch_size=args.infer_batch_size, num_workers=args.num_workers, 
                 **INFER_CONFIG[args.infer_sampler])
 
@@ -31,8 +31,8 @@ subgraph_loader = build_sampler_from_name(args.infer_sampler, data=data, sizes=[
 #     batch = train_loader.get_next_batch()
 #     print(batch)
 
-# num_batches = subgraph_loader.get_num_batches()
-# subgraph_loader.reset_iter()
-# for i in range(num_batches):
-#     batch = subgraph_loader.get_next_batch()
-#     print(batch)
+num_batches = subgraph_loader.get_num_batches()
+subgraph_loader.reset_iter()
+for i in range(num_batches):
+    batch = subgraph_loader.get_next_batch()
+    exit(0)

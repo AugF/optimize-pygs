@@ -13,7 +13,8 @@ def linearmodel():
     :return: None
     """
     ld = load_boston()
-    x_train,x_test,y_train,y_test = train_test_split(ld.data,ld.target.reshape(-1, 1),test_size=0.25)
+    x_train,x_test,y_train,y_test = train_test_split(ld.data,ld.target.reshape(-1, 1))
+    print(x_train.shape, x_test.shape)
     std_x = StandardScaler()
     x_train = std_x.fit_transform(x_train)
     x_test = std_x.transform(x_test)

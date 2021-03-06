@@ -114,5 +114,5 @@ def infer(model, data, subgraph_loader, args, split="val", opt_loader=False):
 if __name__ == '__main__':
     from neuroc_pygs.options import prepare_trainer
     data, train_loader, subgraph_loader, model, optimizer, args = prepare_trainer(log_batch=True, mode='graphsage') # 观察一下
-    model = model.to(args.device)
-    train(model, data, train_loader, optimizer, args)
+    batch_size, n_id, adjs = iter(subgraph_loader).next()
+    print(batch_size, n_id.shape, adjs.edge_index.shape)
