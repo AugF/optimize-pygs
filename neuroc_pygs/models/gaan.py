@@ -116,7 +116,50 @@ class GaAN(Module):
         if log_batch:
             print(f"avg_batch_train_time: {train_time}, avg_batch_sampling_time:{sampling_time}, avg_batch_to_time: {to_time}")
         return x_all
-    
+
+
+    def inference_base(self, x_all, subgraph_loader, f_iter):
+        device = torch.device(self.device)
+        
+        loader_num = len(subgraph_loader)
+        for i in range(self.layers):
+            xs = []
+            # 
+            loader_iter = f_iter(subgraph_loader)
+            for _ in range(loader_num):
+                batch_size, n_id, adj = next(loader_iter)
+                edge_index, _, size = adj.to(device)
+                x = x_all[n_id].to(device)
+                
+                x = self.convs[i](x, edge_index, size=size[1])
+                if i != self.layers - 1:
+                    x = F.leaky_relu(x, self.negative_slop)
+                    x = F.dropout(x, p=self.dropout, training=self.training)
+                xs.append(x.cpu())
+            x_all = torch.cat(xs, dim=0)
+        return x_all
+
+    def inference_cuda(self, x_all, subgraph_loader, f_iter):
+        device = torch.device(self.device)
+        
+        loader_num = len(subgraph_loader)
+        for i in range(self.layers):
+            xs = []
+            # 
+            loader_iter = f_iter(subgraph_loader)
+            for _ in range(loader_num):
+                batch_size, x, y, adj  = next(loader_iter)
+                edge_index, _, size = adj
+                
+                x = self.convs[i](x, edge_index, size=size[1])
+                if i != self.layers - 1:
+                    x = F.leaky_relu(x, self.negative_slop)
+                    x = F.dropout(x, p=self.dropout, training=self.training)
+                xs.append(x.cpu())
+            x_all = torch.cat(xs, dim=0)
+        return x_all
+
+
     def set_loss_fn(self, loss_fn):
         self.loss_fn = loss_fn
     

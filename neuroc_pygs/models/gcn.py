@@ -125,6 +125,24 @@ class GCN(Module):
             print(f"avg_batch_train_time: {train_time}, avg_batch_sampling_time:{sampling_time}, avg_batch_to_time: {to_time}")
         return x_all
 
+    def inference_base(self, x_all, loader_iter, loader_num):
+        device = torch.device(self.device)
+
+        for i in range(self.layers):
+            for _ in range(loader_num):
+                batch_size, n_id, adj = next(loader_iter)
+
+                edge_index, e_id, size = adj.to(device)
+                x = x_all[n_id].to(device)
+
+                x = self.convs[i](x, edge_index, size=size[1], norm=self.norm[e_id])
+                if i != self.layers - 1:
+                    x = F.relu(x)
+                    x = F.dropout(x, p=self.dropout, training=self.training)
+                xs.append(x.cpu())
+            x_all = torch.cat(xs, dim=0)
+        return x_all
+
     def set_loss_fn(self, loss_fn):
         self.loss_fn = loss_fn
     
