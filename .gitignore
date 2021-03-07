@@ -7,7 +7,8 @@
 _*png
 *_*png
 *pdf
-*tmp/*
+*tmp*/
+*tmp*/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
