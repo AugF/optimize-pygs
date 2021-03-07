@@ -21,13 +21,14 @@ for num_workers in [5, 10, 20, 40]:
     for exp_relative_batch_size in EXP_RELATIVE_BATCH_SIZE:
         args.relative_batch_size = exp_relative_batch_size
         for exp_data in EXP_DATASET:
-            args.dataset = exp_data 
+            args.dataset = exp_data
             file_name = f'num_workers={args.num_workers}, relative_batch_size={args.relative_batch_size}, dataset: {args.dataset}'
             print(file_name)
             try:
                 data = build_dataset(args)
                 loader1 = build_train_loader(args, data)
-                loader2 = build_train_loader(args, data, Cluster_Loader=ClusterOptimizerLoader)
+                loader2 = build_train_loader(
+                    args, data, Cluster_Loader=ClusterOptimizerLoader)
                 model, optimizer = build_model_optimizer(args, data)
                 model = model.to(args.device)
                 t1 = time.time()
@@ -37,7 +38,8 @@ for num_workers in [5, 10, 20, 40]:
                 t3 = time.time()
                 base_time, opt_time = t2 - t1, t3 - t2
                 ratio = 100 * (base_time - opt_time) / base_time
-                print(f'base time: {base_time}, opt_time: {opt_time}, ratio: {ratio}')
+                print(
+                    f'base time: {base_time}, opt_time: {opt_time}, ratio: {ratio}')
                 tab_data.append([file_name, base_time, opt_time, ratio])
             except Exception as e:
                 print(e.args)
@@ -46,4 +48,4 @@ for num_workers in [5, 10, 20, 40]:
 
 
 print(tabulate(tab_data, headers=[" ", "Base Time(s)", "Optmize Time(s)", "Ratio(%)"],
-        tablefmt="github"))
+               tablefmt="github"))

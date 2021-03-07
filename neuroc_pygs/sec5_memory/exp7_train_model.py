@@ -55,5 +55,5 @@ if __name__ == "__main__":
                 if os.path.exists(file_path):
                     continue
                 sys.argv = [sys.argv[0], '--model', model, '--dataset', data,
-                    '--device', 'cuda:0', '--epochs', '60', '--mode', mode]
+                    '--device', 'cuda:0', '--epochs', '50', '--mode', mode]
                 trainer(model_path=file_path)

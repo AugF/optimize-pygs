@@ -115,4 +115,12 @@ if __name__ == '__main__':
     from neuroc_pygs.options import prepare_trainer
     data, train_loader, subgraph_loader, model, optimizer, args = prepare_trainer(log_batch=True, mode='graphsage') # 观察一下
     batch_size, n_id, adjs = iter(subgraph_loader).next()
-    print(batch_size, n_id.shape, adjs.edge_index.shape)
+    print(batch_size, n_id, adjs)
+    for k in adjs:
+        print(k, k.shape)
+    # batch_size, n_id, adjs = batch
+    # Adj: edge_index;  e_id;
+    # size=[4343, 1024]
+    # n_id: 
+    # 删除edge_index中的点时，同时考虑删去e_id对应的坐标
+    # 如果某个点都被删完了，考虑删去n_id中的点，并修改sizes中的大小

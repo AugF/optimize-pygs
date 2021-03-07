@@ -85,7 +85,7 @@ def get_metrics(y_pred, y_test):
     max_bias = 0
     max_bias_percent = 0
     for i in range(num):
-        if y_pred[i] > y_test[i]:
+        if y_pred[i] >= y_test[i]:
             max_bias_percent = max(max_bias_percent, (y_pred[i] - y_test[i]) / y_test[i])
             max_bias = max(max_bias, y_pred[i] - y_test[i])
             bad_exps += 1

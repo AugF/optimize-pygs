@@ -67,7 +67,7 @@ class GAT(Module):
                 
         return x
     
-    def inference(self, x_all, subgraph_loader, log_batch=False, opt_loader=False):
+    def inference(self, x_all, subgraph_loader, log_batch=False, opt_loader=False, df=None):
         device = torch.device(self.device)
         flag = self.infer_flag
         
@@ -93,11 +93,12 @@ class GAT(Module):
                     edge_index, _, size = adj.to(device)
                     x = x_all[n_id].to(device)
                     log_memory(flag, device, 'to end')
-                                       
+
                     et2 = time.time()
                     x = F.dropout(x, p=self.dropout, training=self.training)
-                    # x_target = x[:size[1]]
+                    
                     x = self.convs[i]((x, x[:size[1]]), edge_index)
+
                     if i != self.layers - 1:
                         x = F.elu(x)
                     xs.append(x.cpu())
@@ -106,6 +107,12 @@ class GAT(Module):
                     sampling_time += et1 - et0
                     to_time += et2 - et1
                     train_time += time.time() - et2
+
+                    if df is not None:
+                        df['nodes'].append(size[0])
+                        df['edges'].append(edge_index.shape[1])
+                        df['memory'].append(torch.cuda.memory_stats(device)["allocated_bytes.all.peak"])
+                    torch.cuda.reset_max_memory_allocated(device)
                 except StopIteration:
                     break
             

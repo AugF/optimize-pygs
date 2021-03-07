@@ -13,9 +13,9 @@ class AutoML(object):
     # https://github.com/automl/auto-sklearn/blob/58e36bea83c30a21872890c7b4b235fd198dcf7b/autosklearn/estimators.py#L16
     def __init__(self, time_left_for_this_task=120, per_run_time_limit=30, memory_limit=3072):
         self.automl = autosklearn.regression.AutoSklearnRegressor(
-            time_left_for_this_task=time_left_for_this_task,
-            per_run_time_limit=per_run_time_limit,
-            memory_limit=memory_limit,
+            # time_left_for_this_task=time_left_for_this_task,
+            # per_run_time_limit=per_run_time_limit,
+            # memory_limit=memory_limit,
             tmp_folder=os.path.join(PROJECT_PATH, 'sec5_memory/tmp/regression_tmp'),
             output_folder=os.path.join(PROJECT_PATH, 'sec5_memory/tmp/regression_out')
         )
@@ -44,10 +44,10 @@ def automl_exp():
     for model in ['gcn', 'gat']:
         x_train, y_train, x_test, y_test = get_automl_datasets(model)
 
-        np.random.seed(1)
-        mask = np.arange(len(x_train))
-        np.random.shuffle(mask)
-        x_train, y_train = np.array(x_train)[mask], np.array(y_train)[mask]
+        # np.random.seed(1)
+        # mask = np.arange(len(x_train))
+        # np.random.shuffle(mask)
+        # x_train, y_train = np.array(x_train)[mask], np.array(y_train)[mask]
         x_test, y_test = x_test[:1000], y_test[:1000]
 
         tab_data = []

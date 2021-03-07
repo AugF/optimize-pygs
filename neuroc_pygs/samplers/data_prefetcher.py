@@ -3,20 +3,18 @@ from neuroc_pygs.utils import to
 
 
 class DataPrefetcher():
-    def __init__(self, loader, sampler, device, data=None):
-        self.loader = iter(loader)
+    def __init__(self, loader_iter, sampler, device, data=None):
+        self.loader_iter = iter(loader_iter)
         self.sampler, self.device, self.data = sampler, device, data
         self.stream = torch.cuda.Stream(device=device)
         self.preload()
 
     def preload(self):
-        t1 = time.time()
         try:
-            self.batch = next(self.loader)
+            self.batch = next(self.loader_iter)
         except StopIteration:
             self.batch = None
             return
-        t2 = time.time()
         with torch.cuda.stream(self.stream):
             if self.sampler == 'graphsage':
                 batch_size, n_id, adjs = self.batch
@@ -26,8 +24,7 @@ class DataPrefetcher():
                 self.batch = [batch_size, x, y, adjs]
             else:
                 self.batch = to(self.batch, self.device, non_blocking=True)
-        t3 = time.time()
-        print(f'try use time: {t2-t1}, else use time: {t3-t2}')
+
 
     def next(self):
         torch.cuda.current_stream().wait_stream(self.stream)
