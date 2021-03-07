@@ -169,8 +169,8 @@ def build_subgraphloader(args, data, Neighbor_Loader=NeighborSampler):
 
 
 def build_loader(args, data, Cluster_Loader=ClusterLoader, Neighbor_Loader=NeighborSampler):
-    train_loader = build_train_loader(args, data)
-    subgraph_loader = build_subgraphloader(args, data)
+    train_loader = build_train_loader(args, data, Cluster_Loader=ClusterLoader, Neighbor_Loader=NeighborSampler)
+    subgraph_loader = build_subgraphloader(args, data, Neighbor_Loader=NeighborSampler)
     return train_loader, subgraph_loader
 
 

@@ -1,10 +1,5 @@
 import time
-import os
 import numpy as np
-
-from neuroc_pygs.configs import PROJECT_PATH
-from neuroc_pygs.samplers.prefetch_generator import BackgroundGenerator
-from neuroc_pygs.samplers.data_prefetcher import DataPrefetcher
 
 
 def train(model, optimizer, data, loader_iter, loader_num, device, mode):
@@ -63,14 +58,17 @@ def train_cuda(model, optimizer, data, loader_iter, loader_num, device, mode):
 if __name__ == '__main__':
     # gpu上的结果都一样, cpu因为随机种子不一样，所以结果不一样
     from neuroc_pygs.options import get_args, build_dataset, build_model_optimizer, build_train_loader
+    from neuroc_pygs.samplers.prefetch_generator import BackgroundGenerator
+    from neuroc_pygs.samplers.data_prefetcher import DataPrefetcher
     args = get_args()
+    args.dataset, args.model, args.mode, args.relative_batch_size = 'amazon-photo', 'ggnn', 'cluster', 0.01
     data = build_dataset(args)
     model, optimizer = build_model_optimizer(args, data)
     train_loader = build_train_loader(args, data)
     loader_iter, loader_num, device, mode = iter(train_loader), len(train_loader), args.device, args.mode
     model = model.to(device)
-    loader_iter = BackgroundGenerator(loader_iter)
+    # loader_iter = BackgroundGenerator(loader_iter)
     loader_iter = DataPrefetcher(loader_iter, mode, device, None if mode == 'cluster' else data)
-    # res = train(model, optimizer, data, loader_iter, loader_num, device, mode)
+    # # res = train(model, optimizer, data, loader_iter, loader_num, device, mode)
     res = train_cuda(model, optimizer, data, loader_iter, loader_num, device, mode) 
-    print(res)
+    # print(res)
