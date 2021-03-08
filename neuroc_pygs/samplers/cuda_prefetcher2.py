@@ -6,12 +6,12 @@ from torch_geometric.data import Data
 
 class CudaDataLoader(object):
     """ 异步预先将数据从CPU加载到GPU中 """
-    def __init__(self, loader, device, sampler='', data=None, queue_size=2):
+    def __init__(self, loader, device, sampler='infer_sage', data=None, queue_size=2):
         self.device = device
         self.sampler = sampler
-        self.data = data
         self.queue_size = queue_size
         self.loader = loader
+        self.data = data
 
         self.load_stream = torch.cuda.Stream(device=device)
         self.queue = Queue.Queue(maxsize=self.queue_size)
@@ -30,9 +30,7 @@ class CudaDataLoader(object):
                 if self.sampler == 'graphsage':
                     batch_size, n_id, adj = batch
                     x, y = self.data.x[n_id], self.data.y[n_id[:batch_size]]
-                    with torch.cuda.stream(self.load_stream):
-                        x, y = x.to(self.device, non_blocking=True), y.to(self.device, non_blocking=True)
-                    batch = [batch_size, n_id, adj, x, y]
+                    batch = [batch_size, n_id, adj, x.to(self.device, non_blocking=True), y.to(self.device, non_blocking=True)]
                 self.queue.put(batch)
 
     def load_instance(self, sample):
@@ -81,27 +79,26 @@ class CudaDataLoader(object):
 
 if __name__ == '__main__':
     import time
-    from neuroc_pygs.options import build_train_loader, get_args, build_dataset
-    from neuroc_pygs.samplers.prefetch_generator import BackgroundGenerator
-    from neuroc_pygs.samplers.data_prefetcher_2 import TransferGenerator
+    from neuroc_pygs.options import build_subgraphloader, get_args, build_dataset
     from torch_geometric.data import Data
     args = get_args()
-    args.mode = 'graphsage'
+    args.num_workers = 0
     data = build_dataset(args)
-    train_loader = build_train_loader(args, data)
+    subgraph_loader = build_subgraphloader(args, data)
 
-    opt_loader = CudaDataLoader(train_loader, args.device, sampler=args.mode, data=data)
+    opt_loader = CudaDataLoader(subgraph_loader, args.device, sampler='infer_sage', data=data.x)
     print('start', args.device)
     t1 = time.time()
-    for i, x in enumerate(train_loader):
-        print(i)
+    for i, x in enumerate(subgraph_loader):
+        # print(i)
         if i == 0:
-            print('base')
+            print('base', x)
     t2 = time.time()
-    for i, x in enumerate(opt_loader):
-        print(i)
+    for i, batch in enumerate(opt_loader):
+        # print(i)
         if i == 0:
-            print('opt', x)
+            batch_size, n_id, adj, x = batch
+            print('opt', batch_size, n_id, adj, x)
             # print('opt', Data.from_dict({li[0]:li[1] for li in x}))
     t3 = time.time()
     print(f'use time: {t2 - t1}, opt time: {t3 - t2}')

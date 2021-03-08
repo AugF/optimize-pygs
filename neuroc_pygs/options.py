@@ -76,7 +76,7 @@ def get_args():
     parser.add_argument('--infer_layer', type=bool,
                         default=True, help='Choose how to inference')
     parser.add_argument('--pin_memory', type=bool,
-                        default=True, help='pin_memory')
+                        default=False, help='pin_memory')
     # for log
     parser.add_argument('--log_batch', type=bool,
                         default=False, help='log batch')

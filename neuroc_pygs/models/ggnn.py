@@ -58,6 +58,24 @@ class GGNN(Module):
         log_memory(self.infer_flag, device, "output-transform")
         return x_all.cpu()
 
+    def inference_base(self, x_all, subgraph_loader):
+        device = torch.device(self.device)
+
+        x_all = torch.matmul(x_all.to(device), self.weight_in) # 尽最大可能第键槽内存        
+        x_all = self.convs[0].inference_base(x_all.cpu(), subgraph_loader)
+        
+        x_all = torch.matmul(x_all.to(device), self.weight_out)
+        return x_all.cpu()
+
+    def inference_cuda(self, x_all, subgraph_loader):
+        device = torch.device(self.device)
+
+        x_all = torch.matmul(x_all.to(device), self.weight_in) # 尽最大可能第键槽内存        
+        x_all = self.convs[0].inference_cuda(x_all.cpu(), subgraph_loader)
+
+        x_all = torch.matmul(x_all.to(device), self.weight_out)
+        return x_all.cpu()
+
     def set_loss_fn(self, loss_fn):
         self.loss_fn = loss_fn
     

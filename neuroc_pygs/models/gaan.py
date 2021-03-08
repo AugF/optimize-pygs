@@ -118,16 +118,15 @@ class GaAN(Module):
         return x_all
 
 
-    def inference_base(self, x_all, subgraph_loader, f_iter):
+    def inference_base(self, x_all, subgraph_loader):
         device = torch.device(self.device)
         
         loader_num = len(subgraph_loader)
         for i in range(self.layers):
             xs = []
             # 
-            loader_iter = f_iter(subgraph_loader)
-            for _ in range(loader_num):
-                batch_size, n_id, adj = next(loader_iter)
+            for batch in subgraph_loader:
+                batch_size, n_id, adj = batch
                 edge_index, _, size = adj.to(device)
                 x = x_all[n_id].to(device)
                 
@@ -139,18 +138,18 @@ class GaAN(Module):
             x_all = torch.cat(xs, dim=0)
         return x_all
 
-    def inference_cuda(self, x_all, subgraph_loader, f_iter):
+
+    def inference_cuda(self, x_all, subgraph_loader):
         device = torch.device(self.device)
         
-        loader_num = len(subgraph_loader)
         for i in range(self.layers):
             xs = []
             # 
-            loader_iter = f_iter(subgraph_loader)
-            for _ in range(loader_num):
-                batch_size, x, y, adj  = next(loader_iter)
+            for batch in subgraph_loader:
+                batch_size, n_id, adj = batch
                 edge_index, _, size = adj
-                
+                x = x_all[n_id].to(device)
+
                 x = self.convs[i](x, edge_index, size=size[1])
                 if i != self.layers - 1:
                     x = F.leaky_relu(x, self.negative_slop)
@@ -158,7 +157,6 @@ class GaAN(Module):
                 xs.append(x.cpu())
             x_all = torch.cat(xs, dim=0)
         return x_all
-
 
     def set_loss_fn(self, loss_fn):
         self.loss_fn = loss_fn
