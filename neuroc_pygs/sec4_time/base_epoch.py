@@ -5,8 +5,7 @@ from neuroc_pygs.sec4_time.epoch_utils import train, infer
 from neuroc_pygs.samplers.cuda_prefetcher import CudaDataLoader
 
 
-def epoch(args):
-    sys.argv = [sys.argv[0]] + args.split(' ')
+def epoch():
     args = get_args()
     print(args)
     data = build_dataset(args)
@@ -30,5 +29,5 @@ def epoch(args):
     return
 
 
-# if __name__ == '__main__':
-#     epoch('--num_workers 0 --opt_eval_flag 1 --opt_train_flag 0')
+if __name__ == '__main__':
+    epoch()

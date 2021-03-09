@@ -2,7 +2,6 @@ import time, os
 import subprocess
 from tabulate import tabulate
 from neuroc_pygs.samplers.cuda_prefetcher import CudaDataLoader
-from neuroc_pygs.sec4_time.base_epoch import epoch
 from neuroc_pygs.configs import PROJECT_PATH
 
 headers = ['Name', 'Baseline', 'Batch Opt', 'Epoch Opt', 'Opt']
@@ -16,6 +15,12 @@ def opt_epoch(args=''):
     pro_eval.communicate()
     pro_eval.wait()
     pro_train.kill()
+
+
+def epoch(args=''):
+    pro = subprocess.Popen("/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec4_time/base_epoch.py " + args, shell=True)
+    pro.communicate()
+    pro.wait()
 
 
 def run_model(model='gcn', data='amazon-computers'):
@@ -55,4 +60,4 @@ if __name__ == '__main__':
     models = ['gcn']
     tab_data = run_model(model=models, data=small_datasets)
     import pandas as pd
-    pd.DataFrame(tab_data, columns=headers).to_csv(os.path.join(PROJECT_PATH, 'sec4_time', 'exp_res', f'epoch_v0.csv'))
+    pd.DataFrame(tab_data, columns=headers).to_csv(os.path.join(PROJECT_PATH, 'sec4_time', 'exp_res', f'epoch_{models}_v2.csv'))

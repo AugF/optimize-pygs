@@ -119,5 +119,5 @@ if __name__ == '__main__':
     import sys
     sys.argv = [sys.argv[0], '--device', 'cuda:1', '--num_workers', '0']
     small_datasets = ['pubmed', 'amazon-photo', 'amazon-computers', 'coauthor-physics', 'flickr', 'com-amazon']
-    run_all(file_name='sampling_training_final_v1', dir_name='sampling_training_final_v1', datasets=small_datasets, models=ALL_MODELS, rses=[None] + EXP_RELATIVE_BATCH_SIZE,
+    run_all(file_name='sampling_training_final_v1', dir_name='sampling_training_final_v1', datasets=['com-amazon'], models=ALL_MODELS, rses=[None] + EXP_RELATIVE_BATCH_SIZE,
          modes=['cluster', 'graphsage'], pin_memorys=[False], workers=[0], non_blockings=[False])

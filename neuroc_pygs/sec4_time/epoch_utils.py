@@ -1,6 +1,28 @@
 import os, sys
 import torch
 import numpy as np
+import torch.nn.functional as F
+
+def train_full(model, data, optimizer):
+    model.train()
+    out = model(data.x, data.edge_index)
+    loss = F.nll_loss(F.log_softmax(out, dim=1)[data.train_mask], data.y[data.train_mask])
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+    return loss.item()
+
+
+@torch.no_grad()
+def test_full(model, data):
+    model.eval()
+    out = model(data.x, data.edge_index)
+    logits, accs = F.log_softmax(out, dim=1), []
+    for _, mask in data('train_mask', 'val_mask', 'test_mask'):
+        pred = logits[mask].max(1)[1]
+        acc = pred.eq(data.y[mask]).sum().item() / mask.sum().item()
+        accs.append(acc)
+    return accs
 
 
 @torch.no_grad()
