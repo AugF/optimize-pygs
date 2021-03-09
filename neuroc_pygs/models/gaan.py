@@ -118,23 +118,30 @@ class GaAN(Module):
         return x_all
 
 
-    def inference_base(self, x_all, subgraph_loader):
+    def inference_base(self, x_all, subgraph_loader, df):
         device = torch.device(self.device)
         
         loader_num = len(subgraph_loader)
         for i in range(self.layers):
             xs = []
             # 
-            for batch in subgraph_loader:
+            loader_iter = iter(subgraph_loader)
+            for _ in range(loader_num):
+                t0 = time.time()
+                batch = next(loader_iter)
                 batch_size, n_id, adj = batch
+                t1 = time.time()
                 edge_index, _, size = adj.to(device)
                 x = x_all[n_id].to(device)
+                t2 = time.time()
                 
                 x = self.convs[i](x, edge_index, size=size[1])
                 if i != self.layers - 1:
                     x = F.leaky_relu(x, self.negative_slop)
                     x = F.dropout(x, p=self.dropout, training=self.training)
                 xs.append(x.cpu())
+                t3 = time.time()
+                df.append([t1 - t0, t2 - t1, t3 - t2])
             x_all = torch.cat(xs, dim=0)
         return x_all
 
@@ -147,7 +154,7 @@ class GaAN(Module):
             # 
             for batch in subgraph_loader:
                 batch_size, n_id, adj = batch
-                edge_index, _, size = adj
+                edge_index, _, size = adj.to(device)
                 x = x_all[n_id].to(device)
 
                 x = self.convs[i](x, edge_index, size=size[1])

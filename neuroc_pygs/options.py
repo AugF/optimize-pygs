@@ -92,7 +92,13 @@ def get_args():
     parser.add_argument('--eval_step', type=int,
                         default=1, help='eval step')
     parser.add_argument('--checkpoint_dir', type=str,
-                        default='/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/checkpoints', help='eval step')
+                        default='/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec4_time/exp_checkpoints', help='eval step')
+    
+    # for opt
+    parser.add_argument('--opt_train_flag', type=int,
+                        default=0, help='opt_flag')
+    parser.add_argument('--opt_eval_flag', type=int,
+                        default=0, help='opt_flag')
     args = parser.parse_args()
     args.gpu = args.nvtx_flag and torch.cuda.is_available() # nvtx
     args.flag = not args.json_path == ''

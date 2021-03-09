@@ -7,24 +7,20 @@ import pyinotify
 import asyncio
 import copy
 
-from neuroc_pygs.train_step import test, infer
+from neuroc_pygs.sec4_time.epoch_utils import infer
+from neuroc_pygs.samplers.cuda_prefetcher import CudaDataLoader
 from neuroc_pygs.options import get_args, build_dataset, build_subgraphloader, build_model
 
 
-def evaluate(model_path, best_val_acc, model, data, subgraph_loader, args):
-    # t1 = time.time()
+def evaluate(model_path, model, data, subgraph_loader):
     save_dict = torch.load(model_path)
     model.load_state_dict(save_dict['model_state_dict'])
-    if args.infer_layer:
-        val_acc, _ = infer(model, data, subgraph_loader, args, split="val")
-    else:
-        val_acc, _ = test(model, data, subgraph_loader, args, split="val")
-    epoch, train_acc = save_dict['epoch'], save_dict['train_acc']
-    print(f"Epoch: {epoch:03d}, Accuracy: Train: {train_acc:.4f}, Val: {val_acc:.4f}")
-    if val_acc > best_val_acc:
-        best_val_acc = val_acc
-        best_model = copy.deepcopy(model)
-    return best_model, best_val_acc, True
+    t1 = time.time()
+    accs, losses = infer(model, data, subgraph_loader)
+    t2 = time.time()
+    epoch, train_time = save_dict['epoch'], save_dict['train_time']
+    print(f'Epoch: {epoch:03d}, Train: {accs[0]:.8f}, Val: {accs[1]:.8f}, Test: {accs[2]:.8f}, Train Time: {train_time}, Val Time: {t2-t1}')
+    return
 
 
 class CREATE_EventHandler(pyinotify.ProcessEvent):
@@ -38,16 +34,10 @@ class CREATE_EventHandler(pyinotify.ProcessEvent):
         newest_file = os.path.join(
             self.args.checkpoint_dir, 'model_%d.pth' % self.cur_epoch)
         if os.path.exists(newest_file):
-            self.best_model, self.best_val_acc, stopping_flag = evaluate(
-                newest_file, self.best_val_acc, self.model, self.data, self.subgraph_loader, self.args)
-            self.cur_epoch += self.args.eval_step
-            if stopping_flag or self.cur_epoch >= self.args.epochs:
-                if self.args.infer_layer:
-                    test_acc, _ = infer(self.best_model, self.data, self.subgraph_loader, self.args, split="test")
-                else:
-                    test_acc, _ = test(self.best_model, self.data, self.subgraph_loader, self.args, split="test")
-                print(f"final test acc: {test_acc:.4f}")
-                torch.save(self.best_model.state_dict(), os.path.join(self.args.checkpoint_dir, 'opt_trainer_best_model.pth'))
+            stopping_flag = evaluate(
+                newest_file, self.model, self.data, self.subgraph_loader)
+            self.cur_epoch += 1
+            if self.cur_epoch >= self.args.epochs:
                 self.loop.stop()
                 sys.exit(0)
         else:
@@ -56,8 +46,12 @@ class CREATE_EventHandler(pyinotify.ProcessEvent):
 
 def run_eval():
     args = get_args()
+    # print(args)
     data = build_dataset(args)
     subgraph_loader = build_subgraphloader(args, data)
+    if args.opt_eval_flag:
+        subgraph_loader = CudaDataLoader(subgraph_loader, args.device, sampler='infer_sage')
+
     model = build_model(args, data)
     model = model.to(args.device)
     # print("begin eval")

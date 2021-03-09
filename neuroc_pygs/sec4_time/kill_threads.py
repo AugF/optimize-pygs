@@ -1,7 +1,7 @@
 import os
 import sys
 
-pyPath = '-u exp2_sampling_inference.py'
+pyPath = 'run_sampling_3_9'
 
 lines = os.popen('ps -aux | grep %s' % pyPath)
 for path in lines:
@@ -11,4 +11,4 @@ for path in lines:
         continue
 
     print(progress , client)
-    os.popen('kill -9 %s' % progress)
+    # os.popen('kill -9 %s' % progress)

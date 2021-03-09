@@ -10,6 +10,7 @@ from neuroc_pygs.configs import PROJECT_PATH
 
 def trainer(): # 训练函数可定制化
     data, train_loader, subgraph_loader, model, optimizer, args = prepare_trainer()
+    print(args)
     model = model.to(args.device)
     # step1 fit
     best_val_acc = 0
@@ -34,7 +35,7 @@ def trainer(): # 训练函数可定制化
     else:
         test_acc, _ = test(best_model, data, subgraph_loader, args, split="test")
     print(f"final test acc: {test_acc:.4f}")
-    torch.save(best_model.state_dict(), osp.join(args.checkpoint_dir, 'trainer_{args.model}_{args.dataset}_best_model.pth'))
+    torch.save(best_model.state_dict(), osp.join(args.checkpoint_dir, f'trainer_base_{args.model}_{args.dataset}_best_model.pth'))
     return
 
 

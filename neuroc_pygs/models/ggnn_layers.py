@@ -157,16 +157,22 @@ class GatedGraphConv(MessagePassing):
             print(f"avg_batch_train_time: {train_time}, avg_batch_sampling_time:{sampling_time}, avg_batch_to_time: {to_time}")
         return x_all
     
-    def inference_base(self, x_all, subgraphloader):
+    def inference_base(self, x_all, subgraph_loader, df):
         device = torch.device(self.device)
+
+        loader_num = len(subgraph_loader)
         for i in range(self.num_layers):
-
             xs = []
-            for batch in subgraphloader:
+            # 
+            loader_iter = iter(subgraph_loader)
+            for _ in range(loader_num):
+                t0 = time.time()
+                batch = next(loader_iter)
                 batch_size, n_id, adj = batch
-
+                t1 = time.time()
                 edge_index, _, size = adj.to(device)
                 x = x_all[n_id].to(device)
+                t2 = time.time()
 
                 # GRU单元
                 m = torch.matmul(x, self.weight[i]) # vertex cal
@@ -176,8 +182,11 @@ class GatedGraphConv(MessagePassing):
                 if i != self.num_layers - 1:
                     x = F.relu(x)
                 xs.append(x.cpu())
+                t3 = time.time()
+                df.append([t1 - t0, t2 - t1, t3 - t2])
             x_all = torch.cat(xs, dim=0)
         return x_all
+
 
     def inference_cuda(self, x_all, subgraphloader):
         device = torch.device(self.device)
@@ -187,7 +196,7 @@ class GatedGraphConv(MessagePassing):
             for batch in subgraphloader:
                 batch_size, n_id, adj = batch
 
-                edge_index, _, size = adj
+                edge_index, _, size = adj.to(device)
                 x = x_all[n_id].to(device)
 
                 # GRU单元

@@ -26,14 +26,10 @@ class CudaDataLoader(object):
         # The loop that will load into the queue in the background
         while True:
             for i, sample in enumerate(self.loader):
-                batch = self.load_instance(sample)
-                if self.sampler == 'graphsage':
-                    batch_size, n_id, adj = batch
-                    x, y = self.data.x[n_id], self.data.y[n_id[:batch_size]]
-                    with torch.cuda.stream(self.load_stream):
-                        x, y = x.to(self.device, non_blocking=True), y.to(self.device, non_blocking=True)
-                    batch = [batch_size, n_id, adj, x, y]
-                self.queue.put(batch)
+                if self.sampler == 'infer_sage':
+                    self.queue.put(sample)
+                else:
+                    self.queue.put(self.load_instance(sample))
 
     def load_instance(self, sample):
         """ 将batch数据从CPU加载到GPU中 """

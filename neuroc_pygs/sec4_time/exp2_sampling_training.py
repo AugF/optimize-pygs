@@ -1,4 +1,5 @@
 import os
+import copy
 import time 
 import traceback
 import numpy as np
@@ -11,60 +12,42 @@ from neuroc_pygs.configs import ALL_MODELS, MODES, EXP_DATASET, PROJECT_PATH, EX
 from neuroc_pygs.samplers.cuda_prefetcher import CudaDataLoader
 
 
-def train(model, optimizer, data, loader, device, mode, non_blocking=False):
+def train(model, optimizer, data, loader, device, mode, df, non_blocking=False):
     model.reset_parameters()
     model.train()
-    all_acc, all_loss = [], []
-    for batch in loader:
+    all_loss = []
+    loader_num, loader_iter = len(loader), iter(loader)
+    for _ in range(loader_num):
+        t0 = time.time()
         if mode == 'cluster':
-            optimizer.zero_grad()
+            batch = next(loader_iter)
+            t1 = time.time()
             batch = batch.to(device, non_blocking=non_blocking)
+            t2 = time.time()
+            batch_size = batch.train_mask.sum().item()
+            optimizer.zero_grad()
             logits = model(batch.x, batch.edge_index)
             loss = model.loss_fn(logits[batch.train_mask], batch.y[batch.train_mask])
             loss.backward()
-            acc = model.evaluator(logits[batch.train_mask], batch.y[batch.train_mask])
             optimizer.step()
         elif mode == 'graphsage':
-            batch_size, n_id, adjs = batch
+            batch_size, n_id, adjs = next(loader_iter)
             x, y = data.x[n_id], data.y[n_id[:batch_size]]
+            t1 = time.time()
             x, y = x.to(device, non_blocking=non_blocking), y.to(device, non_blocking=non_blocking)
             adjs = [adj.to(device, non_blocking=non_blocking) for adj in adjs]
+            t2 = time.time()
             # task3
-            logits = model(x, adjs)
-            loss = model.loss_fn(logits, y)
-            loss.backward()
-            acc = model.evaluator(logits, y) / batch_size
-            optimizer.step()
-        all_loss.append(loss.item())
-        all_acc.append(acc)
-    return np.mean(all_acc), np.mean(all_loss)
-
-
-def train_cuda(model, optimizer, data, loader, device, mode, non_blocking=False):
-    model.reset_parameters()
-    model.train()
-    all_acc, all_loss = [], []
-    for batch in loader:
-        if mode == 'cluster':
             optimizer.zero_grad()
-            # batch = batch.to(device)
-            logits = model(batch.x, batch.edge_index)
-            loss = model.loss_fn(logits[batch.train_mask], batch.y[batch.train_mask])
-            loss.backward()
-            acc = model.evaluator(logits[batch.train_mask], batch.y[batch.train_mask])
-            optimizer.step()
-        elif mode == 'graphsage':
-            batch_size, n_id, adjs = batch
-            x, y = data.x[n_id], data.y[n_id[:batch_size]]
-            x, y = x.to(device, non_blocking=non_blocking), y.to(device, non_blocking=non_blocking)
             logits = model(x, adjs)
             loss = model.loss_fn(logits, y)
             loss.backward()
-            acc = model.evaluator(logits, y) / batch_size
             optimizer.step()
-        all_loss.append(loss.item())
-        all_acc.append(acc)
-    return np.mean(all_acc), np.mean(all_loss)
+        all_loss.append(loss.item() * batch_size)
+        t3 = time.time()
+        df.append([t1 - t0, t2 - t1, t3 - t2])
+        # print(f'Batch {_}: sampling time: {t1-t0}, to_time: {t2-t1}, training_time: {t3-t2}')
+    return np.sum(all_loss) / int(data.train_mask.sum())
 
 
 def run_all(file_name='sampling_training_final', dir_name='sampling_train', datasets=EXP_DATASET, models=ALL_MODELS, rses=[None]+EXP_RELATIVE_BATCH_SIZE,
@@ -72,13 +55,16 @@ def run_all(file_name='sampling_training_final', dir_name='sampling_train', data
     args = get_args()
     print(args)
 
-    tab_data = []
-    headers = ['Name', 'Baseline', 'Opt', 'Ratio Avg(%)', 'Avg Ratio(%)']
-
+    headers = ['Name', 'Base Sampling', 'Base Transfer', 'Base Training', 'Opt Sampling', 'Opt Transfer', 'Opt Training', 'Base max', 'Base min', 'Opt max', 'Opt min', 'Ratio(%)']
     for exp_data in datasets:
         args.dataset = exp_data
         data = build_dataset(args)
         print(f'begin {args.dataset} dataset ...')
+        data_path = os.path.join(PROJECT_PATH, 'sec4_time', 'exp_res', file_name + f'_{args.dataset}.csv')
+        print(data_path)
+        if os.path.exists(data_path):
+            continue
+        tab_data = []
         for exp_model in models: # 4
             args.model = exp_model
             model, optimizer = build_model_optimizer(args, data)
@@ -92,9 +78,6 @@ def run_all(file_name='sampling_training_final', dir_name='sampling_train', data
                         args.pin_memory = pin_memory
                         file_name = f'{args.dataset}_{args.model}_{args.relative_batch_size}_{args.mode}_pin_memory_{args.pin_memory}'
                         real_path = os.path.join(PROJECT_PATH, 'sec4_time', 'exp_res', dir_name, file_name + '.csv')
-                        # if os.path.exists(real_path):
-                        #     tmp_data = pd.read_csv(real_path, index_col=0).values
-                        # else:
                         if True:
                             tmp_data = []
                             for num_workers in workers: # 4
@@ -104,40 +87,37 @@ def run_all(file_name='sampling_training_final', dir_name='sampling_train', data
                                     print(cur_name)
                                     try:
                                         loader = build_train_loader(args, data)
-                                        opt_loader = CudaDataLoader(loader, device=args.device)
-                                        base_times, opt_times, ratios = [], [], []
-                                        for _ in range(5):
-                                            t0 = time.time()
-                                            train(model, optimizer, data, loader, args.device, args.mode, non_blocking)
-                                            t1 = time.time()
-                                            train_cuda(model, optimizer, data, opt_loader, args.device, args.mode, non_blocking)
-                                            t2 = time.time()
-                                            base_time, opt_time = t1 - t0, t2 - t1
-                                            ratio = 100 * (base_time - opt_time) / base_time
-                                            base_times.append(base_time)
-                                            opt_times.append(opt_time)
-                                            ratios.append(ratio)
-                                            print(f'base time: {base_time}, opt_time: {opt_time}, ratio: {ratio}')
-                                        avg_ratio = 100 * (np.mean(base_times) - np.mean(opt_times)) / np.mean(base_times)
-                                        res = [cur_name, np.mean(base_times), np.mean(opt_times), np.mean(ratios), avg_ratio, np.max(ratios)]
-                                        print(res)
+                                        opt_loader = CudaDataLoader(copy.deepcopy(loader), device=args.device)
+                                        loader_num = len(loader)
+                                        base_times, opt_times = [], []
+                                        for _ in range(50):
+                                            if _ * loader_num >= 50: break
+                                            train(model, optimizer, data, loader, args.device, args.mode, base_times, non_blocking=non_blocking)
+                                            train(model, optimizer, data, opt_loader, args.device, args.mode, opt_times, non_blocking=non_blocking)
+                                        
+                                        base_times, opt_times = np.array(base_times), np.array(opt_times)
+                                        avg_base_times, avg_opt_times, base_all_times, opt_all_times = np.mean(base_times, axis=0), np.mean(opt_times, axis=0), np.sum(base_times, axis=1), np.sum(opt_times, axis=1)
+                                        base_max_time, base_min_time = np.max(base_all_times), np.min(base_all_times)
+                                        base_time, opt_time, opt_max_time, opt_min_time = np.sum(avg_base_times), np.sum(avg_opt_times), np.max(opt_all_times), np.min(opt_all_times)
+                                        print(avg_base_times, avg_opt_times)
+                                        ratio = 100 * (base_time - opt_time) / base_time
+                                        print(f'base time: {base_time}, opt_time: {opt_time}, ratio: {ratio}')
+                                        res = [cur_name, avg_base_times[0], avg_base_times[1], avg_base_times[2], avg_opt_times[0], avg_opt_times[1], avg_opt_times[2], base_max_time, base_min_time, opt_max_time, opt_min_time, ratio]
                                         tmp_data.append(res)
                                         
                                     except Exception as e:
                                         print(e.args)
                                         print("======")
                                         print(traceback.format_exc())
-                            # pd.DataFrame(tmp_data, columns=headers).to_csv(real_path)
                         tab_data.extend(tmp_data)
 
-    pd.DataFrame(tmp_data, columns=headers).to_csv(os.path.join(PROJECT_PATH, 'sec4_time', 'exp_res', file_name + '.csv'))
-    # np.save(os.path.join(PROJECT_PATH, 'sec4_time', 'exp_res', file_name + '.npy'), np.array(tab_data))
-    print(tabulate(tab_data, headers=headers, tablefmt='github'))
+        pd.DataFrame(tab_data, columns=headers).to_csv(data_path)
+        print(tabulate(tab_data, headers=headers, tablefmt='github'))
 
 
 if __name__ == '__main__':
     import sys
-    sys.argv = [sys.argv[0], '--device', 'cuda:2', '--num_workers', '0']
+    sys.argv = [sys.argv[0], '--device', 'cuda:1', '--num_workers', '0']
     small_datasets = ['pubmed', 'amazon-photo', 'amazon-computers', 'coauthor-physics', 'flickr', 'com-amazon']
-    run_all(file_name='sampling_training_small_datasets_0', dir_name='sampling_train_small_datasets_0', datasets=small_datasets, models=ALL_MODELS, rses=[None] + EXP_RELATIVE_BATCH_SIZE,
+    run_all(file_name='sampling_training_final_v1', dir_name='sampling_training_final_v1', datasets=small_datasets, models=ALL_MODELS, rses=[None] + EXP_RELATIVE_BATCH_SIZE,
          modes=['cluster', 'graphsage'], pin_memorys=[False], workers=[0], non_blockings=[False])
