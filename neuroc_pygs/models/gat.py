@@ -79,10 +79,7 @@ class GAT(Module):
             log_memory(flag, device, f'layer{i} start')
 
             xs = []
-            if opt_loader:
-                loader_iter = BackgroundGenerator(iter(subgraph_loader))
-            else:
-                loader_iter = iter(subgraph_loader)
+            loader_iter = iter(subgraph_loader)
             while True:
                 try:
                     et0 = time.time()
@@ -113,6 +110,7 @@ class GAT(Module):
                         df['edges'].append(edge_index.shape[1])
                         df['memory'].append(torch.cuda.memory_stats(device)["allocated_bytes.all.peak"])
                     torch.cuda.reset_max_memory_allocated(device)
+                    torch.cuda.empty_cache()
                 except StopIteration:
                     break
             

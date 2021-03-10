@@ -56,11 +56,12 @@ def automl_exp():
             automl = AutoML()
             automl.fit(x_train[:end_step], y_train[:end_step], dataset_name=f'{model}_{end_step}')
             y_pred = automl.predict(x_test)
-            tab_data.append(get_metrics(y_pred, y_test))    
+            res = get_metrics(y_pred, y_test)
+            print(res)
+            tab_data.append(res)    
+            automl.save_model(f'{model}_{end_step}')
 
         print(tabulate(tab_data[1:], headers=tab_data[0], tablefmt="github"))
-        np.save(os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_res', f'{model}_automl_res.npy'), np.array(tab_data))
-
 
 if __name__ == '__main__':
     automl_exp()

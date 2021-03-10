@@ -29,7 +29,8 @@ def infer(model, data, subgraphloader, df=None):
     return accs, losses
 
 
-sys.argv = [sys.argv[0], '--device', 'cuda:1', '--num_workers', '0']
+default_args = '--hidden_dims 1024 --gaan_hidden_dims 256 --head_dims 128 --heads 4 --d_a 32 --d_v 32 --d_m 32'
+sys.argv = [sys.argv[0], '--device', 'cuda:1', '--num_workers', '0'] + default_args.split(' ')
 args = get_args()
 print(args)
 
@@ -66,6 +67,7 @@ for exp_data in small_datasets:
             ratio = 100 * (base_time - opt_time) / base_time
             print(f'base time: {base_time}, opt_time: {opt_time}, ratio: {ratio}')
             res = [cur_name, avg_base_times[0], avg_base_times[1], avg_base_times[2], avg_opt_times[0], avg_opt_times[1], avg_opt_times[2], base_max_time, base_min_time, opt_max_time, opt_min_time, ratio]
+            print(','.join([str(r) for r in res]))
             tab_data.append(res)
         except Exception as e:
             print(e.args)
@@ -73,5 +75,5 @@ for exp_data in small_datasets:
             print(traceback.format_exc())
 
 
-pd.DataFrame(tab_data, columns=headers).to_csv(os.path.join(PROJECT_PATH, 'sec4_time', 'exp_res', f'sampling_inference_final_v1.csv'))
+pd.DataFrame(tab_data, columns=headers).to_csv(os.path.join(PROJECT_PATH, 'sec4_time', 'exp_res', 'batch', f'sampling_inference_v1.csv'))
 print(tabulate(tab_data, headers=headers, tablefmt='github'))

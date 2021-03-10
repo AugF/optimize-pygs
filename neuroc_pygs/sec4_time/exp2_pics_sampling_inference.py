@@ -13,8 +13,9 @@ small_datasets = ['pubmed', 'amazon-photo', 'amazon-computers', 'coauthor-physic
 models = ['gcn', 'ggnn', 'gat', 'gaan']
 
 
-dir_path = os.path.join(PROJECT_PATH, 'sec4_time', 'exp_res')
-df = pd.read_csv(os.path.join(dir_path, 'sampling_inference_small_datasets_0_cpu_final.csv'), index_col=0)
+dir_in = os.path.join(PROJECT_PATH, 'sec4_time', 'exp_res')
+dir_path = os.path.join(PROJECT_PATH, 'sec4_time', 'exp_figs')
+df = pd.read_csv(os.path.join(dir_in, 'final', 'sampling_inference.csv'), index_col=0)
 df.index = df['Name']
 del df['Name']
 print(df)
@@ -48,7 +49,7 @@ for model in models:
 
     legend_colors = [Line2D([0], [0], color=c, lw=4) for c in colors]
     legend_hatchs = [Patch(facecolor='white', edgecolor='r', hatch='////'), Patch(facecolor='white',edgecolor='r', hatch='....'), Patch(facecolor='white', edgecolor='r', hatch='xxxx')]
-    ax.legend(legend_hatchs + legend_colors, ['Sampling', 'Data Transferring', 'Inference on GPU'] + ['Baseline', 'Optimize'], ncol=1, loc="upper left")
+    ax.legend(legend_hatchs + legend_colors, ['Sampling', 'Data Transferring', 'Inference on GPU'] + ['Baseline', 'Optimize'], ncol=1)
     ax.set_ylabel('Inference Time Per Batch (ms)')
     fig.savefig(dir_path + f'/exp_sampling_inference_{model}.png')
     plt.close()

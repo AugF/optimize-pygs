@@ -9,6 +9,7 @@ from neuroc_pygs.options import get_args, build_dataset, build_train_loader, bui
 
 def run_train():
     args = get_args()
+    print(f'opt epoch, opt_train_flag:{args.opt_train_flag}, opt_eval_flag:{args.opt_eval_flag}')
     print(args)
     data = build_dataset(args)
     train_loader = build_train_loader(args, data)

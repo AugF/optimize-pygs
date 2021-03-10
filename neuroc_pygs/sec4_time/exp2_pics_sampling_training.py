@@ -19,6 +19,15 @@ df.index = df['Name']
 del df['Name']
 print(df)
 
+# 不同的模型
+
+
+# 不同的数据集
+
+
+# 不同的BatchSize
+
+
 for model in models:
     base_times, opt_times, base_error, opt_error = [], [], [], []
     for data in small_datasets:

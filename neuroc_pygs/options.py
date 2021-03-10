@@ -25,6 +25,8 @@ def get_args():
                         help="layers for hidden layer")
     parser.add_argument('--hidden_dims', type=int,
                         default=64, help="hidden layer output dims")
+    parser.add_argument('--gaan_hidden_dims', type=int,
+                        default=64, help="hidden layer output dims")
     parser.add_argument('--heads', type=int, default=8,
                         help="gat or gaan model: heads")
     # head_dims * heads = hidden_dims
@@ -217,7 +219,7 @@ def build_model(args, data):
         model = GaAN(
             layers=args.layers,
             n_features=args.num_features, n_classes=args.num_classes,
-            hidden_dims=args.hidden_dims,
+            hidden_dims=args.gaan_hidden_dims,
             heads=args.heads, d_v=args.d_v,
             d_a=args.d_a, d_m=args.d_m, gpu=args.gpu,
             flag=args.flag, infer_flag=args.infer_flag, device=args.device

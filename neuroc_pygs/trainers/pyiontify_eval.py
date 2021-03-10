@@ -11,7 +11,7 @@ from neuroc_pygs.train_step import test, infer
 from neuroc_pygs.options import get_args, build_dataset, build_subgraphloader, build_model
 
 
-def evaluate(model_path, best_val_acc, model, data, subgraph_loader, args):
+def evaluate(model_path, best_model, best_val_acc, model, data, subgraph_loader, args):
     # t1 = time.time()
     save_dict = torch.load(model_path)
     model.load_state_dict(save_dict['model_state_dict'])
@@ -24,7 +24,7 @@ def evaluate(model_path, best_val_acc, model, data, subgraph_loader, args):
     if val_acc > best_val_acc:
         best_val_acc = val_acc
         best_model = copy.deepcopy(model)
-    return best_model, best_val_acc, True
+    return best_model, best_val_acc, False
 
 
 class CREATE_EventHandler(pyinotify.ProcessEvent):
@@ -32,6 +32,7 @@ class CREATE_EventHandler(pyinotify.ProcessEvent):
         self.loop = loop if loop else asyncio.get_event_loop()
         self.model, self.data, self.subgraph_loader, self.args = info
         self.cur_epoch = 0
+        self.best_model = None
         self.best_val_acc = 0
 
     def process_IN_CLOSE_WRITE(self, event):  # 名字自取
@@ -39,7 +40,7 @@ class CREATE_EventHandler(pyinotify.ProcessEvent):
             self.args.checkpoint_dir, 'model_%d.pth' % self.cur_epoch)
         if os.path.exists(newest_file):
             self.best_model, self.best_val_acc, stopping_flag = evaluate(
-                newest_file, self.best_val_acc, self.model, self.data, self.subgraph_loader, self.args)
+                newest_file, self.best_model, self.best_val_acc, self.model, self.data, self.subgraph_loader, self.args)
             self.cur_epoch += self.args.eval_step
             if stopping_flag or self.cur_epoch >= self.args.epochs:
                 if self.args.infer_layer:

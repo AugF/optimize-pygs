@@ -74,7 +74,7 @@ class GCN(Module):
                 
         return x
 
-    def inference(self, x_all, subgraph_loader, log_batch=False, opt_loader=False):
+    def inference(self, x_all, subgraph_loader, log_batch=False, opt_loader=False, df=None):
         device = torch.device(self.device)
         flag = self.infer_flag
         
@@ -112,6 +112,12 @@ class GCN(Module):
                     sampling_time += et1 - et0
                     to_time += et2 - et1
                     train_time += time.time() - et2
+                    if df is not None:
+                        df['nodes'].append(size[0])
+                        df['edges'].append(edge_index.shape[1])
+                        df['memory'].append(torch.cuda.memory_stats(device)["allocated_bytes.all.peak"])
+                    torch.cuda.reset_max_memory_allocated(device)
+                    torch.cuda.empty_cache()
                 except StopIteration:
                     break
             x_all = torch.cat(xs, dim=0)

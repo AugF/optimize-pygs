@@ -50,7 +50,7 @@ def train(model, optimizer, data, loader, device, mode, df, non_blocking=False):
     return np.sum(all_loss) / int(data.train_mask.sum())
 
 
-def run_all(file_name='sampling_training_final', dir_name='sampling_train', datasets=EXP_DATASET, models=ALL_MODELS, rses=[None]+EXP_RELATIVE_BATCH_SIZE,
+def run_all(file_name='sampling_training_final_v2', dir_name='sampling_train', datasets=EXP_DATASET, models=ALL_MODELS, rses=[None]+EXP_RELATIVE_BATCH_SIZE,
          modes=MODES, pin_memorys=[True, False], workers=list(range(0, 41, 10)), non_blockings=[True, False]):
     args = get_args()
     print(args)
@@ -69,6 +69,8 @@ def run_all(file_name='sampling_training_final', dir_name='sampling_train', data
             args.model = exp_model
             model, optimizer = build_model_optimizer(args, data)
             for exp_rs in rses: # 6
+                if exp_rs != None:
+                    exp_rs = float(exp_rs)
                 args.relative_batch_size = exp_rs
                 for exp_mode in modes: # 2
                     args.mode = exp_mode
@@ -103,6 +105,7 @@ def run_all(file_name='sampling_training_final', dir_name='sampling_train', data
                                         ratio = 100 * (base_time - opt_time) / base_time
                                         print(f'base time: {base_time}, opt_time: {opt_time}, ratio: {ratio}')
                                         res = [cur_name, avg_base_times[0], avg_base_times[1], avg_base_times[2], avg_opt_times[0], avg_opt_times[1], avg_opt_times[2], base_max_time, base_min_time, opt_max_time, opt_min_time, ratio]
+                                        print(','.join([str(r) for r in res]))
                                         tmp_data.append(res)
                                         
                                     except Exception as e:
@@ -111,13 +114,37 @@ def run_all(file_name='sampling_training_final', dir_name='sampling_train', data
                                         print(traceback.format_exc())
                         tab_data.extend(tmp_data)
 
-        pd.DataFrame(tab_data, columns=headers).to_csv(data_path)
+        # pd.DataFrame(tab_data, columns=headers).to_csv(data_path)
         print(tabulate(tab_data, headers=headers, tablefmt='github'))
 
 
+def do_failed():
+    failed = """coauthor-physics_gcn_0.06_cluster, coauthor-physics_gcn_0.1_cluster, 
+            coauthor-physics_gat_0.01_graphsage, 
+            coauthor-physics_ggnn_0.01_cluster, coauthor-physics_ggnn_0.03_cluster, 
+            flickr_gcn_None_graphsage, flickr_gcn_0.01_graphsage, flickr_gcn_0.03_graphsage, 
+            flickr_gat_0.01_graphsage, flickr_ggnn_0.01_graphsage, flickr_ggnn_0.03_graphsage, 
+            flickr_ggnn_0.06_graphsage, flickr_ggnn_0.1_graphsage, flickr_gaan_0.01_graphsage, 
+            flickr_gaan_0.03_graphsage, flickr_gaan_0.06_graphsage, flickr_gaan_0.1_graphsage"""
+            
+    failed = [x.strip() for x in failed.split(', ')]
+    for f in failed:
+        xs = f.split('_')
+        print(xs)
+        data, model, rs, mode = xs
+        run_all(file_name='sampling_training_final_v2', dir_name='sampling_training_final_v3', datasets=[data], models=[model], rses=[rs],
+        modes=[mode], pin_memorys=[False], workers=[0], non_blockings=[False])
+        
+        
 if __name__ == '__main__':
     import sys
-    sys.argv = [sys.argv[0], '--device', 'cuda:1', '--num_workers', '0']
-    small_datasets = ['pubmed', 'amazon-photo', 'amazon-computers', 'coauthor-physics', 'flickr', 'com-amazon']
-    run_all(file_name='sampling_training_final_v1', dir_name='sampling_training_final_v1', datasets=['com-amazon'], models=ALL_MODELS, rses=[None] + EXP_RELATIVE_BATCH_SIZE,
-         modes=['cluster', 'graphsage'], pin_memorys=[False], workers=[0], non_blockings=[False])
+    default_args = '--hidden_dims 1024 --gaan_hidden_dims 256 --head_dims 128 --heads 4 --d_a 32 --d_v 32 --d_m 32'
+    sys.argv = [sys.argv[0], '--device', 'cuda:1', '--num_workers', '0'] + default_args.split(' ')
+    # small_datasets = ['reddit', 'yelp', 'amazon']
+    small_datasets = ['pubmed', 'amazon-photo', 'amazon-computers', 'coauthor-physics', 'flickr']
+    # run_all(file_name='sampling_training_final_v2', dir_name='sampling_training_final_v2', datasets=small_datasets, models=['gcn', 'gat'], rses=[None],
+    #      modes=['cluster', 'graphsage'], pin_memorys=[False], workers=[0], non_blockings=[False])
+    run_all(file_name='sampling_training_tmp12', dir_name='sampling_training_final_v3', datasets=['coauthor-physics'], models=['gat'], rses=[None],
+         modes=['cluster'], pin_memorys=[False], workers=[0], non_blockings=[False])
+
+
