@@ -3,47 +3,44 @@ import torch
 import traceback
 import numpy as np
 import pandas as pd
+from joblib import load
 from collections import defaultdict
 from torch_geometric.data import ClusterData, ClusterLoader, NeighborSampler
 from neuroc_pygs.configs import EXP_DATASET, ALL_MODELS, EXP_RELATIVE_BATCH_SIZE, MODES, PROJECT_PATH
 from neuroc_pygs.options import get_args, build_dataset, build_model_optimizer
 
+memory_limit = {
+    'gcn': 6.5,
+    'gat': 8
+}
+dir_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_motivation_datasets')
 
 def train(model, data, train_loader, optimizer, args, df, cnt):
     model = model.to(args.device) # special
-    device, mode = args.device, args.mode
+    device = args.device
     model.train()
 
     loader_iter, loader_num = iter(train_loader), len(train_loader)
     for i in range(loader_num):
-        if mode == "cluster":
-            # task1
-            optimizer.zero_grad()
-            batch = next(loader_iter)
-            # task2
-            batch = batch.to(device)
-            df['nodes'].append(batch.x.shape[0])
-            df['edges'].append(batch.edge_index.shape[1])
-            # task3
-            logits = model(batch.x, batch.edge_index)
-            loss = model.loss_fn(logits[batch.train_mask], batch.y[batch.train_mask])
-            loss.backward()
-            acc = model.evaluator(logits[batch.train_mask], batch.y[batch.train_mask])
-            optimizer.step()
-        else:
-            # task1
-            batch_size, n_id, adjs = next(loader_iter)
-            x, y = data.x[n_id], data.y[n_id[:batch_size]]
-            x, y = x.to(device), y.to(device)
-            adjs = [adj.to(device) for adj in adjs]
-            df['nodes'].append(adjs[0][2][0])
-            df['edges'].append(adjs[0][0].shape[1])
-            # task3
-            logits = model(x, adjs)
-            loss = model.loss_fn(logits, y)
-            loss.backward()
-            acc = model.evaluator(logits, y) / batch_size
-            optimizer.step()
+        # task1
+        optimizer.zero_grad()
+        batch = next(loader_iter)
+        # task2
+        batch = batch.to(device)
+        node, edge = batch.x.shape[0], batch.edge_index.shape[1]
+        reg = load(dir_path + f'/{args.model}_linear_model_v1.pth')
+        memory_pre = reg.predict([[node, edge]]) / 1024
+        if memory_pre > memory_limit[args.model]:
+            print(f'{node}, {edge}, {memory_pre * 1024 * 1024 * 1024}, pass')
+            continue
+        df['nodes'].append(node)
+        df['edges'].append(edge)
+        # task3
+        logits = model(batch.x, batch.edge_index)
+        loss = model.loss_fn(logits[batch.train_mask], batch.y[batch.train_mask])
+        loss.backward()
+        acc = model.evaluator(logits[batch.train_mask], batch.y[batch.train_mask])
+        optimizer.step()
         print(f'batch {i}, train_acc: {acc:.4f}, train_loss: {loss.item():.4f}')
         df['memory'].append(torch.cuda.memory_stats(device)["allocated_bytes.all.peak"])
         torch.cuda.reset_max_memory_allocated(device)
@@ -113,20 +110,12 @@ def run_all(exp_datasets=EXP_DATASET, exp_models=ALL_MODELS, exp_modes=MODES, ex
             model, optimizer = build_model_optimizer(args, data)
             print(model)
             args.mode = 'cluster'
-            # if exp_model == 'gat':
-            #     re_bs = [100, 150, 250]
-            #     for rs in re_bs:
-            #         args.batch_partitions = rs
-            #         file_name = '_'.join([args.dataset, args.model, str(rs), args.mode, 'v1'])
-            #         run_one(file_name, args, model, data, optimizer)
-            # else:
             if True:
-                re_bs = [180, 185, 190]
+                re_bs = [175, 180, 185]
                 for rs in re_bs:
                     args.batch_partitions = rs
-                    file_name = '_'.join([args.dataset, args.model, str(rs), args.mode, 'v1'])
-                    run_one(file_name, args, model, data, optimizer)
-                        
+                    file_name = '_'.join([args.dataset, args.model, str(rs), args.mode, 'linear_model_v1'])
+                    run_one(file_name, args, model, data, optimizer)       
     return
 
 

@@ -77,7 +77,7 @@ def run_one(file_name, args, model, data, optimizer):
     print(file_name)
     base_memory = torch.cuda.memory_stats(args.device)["allocated_bytes.all.current"]
     print(f'base memory: {base_memory}')
-    real_path = os.path.join(PROJECT_PATH, 'sec5_memory/exp_motivation', file_name) + '.csv'
+    real_path = os.path.join(PROJECT_PATH, 'sec5_memory/motivation', file_name) + '.csv'
     if os.path.exists(real_path):
         res = pd.read_csv(real_path, index_col=0).to_dict(orient='list')
     else:
@@ -103,30 +103,32 @@ def run_one(file_name, args, model, data, optimizer):
 def run_all(exp_datasets=EXP_DATASET, exp_models=ALL_MODELS, exp_modes=MODES, exp_relative_batch_sizes=EXP_RELATIVE_BATCH_SIZE):
     args = get_args()
     print(f"device: {args.device}")
-    for exp_data in ['yelp', 'reddit']:
+    for exp_data in ['yelp', 'amazon']:
         args.dataset = exp_data
         data = build_dataset(args)
         print('build data success')
-        for exp_model in ['gcn', 'gat']:
+        for exp_model in ['gat']:
             args.model = exp_model
             data = data.to('cpu')
             model, optimizer = build_model_optimizer(args, data)
             print(model)
-            args.mode = 'cluster'
-            # if exp_model == 'gat':
-            #     re_bs = [100, 150, 250]
-            #     for rs in re_bs:
-            #         args.batch_partitions = rs
-            #         file_name = '_'.join([args.dataset, args.model, str(rs), args.mode, 'v1'])
-            #         run_one(file_name, args, model, data, optimizer)
-            # else:
-            if True:
-                re_bs = [180, 185, 190]
-                for rs in re_bs:
-                    args.batch_partitions = rs
-                    file_name = '_'.join([args.dataset, args.model, str(rs), args.mode, 'v1'])
-                    run_one(file_name, args, model, data, optimizer)
-                        
+            for exp_mode in MODES:
+                args.mode = exp_mode
+                if exp_mode == 'cluster':
+                    if exp_data == 'amazon':
+                        re_bs = [0.01, 0.02, 0.04]
+                    else:
+                        re_bs = [0.1, 0.2, 0.4]
+                    for exp_relative_batch_size in re_bs:
+                        args.relative_batch_size = exp_relative_batch_size
+                        file_name = '_'.join([args.dataset, args.model, str(args.relative_batch_size), args.mode, 'final'])
+                        run_one(file_name, args, model, data, optimizer)
+                else:
+                    for bs in [51200, 102400, 204800]:
+                        args.batch_size = bs
+                        file_name = '_'.join([args.dataset, args.model, str(args.batch_size), args.mode, 'final'])
+                        run_one(file_name, args, model, data, optimizer)
+                            
     return
 
 
@@ -140,7 +142,4 @@ def test_run_one():
 
 
 if __name__ == '__main__':
-    import sys
-    default_args = '--hidden_dims 1024 --gaan_hidden_dims 256 --head_dims 128 --heads 4 --d_a 32 --d_v 32 --d_m 32'
-    sys.argv = [sys.argv[0], '--device', 'cuda:2', '--num_workers', '0'] + default_args.split(' ')
     run_all()

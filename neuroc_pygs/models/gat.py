@@ -104,7 +104,7 @@ class GAT(Module):
                     sampling_time += et1 - et0
                     to_time += et2 - et1
                     train_time += time.time() - et2
-
+                    
                     if df is not None:
                         df['nodes'].append(size[0])
                         df['edges'].append(edge_index.shape[1])

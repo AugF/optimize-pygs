@@ -21,18 +21,6 @@ class EdgeIndex(NamedTuple):
         return EdgeIndex(edge_index, e_id, self.size)
 
 
-def get_dataset_info():
-    args = get_args()
-    tab_data = []
-    for exp_data in EXP_DATASET:
-        args.dataset = exp_data
-        data = build_dataset(args)
-        feats, classes, nodes, edges = args.num_features, args.num_classes, data.num_nodes, data.num_edges 
-        tab_data.append([args.dataset, nodes, edges, edges/nodes, feats, classes])
-
-    print(tabulate(tab_data, headers=['name', 'nodes', 'edges', 'avg_degrees', 'feats', 'classes'], tablefmt="github"))
-
-
 def get_adj(data, batch_size): # get same device
     N, E = data.num_nodes, data.num_edges
     adj = SparseTensor(
@@ -94,8 +82,8 @@ def get_metrics(y_pred, y_test):
 
 def get_automl_datasets(model='gcn'):
     # 之后再灵活变化来做
-    train_datasets = ['amazon-photo', 'amazon-computers', 'pubmed', 'ppi', 'flickr']
-    test_datasets = ['reddit', 'yelp', 'amazon']
+    train_datasets = ['amazon-photo', 'amazon-computers', 'pubmed']
+    test_datasets = ['ppi', 'flickr']
 
     x_train, y_train = [], []
     for data in train_datasets:

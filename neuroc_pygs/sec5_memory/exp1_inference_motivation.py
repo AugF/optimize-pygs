@@ -8,42 +8,48 @@ from neuroc_pygs.configs import PROJECT_PATH
 
 
 @torch.no_grad()
-def infer(model, data, subgraph_loader, args, df=None, split='test'):
+def infer(model, data, subgraph_loader, args, split='test'):
     device, log_batch, log_batch_dir = args.device, args.log_batch, args.log_batch_dir
     model.eval()
-    y_pred = model.inference(data.x, subgraph_loader, log_batch, df=df)
+    y_pred = model.inference(data.x, subgraph_loader, log_batch)
     y_true = data.y.cpu()
 
     mask = getattr(data, split + "_mask")
-    loss = model.loss_fn(y_pred[mask], y_true[mask])
     acc = model.evaluator(y_pred[mask], y_true[mask]) 
-    return acc, loss
+    return acc
 
 
+@torch.no_grad()
+def test_full(model, data, split='test'): 
+    model.eval()
+    y_pred = model(data.x, data.edge_index)
+    y_true = data.y.cpu()
+
+    mask = getattr(data, split + "_mask")
+    acc = model.evaluator(y_pred[mask], y_true[mask]) 
+    return acc
+
+
+import sys
+sys.argv = [sys.argv[0], '--device', 'cuda:0']
 args = get_args()
-args.model = 'gat'
-print(args)
-
-for exp_data in ['yelp', 'amazon']:
-    args.dataset =exp_data
-    data = build_dataset(args)
-    model = build_model(args, data)
-    model = model.to(args.device)
-    for bs in [51200, 102400, 204800]:
-        args.infer_batch_size = bs
-        subgraphloader = build_subgraphloader(args, data)
-
-        file_name = f'inference_{args.model}_{args.dataset}_{args.mode}_{bs}'
-        real_path = os.path.join(PROJECT_PATH, 'sec5_memory/motivation', file_name) + '.csv'
-        print(real_path)
-        torch.cuda.reset_max_memory_allocated(args.device)
-        if not os.path.exists(real_path):
+for exp_model in ['gcn', 'ggnn', 'gat', 'gaan']:
+    for exp_data in ['pubmed', 'amazon-photo', 'amazon-computers', 'coauthor-physics', 'flickr']:
+        args.dataset =exp_data
+        print(args)
+        data = build_dataset(args)
+        model = build_model(args, data)
+        model.reset_parameters()
+        model = model.to(args.device)
+        acc = test_full(model, data.to(args.device))
+        data = data.to('cpu')
+        print('full', acc)
+        for bs in [0.01, 0.03, 0.06, 0.1, 0.25, 0.5]:
+            args.infer_batch_size = int(data.x.shape[0] * bs)
+            subgraphloader = build_subgraphloader(args, data)
+            torch.cuda.reset_max_memory_allocated(args.device)
             res = defaultdict(list)
             num_loader = len(subgraphloader) * args.layers
-            for i in range(40):
-                if num_loader * i >= 40:
-                    break
-                infer(model, data, subgraphloader, args, df=res)
-            memory = np.array(res['memory'])
-            print(np.mean(memory), np.median(memory), np.max(memory) - np.min(memory))
-            pd.DataFrame(res).to_csv(real_path)
+            model.reset_parameters()
+            acc = infer(model, data, subgraphloader, args)
+            print(f'batchsize{bs}', acc)

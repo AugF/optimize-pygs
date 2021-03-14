@@ -48,9 +48,9 @@ def test_bsearch():
 # 如果某个点都被删完了，考虑删去n_id中的点，并修改sizes中的大小
 def get_degree(edge_index):
     degrees = defaultdict(int)
-    for v, w in edge_index:
-        degrees[v] += 1
-        degrees[w] += 1
+    for i in range(edge_index.shape[1]):
+        degrees[int(edge_index[0][i])] += 1
+        degrees[int(edge_index[1][i])] += 1
     return degrees
 
 
@@ -72,9 +72,10 @@ class CuttingStrategies(object):
 
     def check_nodes(self, degrees):
         new_id = []
-        for v in self.n_id:
-            if degrees[v]:
-                new_id.append(v)
+        for v in range(self.nodes):
+            # print(v)
+            if degrees[v] > 0:
+                new_id.append(self.n_id[v])
         return new_id, [len(new_id), self.batch_size]
     
     def getting_batch(self, method, cutting_nums):
@@ -83,18 +84,36 @@ class CuttingStrategies(object):
             outliers = np.random.choice(self.edges, cutting_nums)
             mask = list(set(range(self.edges)) - set(outliers))
             for idx in outliers:
-                degrees[self.edge_index[idx][0]] -= 1
-                degrees[self.edge_index[idx][1]] -= 1
-            edge_index, e_id = self.edge_index[mask], self.e_id[mask]
+                degrees[int(self.edge_index[0][idx])] -= 1
+                degrees[int(self.edge_index[1][idx])] -= 1
+            print(max(mask), self.edge_index.shape, self.e_id.shape)
+            edge_index, e_id = self.edge_index[:,mask], self.e_id[mask]
             n_id, sizes = self.check_nodes(degrees)
+            return edge_index, e_id, n_id, sizes # 简单版
             # batch_size, n_id, adjs 
             # [Adj(edge_index;  e_id; sizes),]
-            #return [self.batch_size, n_id, Adj(edge_index, e_id, sizes)]
+            # return [self.batch_size, n_id, Adj(edge_index, e_id, sizes)]
             # e_id这里不需要
 
 
-edges = 10
-cutting_nums = 3
-outliers = np.random.choice(edges, cutting_nums)
-mask = list(set(range(edges)) - set(outliers))
-print(outliers, mask)
+from neuroc_pygs.options import build_subgraphloader, get_args, build_dataset
+args = get_args()
+data = build_dataset(args)
+subgraphloader = build_subgraphloader(args, data)
+
+batch = next(iter(subgraphloader))
+print(batch)
+
+cs = CuttingStrategies(batch)
+edge_index = cs.edge_index
+cnt = 0
+# for i in range(edge_index.shape[1]):
+#     v, w = edge_index[:,i]
+#     # print(v, w)
+#     if v not in cs.n_id or w not in cs.n_id:
+#         cnt+=1 
+
+# print(edge_index.max(), edge_index.min(), edge_index.shape)
+# 边没有了, 删除对应的边就可以!!!
+edge_index, e_id, n_id, sizes = cs.getting_batch('random', 10)
+print(edge_index.shape, e_id.shape, len(n_id), sizes)

@@ -47,13 +47,14 @@ def infer(model, data, subgraph_loader, args, split="val", opt_loader=False):
 
 if __name__ == "__main__":
     import sys, os
+    default_args = '--hidden_dims 1024 --gaan_hidden_dims 256 --head_dims 128 --heads 4 --d_a 32 --d_v 32 --d_m 32'
     for data in ['yelp', 'amazon', 'reddit']:
         for model in ['gcn', 'gat']:
             for mode in ['cluster']:
-                file_path = osp.join(PROJECT_PATH, f'sec5_memory/exp_res/trainer_{model}_{data}_{mode}_best_model.pth')
+                file_path = osp.join(PROJECT_PATH, f'sec5_memory/exp_inference_cutting/trainer_{model}_{data}_{mode}_best_model.pth')
                 print(file_path)
                 if os.path.exists(file_path):
                     continue
                 sys.argv = [sys.argv[0], '--model', model, '--dataset', data,
-                    '--device', 'cuda:0', '--epochs', '50', '--mode', mode]
+                    '--device', 'cuda:0', '--epochs', '1000'] + default_args.split(' ')
                 trainer(model_path=file_path)

@@ -144,7 +144,7 @@ if __name__ == '__main__':
     small_datasets = ['pubmed', 'amazon-photo', 'amazon-computers', 'coauthor-physics', 'flickr']
     # run_all(file_name='sampling_training_final_v2', dir_name='sampling_training_final_v2', datasets=small_datasets, models=['gcn', 'gat'], rses=[None],
     #      modes=['cluster', 'graphsage'], pin_memorys=[False], workers=[0], non_blockings=[False])
-    run_all(file_name='sampling_training_tmp12', dir_name='sampling_training_final_v3', datasets=['coauthor-physics'], models=['gat'], rses=[None],
-         modes=['cluster'], pin_memorys=[False], workers=[0], non_blockings=[False])
+    run_all(file_name='sampling_training_tmp12', dir_name='sampling_training_final_v3', datasets=['flickr'], models=['gat'], rses=[0.25],
+         modes=['graphsage'], pin_memorys=[False], workers=[0], non_blockings=[False])
 
 
