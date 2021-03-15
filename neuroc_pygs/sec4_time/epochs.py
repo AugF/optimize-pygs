@@ -64,10 +64,10 @@ if __name__ == '__main__':
     small_datasets = ['pubmed', 'amazon-photo', 'amazon-computers', 'coauthor-physics', 'flickr']
     for model in ['gcn', 'gat']:
         tab_data = run_model(model=[model], data=['pubmed'])
-        with open(dir_path + f'sampling_epoch_{model}.txt', 'w') as f:
+        with open(dir_path + f'/sampling_epoch_{model}.txt', 'w') as f:
             f.write('\n'.join([str(t) for t in tab_data]))
 
     for data in ['amazon-computers', 'flickr']:
         tab_data = run_model(model=['ggnn', 'gaan'], data=[data])
-        with open(dir_path + f'sampling_epoch_{data}.txt', 'w') as f:
+        with open(dir_path + f'/sampling_epoch_{data}.txt', 'w') as f:
             f.write('\n'.join([str(t) for t in tab_data]))

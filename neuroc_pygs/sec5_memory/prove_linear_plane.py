@@ -52,11 +52,12 @@ def run():
 
 
 def get_linear_plane(model='gat'):
+    default_args = '--hidden_dims 1024 --gaan_hidden_dims 256 --head_dims 128 --heads 4 --d_a 32 --d_v 32 --d_m 32'
     tab_data = []
     for nodes in range(5000, 100001, 5000):
         for expect_edges in range(5000, 100001, 5000):
             exp_data = f'random_{int(nodes/1000)}k_{int(expect_edges/1000)}k'
-            sys.argv = [sys.argv[0], '--dataset', exp_data, '--device', 'cuda:2', '--model', model]
+            sys.argv = [sys.argv[0], '--dataset', exp_data, '--device', 'cuda:2', '--model', model] + default_args.split(' ')
             tab_data.append(run())
     np.save(os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_res', f'{model}_linear_plane_data.npy'), tab_data)
     print(tabulate(tab_data, headers=['Name', 'Nodes', 'Edges', 'Peak Memory'], tablefmt='github'))
