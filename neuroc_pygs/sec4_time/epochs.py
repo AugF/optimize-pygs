@@ -63,7 +63,7 @@ if __name__ == '__main__':
     dir_path = '/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec4_time/exp_res'
     small_datasets = ['pubmed', 'amazon-photo', 'amazon-computers', 'coauthor-physics', 'flickr']
     for model in ['gcn', 'gat']:
-        tab_data = run_model(model=[model], data=['pubmed'])
+        tab_data = run_model(model=[model], data=small_datasets)
         with open(dir_path + f'/sampling_epoch_{model}.txt', 'w') as f:
             f.write('\n'.join([str(t) for t in tab_data]))
 

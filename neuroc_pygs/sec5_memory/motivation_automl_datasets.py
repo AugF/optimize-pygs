@@ -111,10 +111,8 @@ if __name__ == '__main__':
     print(args)
     small_datasets = ['pubmed', 'amazon-photo', 'amazon-computers', 'coauthor-physics', 'flickr', 'reddit', 'yelp']
     for dataset in small_datasets:
-        for model in ['gcn', 'gat']:
-            args.model = model
-            file_path = PROJECT_PATH + f'/sec5_memory/exp_motivation_datasets/{model}_{dataset}_automl_datasets.csv'
-            print(file_path)
-            if os.path.exists(file_path):
-                continue
-            build_model_datasets(args, datasets=[dataset], file_path=file_path)
+        file_path = PROJECT_PATH + f'/sec5_memory/exp_motivation_datasets/{args.model}_{dataset}_automl_datasets.csv'
+        print(file_path)
+        if os.path.exists(file_path):
+            continue
+        build_model_datasets(args, datasets=[dataset], file_path=file_path)

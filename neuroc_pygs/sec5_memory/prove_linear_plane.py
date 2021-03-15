@@ -64,7 +64,7 @@ def get_linear_plane(model='gat'):
 
 
 def pics_linear_plane(model='gat'):
-    tab_data = np.load(os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_res', f'{model}_memory_linear_plane_data.npy'))
+    tab_data = np.load(os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_res', f'{model}_linear_plane_data.npy'))
     nodes = list(map(lambda x: int(x), tab_data[:, 1]))
     edges = list(map(lambda x: int(x), tab_data[:, 2]))
     memory = list(map(lambda x: int(x) / (1024*1024), tab_data[:, 3]))
@@ -77,8 +77,8 @@ def pics_linear_plane(model='gat'):
     ax.set_ylabel('Number of Edges', fontsize=12)
     ax.set_zlabel('Peak Memory (MB)', fontsize=12)
     ax.scatter3D(nodes, edges, memory, cmap='Blues')
-    fig.savefig(os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_figs', f'{model}_memory_2dims_curve_data.png'))
+    fig.savefig(os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_figs', f'{model}_linear_plane_data.png'))
 
 
 if __name__ == '__main__':
-    get_linear_plane()
+    pics_linear_plane()
