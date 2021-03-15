@@ -1,3 +1,4 @@
+# https://matplotlib.org/2.0.2/examples/pylab_examples/boxplot_demo2.html
 import os
 import numpy as np
 import pandas as pd
@@ -13,6 +14,7 @@ plt.rcParams['font.sans-serif']=['SimHei'] #用来正常显示中文标签
 plt.rcParams['axes.unicode_minus']=False #用来正常显示负号
 plt.rcParams["font.size"] = 14
 
+colors = plt.get_cmap('Greys')(np.linspace(0.15, 0.85, 2))
 mode = 'cluster'
 for model in ['gat', 'gcn']:
     fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(7, 7/2), tight_layout=True)
@@ -29,7 +31,7 @@ for model in ['gat', 'gcn']:
         
         for bs in batch_sizes:
             # read file
-            file_name = '_'.join([data, model, str(bs), mode, 'v1'])
+            file_name = '_'.join([data, model, str(bs), mode, 'linear_model_v1'])
             real_path = os.path.join(PROJECT_PATH, 'sec5_memory/exp_motivation', file_name) + '.csv'
             print(real_path)
             if os.path.exists(real_path):
@@ -38,9 +40,9 @@ for model in ['gat', 'gcn']:
             else:
                 res = []
             box_data.append(list(map(lambda x: x/(1024*1024*1024), res)))
-        ax.boxplot(box_data, labels=batch_sizes)
+        bp = ax.boxplot(box_data, labels=batch_sizes)
         
-    fig.savefig(os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_figs', f'{model}_{mode}_motivation.png'))
+    fig.savefig(os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_figs', f'{model}_{mode}_motivation_linear_model.png'))
 
 
 

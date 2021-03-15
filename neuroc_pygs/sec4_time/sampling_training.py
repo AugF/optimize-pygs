@@ -55,6 +55,7 @@ def run_all(file_name='sampling_training_final_v2', dir_name='sampling_train', d
     args = get_args()
     print(args)
 
+    tab_data = []
     headers = ['Name', 'Base Sampling', 'Base Transfer', 'Base Training', 'Opt Sampling', 'Opt Transfer', 'Opt Training', 'Base max', 'Base min', 'Opt max', 'Opt min', 'Ratio(%)']
     for exp_data in datasets:
         args.dataset = exp_data
@@ -64,7 +65,6 @@ def run_all(file_name='sampling_training_final_v2', dir_name='sampling_train', d
         print(data_path)
         if os.path.exists(data_path):
             continue
-        tab_data = []
         for exp_model in models: # 4
             args.model = exp_model
             model, optimizer = build_model_optimizer(args, data)
@@ -114,19 +114,16 @@ def run_all(file_name='sampling_training_final_v2', dir_name='sampling_train', d
                                         print(traceback.format_exc())
                         tab_data.extend(tmp_data)
 
-        # pd.DataFrame(tab_data, columns=headers).to_csv(data_path)
-        print(tabulate(tab_data, headers=headers, tablefmt='github'))
+    # pd.DataFrame(tab_data, columns=headers).to_csv(data_path)
+    print(tabulate(tab_data, headers=headers, tablefmt='github'))
 
         
 if __name__ == '__main__':
     import sys
     default_args = '--hidden_dims 1024 --gaan_hidden_dims 256 --head_dims 128 --heads 4 --d_a 32 --d_v 32 --d_m 32'
-    sys.argv = [sys.argv[0], '--device', 'cuda:1', '--num_workers', '0'] + default_args.split(' ')
-    # small_datasets = ['reddit', 'yelp', 'amazon']
-    small_datasets = ['pubmed', 'amazon-photo', 'amazon-computers', 'coauthor-physics', 'flickr']
-    # run_all(file_name='sampling_training_final_v2', dir_name='sampling_training_final_v2', datasets=small_datasets, models=['gcn', 'gat'], rses=[None],
-    #      modes=['cluster', 'graphsage'], pin_memorys=[False], workers=[0], non_blockings=[False])
-    run_all(file_name='sampling_training_tmp12', dir_name='sampling_training_final_v3', datasets=['flickr'], models=['gat'], rses=[0.25],
-         modes=['graphsage'], pin_memorys=[False], workers=[0], non_blockings=[False])
+    sys.argv = [sys.argv[0], '--device', 'cuda:1'] + default_args.split(' ')
+    small_datasets = ['pubmed', 'amazon-photo', 'amazon-computers', 'coauthor-physics', 'flickr', 'com-amazon']
+    run_all(file_name='sampling_training_tmp', dir_name='sampling_training_final_v3', datasets=small_datasets, models=['gcn', 'gat'], rses=[None],
+         modes=['cluster', 'graphsage'], pin_memorys=[False], workers=[0], non_blockings=[False])
 
 

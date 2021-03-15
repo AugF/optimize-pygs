@@ -2,7 +2,6 @@ import time, os
 import subprocess
 from neuroc_pygs.configs import PROJECT_PATH
 
-headers = ['Name', 'Baseline', 'Batch Opt', 'Epoch Opt', 'Opt']
 
 def opt_epoch(args=''):
     pro_train = subprocess.Popen(
@@ -22,12 +21,11 @@ def epoch(args=''):
 
 
 if __name__ == '__main__':
-    # for model in ['gcn', 'ggnn', 'gat', 'gaan']:
-    #     args = f'--dataset {data} --model {model}'
     from tabulate import tabulate
+    small_datasets = ['pubmed', 'amazon-photo', 'amazon-computers', 'coauthor-physics', 'flickr']
     tab_data = []
-    for model in ['gat']:
-        for data in ['com-amazon']:
+    for model in ['gcn', 'gat']:
+        for data in small_datasets:
             args = f'--dataset {data} --model {model} --hidden_dims 1024 --gaan_hidden_dims 256 --head_dims 128 --heads 4 --d_a 32 --d_v 32 --d_m 32 --epochs 100'
             try:
                 t1 = time.time()

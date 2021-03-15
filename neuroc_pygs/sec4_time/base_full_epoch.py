@@ -19,9 +19,6 @@ def epoch(): # 50取平均，删除一些异常元素
         accs = test_full(model, data)
         ed_time = time.time()
         print(f'Epoch: {epoch:03d}, train_time: {t0 - st_time}, eval_time: {ed_time - t0}, all_time: {ed_time - st_time}')
-        if epoch == 2:
-            st0 = st_time
-    print(f'final use time: {time.time() - st0}')
     return
 
 def run(): # 50取平均，删除一些异常元素
@@ -44,7 +41,8 @@ def run(): # 50取平均，删除一些异常元素
     return
 
 if __name__ == '__main__':
-    import sys
-    default_args = '--epochs 100 --hidden_dims 1024 --gaan_hidden_dims 256 --head_dims 128 --heads 4 --d_a 32 --d_v 32 --d_m 32'
-    sys.argv = [sys.argv[0]] + default_args.split(' ') + ['--model', 'gcn', '--dataset', 'amazon-computers']
-    run()
+    epoch()
+    # import sys
+    # default_args = '--epochs 100 --hidden_dims 1024 --gaan_hidden_dims 256 --head_dims 128 --heads 4 --d_a 32 --d_v 32 --d_m 32'
+    # sys.argv = [sys.argv[0]] + default_args.split(' ') + ['--model', 'gcn', '--dataset', 'amazon-computers']
+    # run()

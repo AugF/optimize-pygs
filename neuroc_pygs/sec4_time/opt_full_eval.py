@@ -21,10 +21,7 @@ def evaluate(model_path, model, data):
     overhead_time = t1 - ed_train_time
     print(f'Epoch: {epoch:03d}, opt_train: {t0-st_time}, opt_eval: {ed_time - t0}, opt_train_overhead: {t0-ed_train_time}, opt_eval_overhead: {t1 - t0}, train_time: {ed_train_time-st_time}, eval_time: {ed_time-t1}')
 
-    if epoch == 2:
-        return st_time
-    else:
-        return
+    return
     
 
 class CREATE_EventHandler(pyinotify.ProcessEvent):
@@ -38,13 +35,10 @@ class CREATE_EventHandler(pyinotify.ProcessEvent):
         newest_file = os.path.join(
             self.args.checkpoint_dir, 'model_full_%d.pth' % self.cur_epoch)
         if os.path.exists(newest_file):
-            res = evaluate(
+            evaluate(
                 newest_file, self.model, self.data)
-            if self.cur_epoch == 2:
-                self.st_time = res
             self.cur_epoch += 1
             if self.cur_epoch >= self.args.epochs:
-                print(f'final use time: {time.time() - self.st_time}')
                 self.loop.stop()
                 sys.exit(0)
         else:

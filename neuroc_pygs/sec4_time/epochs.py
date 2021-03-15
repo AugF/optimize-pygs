@@ -1,4 +1,5 @@
 import time, os
+import pandas as pd
 import subprocess
 from tabulate import tabulate
 from neuroc_pygs.samplers.cuda_prefetcher import CudaDataLoader
@@ -60,11 +61,11 @@ def run_model(model='gcn', data='amazon-computers'):
 
 
 if __name__ == '__main__':
-    # tab_data = run_model()
+    small_datasets = ['pubmed', 'amazon-photo', 'amazon-computers', 'coauthor-physics', 'flickr']
+    for model in ['gcn', 'gat']:
+        tab_data = run_model(model=[model], data=small_datasets)
+        pd.DataFrame(tab_data, columns=headers).to_csv(os.path.join(PROJECT_PATH, 'sec4_time', 'exp_res', f'sampling_epoch_{model}.csv'))
 
-    # small_datasets = ['pubmed', 'amazon-photo', 'amazon-computers', 'coauthor-physics', 'flickr', 'com-amazon']
-    # models = ['gcn']
-    # tab_data = run_model(model=models, data=small_datasets)
-    # import pandas as pd
-    # pd.DataFrame(tab_data, columns=headers).to_csv(os.path.join(PROJECT_PATH, 'sec4_time', 'exp_res', f'epoch_{models}_v2.csv'))
-    run_model(model='gcn', data='coauthor-physics')
+    for data in ['amazon-computers', 'flickr']:
+        tab_data = run_model(model=['ggnn', 'gaan'], data=[data])
+        pd.DataFrame(tab_data, columns=headers).to_csv(os.path.join(PROJECT_PATH, 'sec4_time', 'exp_res', f'sampling_epoch_{data}_v2.txt'))

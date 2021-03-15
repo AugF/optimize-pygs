@@ -112,8 +112,8 @@ def run_exp():
 
 
 if __name__ == '__main__':
-    build_datasets()
-    # run_exp()
+    # build_datasets()
+    run_exp()
     # reg = load(dir_path + f'/gcn_linear_model_v1.pth')
     # res = reg.predict([[85000, 85000]])
     # print(res)

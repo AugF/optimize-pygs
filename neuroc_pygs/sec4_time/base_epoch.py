@@ -60,8 +60,8 @@ def run():
 
 
 if __name__ == '__main__':
-    # epoch()
-    import sys
-    default_args = '--epochs 30 --hidden_dims 1024 --gaan_hidden_dims 256 --head_dims 128 --heads 4 --d_a 32 --d_v 32 --d_m 32'
-    sys.argv = [sys.argv[0]] + default_args.split(' ') + ['--model', 'gcn', '--dataset', 'amazon-computers']
-    run()
+    epoch()
+    # import sys
+    # default_args = '--epochs 30 --hidden_dims 1024 --gaan_hidden_dims 256 --head_dims 128 --heads 4 --d_a 32 --d_v 32 --d_m 32'
+    # sys.argv = [sys.argv[0]] + default_args.split(' ') + ['--model', 'gcn', '--dataset', 'amazon-computers']
+    # run()
