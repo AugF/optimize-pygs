@@ -173,8 +173,7 @@ def fit(model, data, loader, subgraph_loader, evaluator, optimizer, device, args
                     f'Approx Train Acc: {train_acc:.4f}')
 
         if epoch > 19 and epoch % args.eval_steps == 0:
-            out, result = test(model, data, evaluator, subgraph_loader, device)
-            train_acc, valid_acc, test_acc = result
+            train_acc, valid_acc, test_acc = test(model, data, evaluator, subgraph_loader, device)
             print(f'Epoch: {epoch:02d}, '
                     f'Train: {100 * train_acc:.2f}%, '
                     f'Valid: {100 * valid_acc:.2f}% '
@@ -187,11 +186,6 @@ def fit(model, data, loader, subgraph_loader, evaluator, optimizer, device, args
 
     torch.save(best_model.state_dict(), os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_res',  'cluster_gcn.pth'))
 
-
-def run_test(model, data, subgraph_loader, evaluator, device, df):
-    
-    train_acc, valid_acc, test_acc = result
-    print(test_acc)
 
 
 def get_args():
@@ -224,16 +218,38 @@ def prepare_data(args):
         mask[idx] = True
         data[f'{key}_mask'] = mask
     args.num_classes = dataset.num_classes
+    args.processed_dir = dataset.processed_dir
     return args, data
 
 
 def prepare_loader(args, data):
     cluster_data = ClusterData(data, num_parts=args.num_partitions,
-                               recursive=False, save_dir=dataset.processed_dir)
+                               recursive=False, save_dir=args.processed_dir)
 
     loader = ClusterLoader(cluster_data, batch_size=args.batch_size,
                            shuffle=True, num_workers=args.num_workers)
+    return loader
 
+
+def run_fit():
+    from collections import defaultdict
+    args = get_args()
+    print(args)
+    args, data = prepare_data(args)
+    loader = prepare_loader(args, data)
+    device = f'cuda:{args.device}' if torch.cuda.is_available() else 'cpu'
+    device = torch.device(device)
+    subgraph_loader = NeighborSampler(data.edge_index, sizes=[-1],
+                                      batch_size=args.infer_batch_size, shuffle=False,
+                                      num_workers=args.num_workers)
+    model = GCN(data.x.size(-1), args.hidden_channels, args.num_classes,
+                 args.num_layers, args.dropout).to(device)
+
+    evaluator = Evaluator(name='ogbn-products')
+    model.reset_parameters()
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+    fit(model, data, loader, subgraph_loader, evaluator, optimizer, device, args)
+    
 
 def run_test():
     from collections import defaultdict
@@ -277,6 +293,7 @@ def run_test():
 
 
 if __name__ == "__main__":
+    # run_fit()
     tab_data = []
     for bs in [1024, 2048, 4096, 8192, 16384]:
         sys.argv = [sys.argv[0], '--infer_batch_size', str(bs), '--device', '2']

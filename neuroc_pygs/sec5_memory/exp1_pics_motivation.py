@@ -29,8 +29,9 @@ for model in ['gat', 'gcn']:
         
         for bs in batch_sizes:
             # read file
-            file_name = '_'.join([data, model, str(bs), mode, 'linear_model_v1'])
+            file_name = '_'.join([data, model, str(bs), mode, 'v1'])
             real_path = os.path.join(PROJECT_PATH, 'sec5_memory/exp_motivation', file_name) + '.csv'
+            print(real_path)
             if os.path.exists(real_path):
                 res = pd.read_csv(real_path, index_col=0).to_dict(orient='list')['memory']
                 print(file_name, res)
@@ -39,7 +40,7 @@ for model in ['gat', 'gcn']:
             box_data.append(list(map(lambda x: x/(1024*1024*1024), res)))
         ax.boxplot(box_data, labels=batch_sizes)
         
-    fig.savefig(os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_figs', f'{model}_{mode}_motivation_linear_model.png'))
+    fig.savefig(os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_figs', f'{model}_{mode}_motivation.png'))
 
 
 

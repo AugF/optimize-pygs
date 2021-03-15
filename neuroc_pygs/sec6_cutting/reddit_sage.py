@@ -170,7 +170,8 @@ def fit(model, optimizer, train_loader, data, subgraph_loader):
 
 
 def run_fit():
-    dataset, train_loader, subgraph_loader = prepare_data()
+    args = get_args()
+    dataset, train_loader, subgraph_loader = prepare_data(args)
     model, optimizer = prepare_model_optimizer(dataset)
     data = dataset[0]
     fit(model, optimizer, train_loader, data, subgraph_loader)
@@ -212,7 +213,7 @@ def run_test():
 if __name__ == '__main__':
     tab_data = []
     for bs in [1024, 2048, 4096, 8192, 16384]:
-        sys.argv = [sys.argv[0], '--infer_batch_size', str(bs), '--device', '2']
+        sys.argv = [sys.argv[0], '--infer_batch_size', str(bs), '--device', '1']
         test_accs, times = run_test()
         tab_data.append([str(bs)] + list(test_accs) + list(times))
     pd.DataFrame(tab_data).to_csv(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_res', f'reddit_sage_acc.csv'))

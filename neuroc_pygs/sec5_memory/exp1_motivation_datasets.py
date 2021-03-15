@@ -49,7 +49,7 @@ def run():
     data = data.to(args.device)
     for epoch in range(2): # 实验测试都一样
         train(model, data, optimizer)
-        val_acc, val_loss = test(model, data, split='val')
+        # val_acc, val_loss = test(model, data, split='val')
         peak_memory = torch.cuda.memory_stats(args.device)["allocated_bytes.all.peak"]
         torch.cuda.reset_max_memory_allocated(args.device)
         print(f'Epoch: {epoch:03d}, peak_memory: {peak_memory}')
@@ -112,7 +112,8 @@ def run_exp():
 
 
 if __name__ == '__main__':
-    run_exp()
+    build_datasets()
+    # run_exp()
     # reg = load(dir_path + f'/gcn_linear_model_v1.pth')
     # res = reg.predict([[85000, 85000]])
     # print(res)

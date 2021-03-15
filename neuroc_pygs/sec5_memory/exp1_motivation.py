@@ -121,7 +121,7 @@ def run_all(exp_datasets=EXP_DATASET, exp_models=ALL_MODELS, exp_modes=MODES, ex
             #         run_one(file_name, args, model, data, optimizer)
             # else:
             if True:
-                re_bs = [180, 185, 190]
+                re_bs = [175, 180, 185]
                 for rs in re_bs:
                     args.batch_partitions = rs
                     file_name = '_'.join([args.dataset, args.model, str(rs), args.mode, 'v1'])

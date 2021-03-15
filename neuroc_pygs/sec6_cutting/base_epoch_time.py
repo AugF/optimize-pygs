@@ -9,6 +9,8 @@ from neuroc_pygs.sec4_time.epoch_utils import train_full, test_full
 
 
 dir_path = '/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec6_cutting/exp_cutting_model'
+if not os.path.exists(dir_path):
+    os.makedirs(dir_path)
 
 def epoch(): 
     args = get_args()
@@ -41,9 +43,9 @@ def epoch():
 from tabulate import tabulate
 tab_data = []
 small_datasets =  ['amazon-photo', 'pubmed', 'amazon-computers', 'coauthor-physics', 'flickr']
-for model in ['gcn']:
+for model in ['gcn', 'gat']:
     for data in small_datasets:
-        sys.argv = [sys.argv[0], '--model', model, '--dataset', data, '--epoch', '2000']
+        sys.argv = [sys.argv[0], '--model', model, '--dataset', data, '--epoch', '2000', '--device', 'cuda:1']
         final_test_acc = epoch()
         tab_data.append([model, data, final_test_acc])
 print(tabulate(tab_data, headers=['Model', 'Data', 'Acc'], tablefmt='github'))

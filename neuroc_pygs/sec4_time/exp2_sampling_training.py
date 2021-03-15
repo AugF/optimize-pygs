@@ -117,24 +117,6 @@ def run_all(file_name='sampling_training_final_v2', dir_name='sampling_train', d
         # pd.DataFrame(tab_data, columns=headers).to_csv(data_path)
         print(tabulate(tab_data, headers=headers, tablefmt='github'))
 
-
-def do_failed():
-    failed = """coauthor-physics_gcn_0.06_cluster, coauthor-physics_gcn_0.1_cluster, 
-            coauthor-physics_gat_0.01_graphsage, 
-            coauthor-physics_ggnn_0.01_cluster, coauthor-physics_ggnn_0.03_cluster, 
-            flickr_gcn_None_graphsage, flickr_gcn_0.01_graphsage, flickr_gcn_0.03_graphsage, 
-            flickr_gat_0.01_graphsage, flickr_ggnn_0.01_graphsage, flickr_ggnn_0.03_graphsage, 
-            flickr_ggnn_0.06_graphsage, flickr_ggnn_0.1_graphsage, flickr_gaan_0.01_graphsage, 
-            flickr_gaan_0.03_graphsage, flickr_gaan_0.06_graphsage, flickr_gaan_0.1_graphsage"""
-            
-    failed = [x.strip() for x in failed.split(', ')]
-    for f in failed:
-        xs = f.split('_')
-        print(xs)
-        data, model, rs, mode = xs
-        run_all(file_name='sampling_training_final_v2', dir_name='sampling_training_final_v3', datasets=[data], models=[model], rses=[rs],
-        modes=[mode], pin_memorys=[False], workers=[0], non_blockings=[False])
-        
         
 if __name__ == '__main__':
     import sys

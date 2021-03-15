@@ -11,7 +11,7 @@ from neuroc_pygs.configs import PROJECT_PATH
 dir_path = os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_res')
 
 def run_exp():
-    for model in ['reddit_sage']:
+    for model in ['reddit_sage', 'cluster_gcn']:
         X, y = None, None
         for bs in [1024, 2048, 4096, 8192, 16384]:
             real_path = dir_path + f'/{model}_{bs}_v1.csv'

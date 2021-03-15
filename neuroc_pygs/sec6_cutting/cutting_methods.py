@@ -1,5 +1,6 @@
 import copy
 import math
+import torch
 import numpy as np
 from scipy import sparse
 from fast_pagerank import pagerank
@@ -16,14 +17,14 @@ def get_degree(edge_index):
 
 def get_pagerank(edge_index):
     weights = np.arange(edge_index.shape[1])
-    nodes = np.max(edge_index) + 1
+    nodes = int(torch.max(edge_index)) + 1
     G = sparse.csr_matrix(
         (weights, (edge_index[0, :], edge_index[1, :])), shape=(nodes, nodes))
     return pagerank(G, p=0.85)
 
 
 def cut_by_random(edge_index, cutting_nums):
-    outliers = np.random.choice(edge_index.shape[1], cutting_nums)
+    outliers = np.random.choice(edge_index.shape[1], cutting_nums, replace=False)
     mask = list(set(range(edge_index.shape[1])) - set(outliers))
     return edge_index[:, mask]
 
@@ -33,6 +34,10 @@ def do_method(d1, d2, name='way1'):
         return 1 / d1 + 1/d2
     elif name == 'way2':
         return 1 / math.sqrt(d1 * d2)
+    elif name == 'way3':
+        return d1 + d2
+    elif name == 'way4':
+        return d1 * d2
 
 
 def get_importance(v, name='degree', **args):
@@ -43,9 +48,10 @@ def get_importance(v, name='degree', **args):
 
 
 def cut_by_importance(edge_index, cutting_nums, method='degree', name='way1'):
-    if method = 'degree':
-        degrees = get_degree(edge_index)
-    pr = get_pagerank(edge_index)
+    if method == 'degree':
+        degrees, pr = get_degree(edge_index), None
+    else:
+        degrees, pr = None, get_pagerank(edge_index)
 
     importance = []
     for i in range(edge_index.shape[1]):
@@ -58,6 +64,21 @@ def cut_by_importance(edge_index, cutting_nums, method='degree', name='way1'):
     outliers = [importance[-i][1] for i in range(1, cutting_nums+1)]
     mask = list(set(range(edge_index.shape[1])) - set(outliers))
     return edge_index[:, mask]
+
+
+def cut_by_importance_method(edge_index, cutting_nums, method='degree', name='way1', degree=None, pr=None):
+    importance = []
+    for i in range(edge_index.shape[1]):
+        v, w = int(edge_index[0][i]), int(edge_index[1][i])
+        iv, iw = get_importance(v, name=method, degree=degree, pr=pr), get_importance(
+            w, name=method, degree=degree, pr=pr)
+        importance.append((do_method(iv, iw, name=name), i))
+    importance.sort()
+
+    outliers = [importance[-i][1] for i in range(1, cutting_nums+1)]
+    mask = list(set(range(edge_index.shape[1])) - set(outliers))
+    return edge_index[:, mask]
+
 
 
 def test():
@@ -76,3 +97,4 @@ def test():
     # print(random_, degree1, degree2, pr1, pr2, sep='\n')
 
 
+# test()
