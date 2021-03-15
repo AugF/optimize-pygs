@@ -1,5 +1,4 @@
 import time, os
-import pandas as pd
 import subprocess
 from tabulate import tabulate
 from neuroc_pygs.samplers.cuda_prefetcher import CudaDataLoader
@@ -43,11 +42,11 @@ def run_model(model='gcn', data='amazon-computers'):
             print(cur_name)
             for _ in range(1):
                 t1 = time.time()
-                # opt_epoch(args + ' --opt_train_flag 1 --opt_eval_flag 0') # 优化1+2
+                opt_epoch(args + ' --opt_train_flag 1 --opt_eval_flag 0') 
                 t2 = time.time()
-                # opt_epoch(args) # 优化2
+                opt_epoch(args) # 优化2
                 t3 = time.time()
-                # epoch(args + ' --opt_train_flag 1 --opt_eval_flag 0') # 优化1
+                epoch(args + ' --opt_train_flag 1 --opt_eval_flag 0') # 优化1
                 t4 = time.time()
                 epoch(args) # baseline
                 t5 = time.time()
@@ -61,11 +60,14 @@ def run_model(model='gcn', data='amazon-computers'):
 
 
 if __name__ == '__main__':
+    dir_path = '/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec4_time/exp_res'
     small_datasets = ['pubmed', 'amazon-photo', 'amazon-computers', 'coauthor-physics', 'flickr']
     for model in ['gcn', 'gat']:
-        tab_data = run_model(model=[model], data=small_datasets)
-        pd.DataFrame(tab_data, columns=headers).to_csv(os.path.join(PROJECT_PATH, 'sec4_time', 'exp_res', f'sampling_epoch_{model}.csv'))
+        tab_data = run_model(model=[model], data=['pubmed'])
+        with open(dir_path + f'sampling_epoch_{model}.txt', 'w') as f:
+            f.write('\n'.join([str(t) for t in tab_data]))
 
     for data in ['amazon-computers', 'flickr']:
         tab_data = run_model(model=['ggnn', 'gaan'], data=[data])
-        pd.DataFrame(tab_data, columns=headers).to_csv(os.path.join(PROJECT_PATH, 'sec4_time', 'exp_res', f'sampling_epoch_{data}_v2.txt'))
+        with open(dir_path + f'sampling_epoch_{data}.txt', 'w') as f:
+            f.write('\n'.join([str(t) for t in tab_data]))

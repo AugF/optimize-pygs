@@ -56,10 +56,10 @@ def train(model, data, train_loader, optimizer, args, df, cnt):
     return df, cnt
 
 
-def build_model_datasets(args, datasets, file_type='train'):
+def build_model_datasets(args, datasets, file_path):
     x_train = defaultdict(list)
-    print(f"build for {file_type} dataset")
     for exp_data in datasets:
+        print(f"build for {exp_data} dataset")
         args.dataset = exp_data
         data = build_dataset(args)
         print("build dataset success")
@@ -71,7 +71,7 @@ def build_model_datasets(args, datasets, file_type='train'):
                 print("build model success")
                 for exp_relative_batch_size in [None] + EXP_RELATIVE_BATCH_SIZE: # 7
                     args.relative_batch_size = exp_relative_batch_size
-                    for exp_mode in MODES: # 2
+                    for exp_mode in ['cluster']: # 2
                         args.mode = exp_mode
                         data = data.to('cpu')
                         train_loader = build_train_loader(args, data)
@@ -79,7 +79,7 @@ def build_model_datasets(args, datasets, file_type='train'):
                         print('_'.join([args.dataset, args.model, str(args.relative_batch_size), args.mode]))
                         torch.cuda.reset_max_memory_allocated(args.device) # 记住一定要清除历史信息
                         paras_dict = model.get_hyper_paras() # get other paras
-                        real_path = os.path.join(PROJECT_PATH, f'sec5_memory/exp_memory', '_'.join([str(v) for v in paras_dict.values()] + [str(args.relative_batch_size), args.mode, args.model, args.dataset])) + '.csv'
+                        real_path = os.path.join(PROJECT_PATH, f'sec5_memory/exp_motivation_memory', '_'.join([str(v) for v in paras_dict.values()] + [str(args.relative_batch_size), args.mode, args.model, args.dataset])) + '.csv'
                         print(real_path)
                         if os.path.exists(real_path):
                             res = pd.read_csv(real_path, index_col=0).to_dict(orient='list')
@@ -103,18 +103,18 @@ def build_model_datasets(args, datasets, file_type='train'):
                                 print(e.args)
                                 print(traceback.format_exc())
 
-    pd.DataFrame(x_train).to_csv(PROJECT_PATH + f'/sec5_memory/exp_memory/{args.model}_{file_type}_datasets.csv')
+    pd.DataFrame(x_train).to_csv(file_path)
 
 
 if __name__ == '__main__':
     args = get_args()
     print(args)
-    small_datasets = ['pubmed', 'amazon-photo', 'amazon-computers', 'coauthor-physics', 'flickr', 'com-amazon']
+    small_datasets = ['pubmed', 'amazon-photo', 'amazon-computers', 'coauthor-physics', 'flickr', 'reddit', 'yelp']
     for dataset in small_datasets:
         for model in ['gcn', 'gat']:
             args.model = model
-            file_path = PROJECT_PATH + f'/sec5_memory/exp_memory/{model}_{dataset}_datasets.csv'
+            file_path = PROJECT_PATH + f'/sec5_memory/exp_motivation_datasets/{model}_{dataset}_automl_datasets.csv'
             print(file_path)
-            if os.path.exists(PROJECT_PATH + f'/sec5_memory/exp_memory/{model}_{dataset}_datasets.csv'):
+            if os.path.exists(file_path):
                 continue
-            build_model_datasets(args, datasets=[dataset], file_type=dataset)
+            build_model_datasets(args, datasets=[dataset], file_path=file_path)
