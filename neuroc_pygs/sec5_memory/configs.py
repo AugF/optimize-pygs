@@ -18,3 +18,8 @@ MODEL_PARAS = {
             }
 }
 
+
+paras_df = {
+    'gcn': ['nodes', 'edges', 'layers', 'features', 'classes', 'hidden_dims', 'memory'],
+    'gat': ['nodes', 'edges', 'layers', 'features', 'classes', 'heads', 'head_dims', 'memory'],  
+}

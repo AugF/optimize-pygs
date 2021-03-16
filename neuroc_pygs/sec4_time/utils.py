@@ -35,3 +35,6 @@ def turkey(total_times):
         if x >= min_val and x <= max_val:
             inliers.append(i)
     return inliers
+
+
+
