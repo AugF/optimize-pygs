@@ -82,22 +82,22 @@ def get_metrics(y_pred, y_test):
 
 def get_automl_datasets(model='gcn'):
     # 之后再灵活变化来做
-    train_datasets = ['amazon-photo', 'amazon-computers', 'pubmed']
-    test_datasets = ['ppi', 'flickr']
+    train_datasets = ['pubmed', 'amazon-photo', 'amazon-computers', 'coauthor-physics', 'reddit']
+    test_datasets = ['flickr', 'yelp']
 
     x_train, y_train = [], []
     for data in train_datasets:
-        file_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_res', f'{model}_{data}_datasets.csv')
+        file_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_motivation_datasets', f'{model}_{data}_automl_datasets.csv')
         df = pd.read_csv(file_path, index_col=0)
-        y_train.extend(df['memory'].values)
+        y_train.extend(df['memory'].values / (1024 * 1024))
         del df['memory']
         x_train.extend(df.values.tolist())
 
     x_test, y_test = [], []
     for data in test_datasets:
-        file_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_res', f'{model}_{data}_datasets.csv')
+        file_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_motivation_datasets', f'{model}_{data}_automl_datasets.csv')
         df = pd.read_csv(file_path, index_col=0)
-        y_test.extend(df['memory'].values)
+        y_test.extend(df['memory'].values / (1024 * 1024))
         del df['memory']
         x_test.extend(df.values.tolist())     
     return x_train, y_train, x_test, y_test
@@ -108,5 +108,10 @@ def test():
         print(model)
         x_train, y_train, x_test, y_test = get_automl_datasets(model)
         print(len(y_train), len(y_test))
+        print(x_train[:2], y_train[:2])
     # gcn: 15100, 3940
     # gat: 11220 1700
+    
+
+if __name__ == '__main__':
+    test()

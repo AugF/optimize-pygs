@@ -22,7 +22,7 @@ for i, file in enumerate(['flickr_gat', 'amazon-computers_gcn']):
     fig, ax = plt.subplots(figsize=(7, 5), tight_layout=True)
     tab_data = []
     for v in xs:
-        file_name = f'{file}_None_cluster_pin_memory_False_num_workers_0_non_blocking_{v}'
+        file_name = f'{file}_None_cluster_pin_memory_{v}_num_workers_0_non_blocking_False'
         print(file_name)
         tmp = []
         for name in ['Base', 'Opt']:
@@ -42,12 +42,12 @@ for i, file in enumerate(['flickr_gat', 'amazon-computers_gcn']):
     
     ax.set_title(titles[i], fontsize=18)
     ax.set_ylabel('每轮训练时间 (毫秒)', fontsize=18)
-    ax.set_xlabel('Non Blocking', fontsize=18)
+    ax.set_xlabel('Pin Memory', fontsize=18)
     ax.set_xticks(x)
     ax.set_xticklabels(['未开启', '开启'], fontsize=18)
     ax.bar(x - width/2, tab_data[0], width, color=colors[0], edgecolor='black', label='优化前')
     ax.bar(x + width/2, tab_data[1], width, color=colors[1], edgecolor='black', label='优化后')
     ax.legend(loc='upper center', fontsize=18)
-    fig.savefig(root_path + f'/exp_figs/exp_batch_non_blocking_{file}.png')
+    fig.savefig(root_path + f'/exp_figs/exp_batch_pin_memory_{file}.png')
 
 

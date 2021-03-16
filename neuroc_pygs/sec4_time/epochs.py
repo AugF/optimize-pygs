@@ -71,3 +71,7 @@ if __name__ == '__main__':
         tab_data = run_model(model=['ggnn', 'gaan'], data=[data])
         with open(dir_path + f'/sampling_epoch_{data}.txt', 'w') as f:
             f.write('\n'.join([str(t) for t in tab_data]))
+
+
+# loader: 
+# trainer: 

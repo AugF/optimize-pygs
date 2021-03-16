@@ -5,6 +5,7 @@ import time
 
 import numpy as np 
 import pandas as pd
+import traceback
 
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
@@ -14,9 +15,10 @@ from tabulate import tabulate
 from collections import defaultdict
 from neuroc_pygs.options import build_dataset, get_args, build_dataset, build_model_optimizer
 from neuroc_pygs.configs import PROJECT_PATH
+from neuroc_pygs.sec5_memory.configs import MODEL_PARAS
 
 
-dir_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_motivation_datasets')
+dir_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_automl_datasets')
 
 def train(model, batch, optimizer):
     model.train()
@@ -27,18 +29,9 @@ def train(model, batch, optimizer):
     optimizer.step()
 
 
-@torch.no_grad()
-def test(model, batch, split='val'):
-    model.eval()
-    logits = model(batch.x, batch.edge_index)
-    mask = getattr(batch, split + '_mask')
-    loss = model.loss_fn(logits[mask], batch.y[mask])
-    acc = model.evaluator(logits[mask], batch.y[mask])
-    return acc, loss.item()
-
-
 def run():
     args = get_args()
+    print(args)
     data = build_dataset(args)
     model, optimizer = build_model_optimizer(args, data)
     model = model.to(args.device)
@@ -47,21 +40,51 @@ def run():
     print(f'device: {args.device}, model memory: {memory}, model: {args.model}')
 
     data = data.to(args.device)
-    for epoch in range(2): # 实验测试都一样
+    peak_memorys = []
+    for epoch in range(11): # 实验测试都一样
         train(model, data, optimizer)
-        # val_acc, val_loss = test(model, data, split='val')
         peak_memory = torch.cuda.memory_stats(args.device)["allocated_bytes.all.peak"]
         torch.cuda.reset_max_memory_allocated(args.device)
-        print(f'Epoch: {epoch:03d}, peak_memory: {peak_memory}')
-
-    res = [args.dataset, data.num_nodes, data.num_edges, peak_memory]
+        torch.cuda.empty_cache()
+        print(f'Epoch: {epoch}, peak_memory: {peak_memory}')
+        if epoch > 0:
+            peak_memorys.append(peak_memory)
+    paras_dict = model.get_hyper_paras()
+    res = [data.num_nodes, data.num_edges] + [v for v in paras_dict.values()] + [np.mean(peak_memory) - memory]
     print(res)
     return res
 
 
+def run_automl_dataset(model):
+    default_args = '--hidden_dims 1024 --gaan_hidden_dims 256 --head_dims 128 --heads 4 --d_a 32 --d_v 32 --d_m 32'
+    tab_data = []
+    t1 = time.time()
+    # vars_set = set(range(5000, 100001, 5000)).union(set(range(5000, 100001, 2000)))
+    vars_set = range(5000, 100001, 5000)
+    for nodes in vars_set:
+        for edges in vars_set:
+            exp_data = f'random_{int(nodes/1000)}k_{int(edges/1000)}k'
+            print(exp_data)
+            if not os.path.exists('/mnt/data/wangzhaokang/wangyunpan/data/' + exp_data):
+                continue
+            if os.path.exists(dir_path + f'/{model}_{exp_data}_automl_model_v1.csv'):
+                continue
+            sys.argv = [sys.argv[0], '--dataset', exp_data, '--device', 'cuda:2', '--model', model]
+            for para, para_values in MODEL_PARAS[model].items():
+                for p_v in para_values: #  paras: 13
+                    sys.argv += [f'--{para}', str(p_v)]
+                    try:
+                        tab_data.append(run())
+                    except Exception as e:
+                        print(e.args)
+                        print(traceback.format_exc())
+            pd.DataFrame(tab_data).to_csv(dir_path + f'/{model}_{exp_data}_automl_model_v1.csv')
+    t2 = time.time()
+    return t2 - t1
+
+
 def run_dataset(model):
     headers = ['Name', 'Nodes', 'Edges', 'Peak Memory']
-    default_args = '--hidden_dims 1024 --gaan_hidden_dims 256 --head_dims 128 --heads 4 --d_a 32 --d_v 32 --d_m 32'
     tab_data = []
     t1 = time.time()
     vars_set = set(range(5000, 100001, 5000)).union(set(range(5000, 100001, 2000)))
@@ -71,7 +94,7 @@ def run_dataset(model):
             print(exp_data)
             if not os.path.exists('/mnt/data/wangzhaokang/wangyunpan/data/' + exp_data):
                 continue
-            sys.argv = [sys.argv[0], '--dataset', exp_data, '--device', 'cuda:2', '--model', model] + default_args.split(' ')
+            sys.argv = [sys.argv[0], '--dataset', exp_data, '--device', 'cuda:2', '--model', model]
             tab_data.append(run())
     t2 = time.time()
     pd.DataFrame(tab_data, columns=headers).to_csv(os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_motivation_datasets', f'{model}_linear_model_v1.csv'))
@@ -82,6 +105,12 @@ def run_dataset(model):
 def build_datasets():
     for model in ['gcn', 'gat']:
         use_time = run_dataset(model)
+    print(f'{model} build datasets use time: {use_time}s')
+
+
+def build_automl_datasets():
+    for model in ['gcn', 'gat']:
+        use_time = run_automl_dataset(model)
     print(f'{model} build datasets use time: {use_time}s')
 
 
@@ -112,8 +141,8 @@ def run_exp():
 
 
 if __name__ == '__main__':
-    # build_datasets()
-    run_exp()
+    build_automl_datasets()
+    # run_exp()
     # reg = load(dir_path + f'/gcn_linear_model_v1.pth')
     # res = reg.predict([[85000, 85000]])
     # print(res)

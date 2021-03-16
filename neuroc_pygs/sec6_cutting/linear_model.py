@@ -29,18 +29,19 @@ def run_exp():
         X, y = X[mask], y[mask]
         X_train, y_train, X_test, y_test = X[:-100], y[:-100], X[-100:], y[-100:]
         t1 = time.time()
-        reg = LinearRegression().fit(X_train, y_train)
-        t2 = time.time()
-        dump(reg, dir_path + f'/{model}_linear_model_v1.pth')
-        # reg = load(dir_path + f'/{model}_linear_model_v0.pth')
+        # reg = LinearRegression().fit(X_train, y_train)
+        # t2 = time.time()
+        # dump(reg, dir_path + f'/{model}_linear_model_v1.pth')
+        reg = load(dir_path + f'/{model}_linear_model_v1.pth')
         y_pred = reg.predict(X_test)
+        print(y_pred)
         t3 = time.time()
         mse = mean_squared_error(y_pred, y_test)
         max_bias, max_bias_per = 0, 0
         for i in range(100):
             max_bias = max(max_bias, abs(y_pred[i] - y_test[i]))
             max_bias_per = max(max_bias_per, abs(y_pred[i] - y_test[i]) / y_pred[i])
-        print(model, t2 - t1, (t3 - t2) / 100)
+        # print(model, t2 - t1, (t3 - t2) / 100)
         print(model, mse, max_bias, max_bias_per)
 
 

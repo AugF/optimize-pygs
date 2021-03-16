@@ -8,10 +8,13 @@ from joblib import dump, load
 from neuroc_pygs.sec5_memory.utils import get_automl_datasets, get_metrics
 from neuroc_pygs.configs import PROJECT_PATH
 from tabulate import tabulate
+from sklearn.metrics import mean_squared_error
 
 tmp_dir = os.path.join(PROJECT_PATH, 'sec5_memory', 'tmp')
 if os.path.exists(tmp_dir):
     shutil.rmtree(tmp_dir)
+
+dir_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_motivation_datasets')
 
 class AutoML(object):
     # https://github.com/automl/auto-sklearn/blob/58e36bea83c30a21872890c7b4b235fd198dcf7b/autosklearn/estimators.py#L16
@@ -54,17 +57,17 @@ def automl_exp():
         # x_train, y_train = np.array(x_train)[mask], np.array(y_train)[mask]
         x_test, y_test = x_test[:1000], y_test[:1000]
 
-        tab_data = []
-        tab_data.append(['mse', 'high', 'bias', 'bias_per'])
         automl = AutoML()
         automl.fit(x_train, y_train, dataset_name=f'{model}')
         y_pred = automl.predict(x_test)
-        print(y_pred)
-        print(y_test)
-        res = get_metrics(y_pred, y_test)
-        tab_data.append(list(res))    
+        automl.save_model(dir_path + f'/{model}_automl_v1.pth')
+        mse = mean_squared_error(y_pred, y_test)
+        max_bias, max_bias_per = 0, 0
+        for i in range(1000):
+            max_bias = max(max_bias, abs(y_pred[i] - y_test[i]))
+            max_bias_per = max(max_bias_per, abs(y_pred[i] - y_test[i]) / y_pred[i])   
+        print([model, mse, max_bias, max_bias_per])    
 
-        print(tabulate(tab_data[1:], headers=tab_data[0], tablefmt="github"))
 
 if __name__ == '__main__':
     automl_exp()

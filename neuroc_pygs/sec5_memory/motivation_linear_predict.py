@@ -10,8 +10,8 @@ from neuroc_pygs.configs import EXP_DATASET, ALL_MODELS, EXP_RELATIVE_BATCH_SIZE
 from neuroc_pygs.options import get_args, build_dataset, build_model_optimizer
 
 memory_limit = {
-    'gcn': 6.5,
-    'gat': 8
+    'gcn': 6.5, # 6,979,321,856
+    'gat': 8  # 8,589,934,592
 }
 dir_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_motivation_datasets')
 

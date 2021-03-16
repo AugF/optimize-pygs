@@ -1,8 +1,6 @@
 import numpy as np
 import pandas as pd
 from matplotlib.patches import Patch
-from matplotlib.lines import Line2D
-from matplotlib import font_manager
 import matplotlib.pyplot as plt
 from neuroc_pygs.sec4_time.utils import datasets_maps, algorithms, sampling_modes
 from matplotlib.font_manager import _rebuild
@@ -18,7 +16,7 @@ plt.rcParams['axes.unicode_minus']=False #用来正常显示负号
 plt.rcParams["font.size"] = 14
 
 root_path = '/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec4_time'
-real_path = root_path + '/exp_res/batch/datasets.csv'
+real_path = root_path + '/exp_res/sampling_training_datasets.txt'
 df = pd.read_csv(real_path, index_col=0)
 print(df)
 
@@ -49,14 +47,15 @@ for k, mode in enumerate(modes):
         x = np.arange(len(xticklabels))
 
         locations = [-1, 1]
-        colors = plt.get_cmap('Greys')(np.linspace(0.15, 0.85, 2))
+        colors = plt.get_cmap('Greys')(np.linspace(0.15, 0.75, 2))
+        colors = [colors[-1], colors[0]]
         # colors = ['blue', 'cyan']
         width = 0.35
         errors_bar = [base_error, opt_error]
         for i, times in enumerate([base_times, opt_times]):
-            ax.bar(x + locations[i] * width / 2, times[0], width, color=colors[1-i], edgecolor='black', hatch="///")
-            ax.bar(x + locations[i] * width / 2, times[1], width, color=colors[1-i], edgecolor='black', bottom=times[0], hatch='...')
-            ax.bar(x + locations[i] * width / 2, times[2], width, yerr=[errors_bar[i][1], errors_bar[i][0]], color=colors[1-i], edgecolor='black', bottom=times[1], hatch='xxx')
+            ax.bar(x + locations[i] * width / 2, times[0], width, color=colors[i], edgecolor='black', hatch="///")
+            ax.bar(x + locations[i] * width / 2, times[1], width, color=colors[i], edgecolor='black', bottom=times[0], hatch='...')
+            ax.bar(x + locations[i] * width / 2, times[2], width, yerr=[errors_bar[i][1], errors_bar[i][0]], color=colors[i], edgecolor='black', bottom=times[1], hatch='xxx')
             # 待做: error bar
         if mode == 'cluster':
             ax.set_ylim(0, 120)
@@ -64,9 +63,13 @@ for k, mode in enumerate(modes):
         ax.set_xticks(x)
         ax.set_xticklabels(xticklabels)
 
-        legend_colors = [Line2D([0], [0], color=c, lw=4) for c in colors]
+        legend_colors = [Patch(facecolor=c, edgecolor='black') for c in colors]
         legend_hatchs = [Patch(facecolor='white', edgecolor='black', hatch='xxxx'), Patch(facecolor='white',edgecolor='black', hatch='....'), Patch(facecolor='white', edgecolor='black', hatch='////')]
-        ax.legend(legend_hatchs + legend_colors, ['训练', '数据传输', '采样'] + ['优化前', '优化后'], ncol=1, loc='upper center')
+        ax.legend(legend_hatchs + legend_colors, ['训练', '数据传输', '采样'] + ['优化前', '优化后'], ncol=2, loc='upper left')
+        if mode == 'cluster':
+            ax.set_ylim(0, 100)
+        else:
+            ax.set_ylim(0, 2000)
         ax.set_ylabel('每轮训练时间 (毫秒)')
         ax.set_xlabel('数据集')
         fig.savefig(root_path + f'/exp_figs/exp_batch_datasets_{file}_{mode}.png')

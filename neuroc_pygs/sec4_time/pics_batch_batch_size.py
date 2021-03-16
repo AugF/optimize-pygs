@@ -3,15 +3,20 @@ import pandas as pd
 from matplotlib.patches import Patch
 from matplotlib.lines import Line2D
 import matplotlib.pyplot as plt
+from matplotlib.font_manager import _rebuild
+# print(_rebuild())
+_rebuild() 
 
 def float_x(x):
     return [float(i) for i in x]
 
-plt.style.use("ggplot")
-plt.rcParams["font.size"] = 12
+plt.style.use("grayscale")
+plt.rcParams['font.sans-serif']=['SimHei'] #用来正常显示中文标签
+plt.rcParams['axes.unicode_minus']=False #用来正常显示负号
+plt.rcParams["font.size"] = 14
 
 root_path = '/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec4_time'
-real_path = root_path + '/exp_res/batch/batch_size_constrast.log'
+real_path = root_path + '/exp_res/sampling_training_batch_size.txt'
 headers = None
 mydata = []
 with open(real_path) as f:
@@ -32,6 +37,12 @@ titles = ['GCN Amazon-computers', 'GAT Flickr']
 xs = [0.01, 0.03, 0.06, 0.1, 0.25, 0.5]
 modes = ['graphsage', 'cluster']
 MODES = ['GraphSAGE Sampler', 'Cluster Sampler']
+y_lims = {
+    'cluster_amazon-computers_gcn': 1600,
+    'graphsage_amazon-computers_gcn': 1000,
+    'cluster_flickr_gat': 2600,
+    'graphsage_flickr_gat': 3000
+}
 
 for k, mode in enumerate(modes):
     for file in file_names:
@@ -51,8 +62,9 @@ for k, mode in enumerate(modes):
         x = np.arange(len(xticklabels))
 
         locations = [-1, 1]
-        colors = plt.get_cmap('Paired')(np.linspace(0.15, 0.85, 4))
-        # colors = ['blue', 'cyan']
+        colors = plt.get_cmap('Greys')(np.linspace(0.15, 0.75, 2))
+        colors = [colors[-1], colors[0]]
+        
         width = 0.35
         errors_bar = [base_error, opt_error]
         for i, times in enumerate([base_times, opt_times]):
@@ -63,11 +75,12 @@ for k, mode in enumerate(modes):
         ax.set_title(MODES[k])
         ax.set_xticklabels([''] + xticklabels)
 
-        legend_colors = [Line2D([0], [0], color=c, lw=4) for c in colors]
-        legend_hatchs = [Patch(facecolor='white', edgecolor='r', hatch='xxxx'), Patch(facecolor='white',edgecolor='r', hatch='....'), Patch(facecolor='white', edgecolor='r', hatch='////')]
-        ax.legend(legend_hatchs + legend_colors, ['Training', 'Data Transferring', 'Sampling'] + ['Baseline', 'Optimize'], ncol=1, loc='upper left')
-        ax.set_ylabel('Training Time Per Batch (ms)')
-        ax.set_xlabel('Relative Batch Size')
+        legend_colors = [Patch(facecolor=c, edgecolor='black') for c in colors]
+        legend_hatchs = [Patch(facecolor='white', edgecolor='black', hatch='xxxx'), Patch(facecolor='white',edgecolor='black', hatch='....'), Patch(facecolor='white', edgecolor='black', hatch='////')]
+        ax.legend(legend_hatchs + legend_colors, ['训练', '数据传输', '采样'] + ['优化前', '优化后'], ncol=2, loc='upper left')
+        ax.set_ylim(0, y_lims[f'{mode}_{file}'])
+        ax.set_ylabel('每轮训练时间 (毫秒)')
+        ax.set_xlabel('相对批大小')
         fig.savefig(root_path + f'/exp_figs/exp_batch_batch_size_{file}_{mode}.png')
         plt.close()
 
