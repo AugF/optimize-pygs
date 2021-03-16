@@ -56,6 +56,8 @@ def run_automl(files, model='gcn', file_type='automl'):
         X.append(df[:,:-1]);  y.append(df[:,-1])
 
     X, y = np.concatenate(X, axis=0), np.concatenate(y, axis=0)
+    if file_type == 'linear_model':
+        X = X[:, :2]
     df_r2, df_mae, df_mape = train_model(X, y)
     df_r2, df_mae, df_mape = pd.DataFrame(df_r2), pd.DataFrame(df_mae), pd.DataFrame(df_mape)
     titles = ['决定系数 (R2)', '平均绝对误差 (MAE)', '平均绝对百分比误差 (MAPE)']
@@ -88,6 +90,8 @@ def save_model(files, model, file_type):
         X.append(df[:,:-1]);  y.append(df[:,-1])
 
     X, y = np.concatenate(X, axis=0), np.concatenate(y, axis=0)
+    if file_type == 'linear_model':
+        X = X[:, :2]
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=50, random_state=0)
     if file_type == 'automl':
         reg = RandomForestRegressor(random_state=1) # Random Forest
@@ -100,13 +104,13 @@ def save_model(files, model, file_type):
 
 
 if __name__ == '__main__':
-    files = ['classes', 'nodes_edges', 'features', 'paras', 'paras_v3', 'paras_v4']
-    # files = ['nodes_edges']
+    # files = ['classes', 'nodes_edges', 'features', 'paras', 'paras_v3', 'paras_v4']
+    files = ['nodes_edges']
     # for model in ['gcn', 'gat']:
-        # run_automl(files, model, file_type='automl') 
+    #     run_automl(files, model, file_type='automl') 
 
-    # for model in ['gcn', 'gat']:
-    #     run_automl(files, model, file_type='linear_model')
     for model in ['gcn', 'gat']:
-        save_model(files, model=model, file_type='automl')
-        # save_model(files=['nodes_edges'], model=model, file_type='linear_model')
+        run_automl(files, model, file_type='linear_model')
+    for model in ['gcn', 'gat']:
+    #     save_model(files, model=model, file_type='automl')
+        save_model(files=['nodes_edges'], model=model, file_type='linear_model')

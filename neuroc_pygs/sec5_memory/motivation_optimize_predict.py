@@ -1,5 +1,5 @@
 import os
-import get_completer()
+import gc
 import torch
 import traceback
 import numpy as np
@@ -31,7 +31,11 @@ def train(model, data, train_loader, optimizer, args, df, cnt):
         batch = batch.to(device)
         node, edge = batch.x.shape[0], batch.edge_index.shape[1]
         reg = load(dir_path + f'/{args.model}_{args.predict_model}_v2.pth')
-        memory_pre = reg.predict([[node, edge]])
+        if args.predict_model == 'linear_model':
+            memory_pre = reg.predict([[node, edge]])
+        else:
+            paras_dict = model.get_hyper_paras()
+            memory_pre = reg.predict([[node, edge] + [v for v in paras_dict.values()]])
         if memory_pre > memory_limit[args.model] * 1024 * 1024 * 1024:
             print(f'{node}, {edge}, {memory_pre}, pass')
             continue
@@ -43,8 +47,9 @@ def train(model, data, train_loader, optimizer, args, df, cnt):
         loss.backward()
         acc = model.evaluator(logits[batch.train_mask], batch.y[batch.train_mask])
         optimizer.step()
-        print(f'batch {i}, train_acc: {acc:.4f}, train_loss: {loss.item():.4f}')
-        df['memory'].append(torch.cuda.memory_stats(device)["allocated_bytes.all.peak"])
+        memory = torch.cuda.memory_stats(device)["allocated_bytes.all.peak"]
+        df['memory'].append(memory)
+        print(f'batch {i}, train_acc: {acc:.4f}, train_loss: {loss.item():.4f}, memory: {memory}')
         torch.cuda.reset_max_memory_allocated(device)
         torch.cuda.empty_cache()
         cnt += 1
@@ -114,7 +119,7 @@ def run_all(predict_model='automl'):
             re_bs = [175, 180, 185]
             for rs in re_bs:
                 args.batch_partitions = rs
-                file_name = '_'.join([args.dataset, args.model, str(rs), args.mode, 'v2'])
+                file_name = '_'.join([args.dataset, args.model, str(rs), args.predict_model, 'v2'])
                 run_one(file_name, args)
                 gc.collect()           
     return

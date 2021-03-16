@@ -40,7 +40,7 @@ for model in ['gat', 'gcn']:
             box_data.append(list(map(lambda x: x/(1024*1024*1024), res)))
         ax.boxplot(box_data, labels=batch_sizes)
         
-    fig.savefig(os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_figs', f'{model}_{mode}_motivation.png'))
+    fig.savefig(os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_figs', f'{model}_{mode}_motivation_v2.png'))
 
 
 

@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.font_manager import _rebuild
-# print(_rebuild())
 _rebuild() 
 
 plt.style.use("grayscale")
