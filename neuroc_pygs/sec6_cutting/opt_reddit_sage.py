@@ -15,17 +15,20 @@ from torch_geometric.data import NeighborSampler
 from torch_geometric.nn import SAGEConv
 from neuroc_pygs.utils import get_dataset
 from neuroc_pygs.configs import PROJECT_PATH
+from neuroc_pygs.sec6_cutting.cutting_methods import cut_by_importance
 
 
 dir_path = '/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec6_cutting/exp_res'
-device = torch.device('cuda:2' if torch.cuda.is_available() else 'cpu')
 reg = load(dir_path + '/reddit_sage_linear_model_v1.pth')
-bsearch = BSearch(clf=reg, memory_limit=2.4 * 1024)
+memory_limit = 2.3 * 1024 * 1024 * 1024
+bsearch = BSearch(clf=reg, memory_limit=memory_limit, ratio=0)
 
 def get_args():
     parser = argparse.ArgumentParser(description='OGBN-Products (Cluster-GCN)')
     parser.add_argument('--device', type=int, default=0)
     parser.add_argument('--infer_batch_size', type=int, default=1024)
+    parser.add_argument('--cutting_method', type=str, default='degree')
+    parser.add_argument('--cutting_way', type=str, default='way3')
     args = parser.parse_args()
     return args
 
@@ -43,7 +46,7 @@ def prepare_data(args):
     return dataset, train_loader, subgraph_loader
 
 
-def prepare_model_optimizer(dataset):
+def prepare_model_optimizer(dataset, device):
     model = SAGE(dataset.num_features, 256, dataset.num_classes)
     model = model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
@@ -75,15 +78,26 @@ class SAGE(torch.nn.Module):
                 x = F.dropout(x, p=0.5, training=self.training)
         return x.log_softmax(dim=-1)
 
-    def inference(self, x_all, subgraph_loader, df=None):
+    def inference(self, x_all, subgraph_loader, args, df=None):
+        device = args.device
         pbar = tqdm(total=x_all.size(0) * self.num_layers)
         pbar.set_description('Evaluating')
 
         for i in range(self.num_layers):
             xs = []
             for batch_size, n_id, adj in subgraph_loader:
-                edge_index, _, size = adj.to(device)
+                edge_index, _, size = adj
                 
+                node, edge = size[0], edge_index.shape[1]
+                if i == 0:
+                    memory_pre = reg.predict([[node, edge]])[0]
+                    while memory_pre > memory_limit:
+                        print(f'{node}, {edge}, {memory_pre}, begin cutting')
+                        cutting_nums = bsearch.get_proper_edges(nodes=node, edges=edge)
+                        edge_index = cut_by_importance(edge_index, cutting_nums, method=args.cutting_method, name=args.cutting_way)
+                        memory_pre = reg.predict([[node, edge]])[0]
+                
+                edge_index = edge_index.to(device)
                 x = x_all[n_id].to(device)
                 x_target = x[:size[1]]
                 x = self.convs[i]((x, x_target), edge_index)
@@ -94,11 +108,14 @@ class SAGE(torch.nn.Module):
                 pbar.update(batch_size)
 
                 if i == 0:
-                    node, edge = size[0], edge_index.shape[1]
-                    # 执行剪枝策略
-                    cutting_nums = edge - bsearch.get_proper_edges(node, edge)
-                    print(cutting_nums)
-                    exit(0)
+                    if df is not None:
+                        df['nodes'].append(node)
+                        df['edges'].append(edge)
+                        memory = torch.cuda.memory_stats(device)["allocated_bytes.all.peak"]
+                        df['memory'].append(memory)
+                        print(f'nodes={node}, edge={edge}, predict: {memory_pre}, real: {memory}')
+                    torch.cuda.reset_max_memory_allocated(device)
+                    torch.cuda.empty_cache()
 
             x_all = torch.cat(xs, dim=0)
 
@@ -107,7 +124,7 @@ class SAGE(torch.nn.Module):
         return x_all
 
 
-def train(epoch, model, data, x, y, train_loader, optimizer):
+def train(epoch, model, data, x, y, train_loader, optimizer, device):
     model.train()
 
     pbar = tqdm(total=int(data.train_mask.sum()))
@@ -137,10 +154,10 @@ def train(epoch, model, data, x, y, train_loader, optimizer):
 
 
 @torch.no_grad()
-def test(model, data, x, y, subgraph_loader, df=None):
+def test(model, data, x, y, subgraph_loader, args, df=None):
     model.eval()
 
-    out = model.inference(x, subgraph_loader, df)
+    out = model.inference(x, subgraph_loader, args, df)
 
     y_true = y.cpu().unsqueeze(-1)
     y_pred = out.argmax(dim=-1, keepdim=True)
@@ -152,17 +169,17 @@ def test(model, data, x, y, subgraph_loader, df=None):
     return results
 
 
-def fit(model, optimizer, train_loader, data, subgraph_loader):
-    x = data.x.to(device)
-    y = data.y.squeeze().to(device)
+def fit(model, optimizer, train_loader, data, subgraph_loader, args):
+    x = data.x.to(args.device)
+    y = data.y.squeeze().to(args.device)
     best_model = None 
     best_val_acc = 0
     final_test_acc = 0
 
     for epoch in range(1, 11):
-        loss, acc = train(epoch, model, data, x, y, train_loader, optimizer)
+        loss, acc = train(epoch, model, data, x, y, train_loader, optimizer, args.device)
         print(f'Epoch {epoch:02d}, Loss: {loss:.4f}, Approx. Train: {acc:.4f}')
-        train_acc, val_acc, test_acc = test(model, data, x, y, subgraph_loader)
+        train_acc, val_acc, test_acc = test(model, data, x, y, subgraph_loader, args)
         print(f'Train: {train_acc:.4f}, Val: {val_acc:.4f}, '
             f'Test: {test_acc:.4f}')
         if val_acc > best_val_acc:
@@ -175,22 +192,23 @@ def fit(model, optimizer, train_loader, data, subgraph_loader):
 
 def run_fit():
     args = get_args()
+    args.device = f'cuda:{args.device}' if torch.cuda.is_available() else 'cpu'
     dataset, train_loader, subgraph_loader = prepare_data(args)
-    model, optimizer = prepare_model_optimizer(dataset)
+    model, optimizer = prepare_model_optimizer(dataset, args.device)
     data = dataset[0]
-    fit(model, optimizer, train_loader, data, subgraph_loader)
+    fit(model, optimizer, train_loader, data, subgraph_loader, args.device)
 
 
 def run_test():
     from collections import defaultdict
     args = get_args()
     print(args)
-    device = f'cuda:{args.device}' if torch.cuda.is_available() else 'cpu'
+    args.device = f'cuda:{args.device}' if torch.cuda.is_available() else 'cpu'
     dataset, train_loader, subgraph_loader = prepare_data(args)
-    model, optimizer = prepare_model_optimizer(dataset)
+    model, optimizer = prepare_model_optimizer(dataset, args.device)
     data = dataset[0]
-    x = data.x.to(device)
-    y = data.y.squeeze().to(device)
+    x = data.x.to(args.device)
+    y = data.y.squeeze().to(args.device)
     save_dict = torch.load(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_res',  'reddit_sage.pth'))
     model.load_state_dict(save_dict)
     df = defaultdict(list)
@@ -200,7 +218,7 @@ def run_test():
         if _ * len(subgraph_loader) >= 40:
             break
         t1 = time.time()
-        train_acc, val_acc, test_acc = test(model, data, x, y, subgraph_loader, df)
+        train_acc, val_acc, test_acc = test(model, data, x, y, subgraph_loader, args, df)
         t2 = time.time()
         test_accs.append(test_acc)
         times.append(t2 - t1)
@@ -215,9 +233,11 @@ def run_test():
 
 
 if __name__ == '__main__':
-    tab_data = []
-    for bs in [16384]:
-        sys.argv = [sys.argv[0], '--infer_batch_size', str(bs), '--device', '1']
-        test_accs, times = run_test()
-        tab_data.append([str(bs)] + list(test_accs) + list(times))
-    pd.DataFrame(tab_data).to_csv(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_opt_res', f'reddit_sage_acc.csv'))
+    for cutting in ['degree_way3', 'degree_way4', 'pagerank_way3', 'pagerank_way4']:
+        method, way = cutting.split('_')
+        tab_data = []
+        for bs in [1024, 2048, 4096, 8192]:
+            sys.argv = [sys.argv[0], '--infer_batch_size', str(bs), '--device', '1', '--cutting_method', method, '--cutting_way', way]
+            test_accs, times = run_test()
+            tab_data.append([str(bs)] + list(test_accs) + list(times))
+        pd.DataFrame(tab_data).to_csv(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_opt_res', f'reddit_sage_linear_model_{cutting}_v2.csv'))

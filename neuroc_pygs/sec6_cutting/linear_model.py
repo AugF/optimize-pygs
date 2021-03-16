@@ -3,46 +3,35 @@ import time
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import r2_score, mean_absolute_percentage_error, mean_absolute_error
 from joblib import dump, load
 from neuroc_pygs.configs import PROJECT_PATH
 
-
+# 计算overhead
 dir_path = os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_res')
 
 def run_exp():
     for model in ['reddit_sage', 'cluster_gcn']:
-        X, y = None, None
+        X, y = [], []
         for bs in [1024, 2048, 4096, 8192, 16384]:
             real_path = dir_path + f'/{model}_{bs}_v1.csv'
-            df = pd.read_csv(real_path, index_col=0)
-            X1, y1 = df[['nodes', 'edges']].values.tolist(), (df['memory'].values / (1024 * 1024)).tolist()
-            if X is None:
-                X, y = X1, y1
-            else:
-                X.extend(X1)
-                y.extend(y1)
-        X, y = np.array(X), np.array(y)
-        np.random.seed(1)
-        mask = np.arange(len(y))
-        np.random.shuffle(mask)
-        X, y = X[mask], y[mask]
-        X_train, y_train, X_test, y_test = X[:-100], y[:-100], X[-100:], y[-100:]
+            df = pd.read_csv(real_path, index_col=0).values
+            X.append(df[:,:-1]);  y.append(df[:,-1])
+
+        X, y = np.concatenate(X, axis=0), np.concatenate(y, axis=0)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=50, random_state=0)
         t1 = time.time()
-        # reg = LinearRegression().fit(X_train, y_train)
-        # t2 = time.time()
-        # dump(reg, dir_path + f'/{model}_linear_model_v1.pth')
-        reg = load(dir_path + f'/{model}_linear_model_v1.pth')
+        reg = LinearRegression().fit(X_train, y_train)
+        t2 = time.time()
+        dump(reg, dir_path + f'/{model}_linear_model_v1.pth')
+        # reg = load(dir_path + f'/{model}_linear_model_v1.pth')
         y_pred = reg.predict(X_test)
         print(y_pred)
         t3 = time.time()
-        mse = mean_squared_error(y_pred, y_test)
-        max_bias, max_bias_per = 0, 0
-        for i in range(100):
-            max_bias = max(max_bias, abs(y_pred[i] - y_test[i]))
-            max_bias_per = max(max_bias_per, abs(y_pred[i] - y_test[i]) / y_pred[i])
-        # print(model, t2 - t1, (t3 - t2) / 100)
-        print(model, mse, max_bias, max_bias_per)
+        r2 = r2_score(y_test, y_pred)
+        mae, mape = mean_absolute_error(y_test, y_pred), mean_absolute_percentage_error(y_test, y_pred)
+        print(f'{model}, r2={r2}, mae={mae}, mape={mape}')
 
 
 if __name__ == '__main__':

@@ -49,7 +49,7 @@ def train(model, data, train_loader, optimizer, args, df, cnt):
         optimizer.step()
         memory = torch.cuda.memory_stats(device)["allocated_bytes.all.peak"]
         df['memory'].append(memory)
-        print(f'batch {i}, train_acc: {acc:.4f}, train_loss: {loss.item():.4f}, memory: {memory}')
+        print(f'batch {i}, train_acc: {acc:.4f}, train_loss: {loss.item():.4f}, predict: {memory_pre}, real: {memory}')
         torch.cuda.reset_max_memory_allocated(device)
         torch.cuda.empty_cache()
         cnt += 1

@@ -15,8 +15,6 @@ from neuroc_pygs.utils import get_dataset
 from neuroc_pygs.configs import PROJECT_PATH
 
 
-device = torch.device('cuda:2' if torch.cuda.is_available() else 'cpu')
-
 def get_args():
     parser = argparse.ArgumentParser(description='OGBN-Products (Cluster-GCN)')
     parser.add_argument('--device', type=int, default=0)
@@ -38,7 +36,7 @@ def prepare_data(args):
     return dataset, train_loader, subgraph_loader
 
 
-def prepare_model_optimizer(dataset):
+def prepare_model_optimizer(dataset, device):
     model = SAGE(dataset.num_features, 256, dataset.num_classes)
     model = model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
@@ -70,15 +68,16 @@ class SAGE(torch.nn.Module):
                 x = F.dropout(x, p=0.5, training=self.training)
         return x.log_softmax(dim=-1)
 
-    def inference(self, x_all, subgraph_loader, df=None):
+    def inference(self, x_all, subgraph_loader, device, df=None):
         pbar = tqdm(total=x_all.size(0) * self.num_layers)
         pbar.set_description('Evaluating')
 
         for i in range(self.num_layers):
             xs = []
             for batch_size, n_id, adj in subgraph_loader:
-                edge_index, _, size = adj.to(device)
+                edge_index, _, size = adj
                 
+                edge_index = edge_index.to(device)
                 x = x_all[n_id].to(device)
                 x_target = x[:size[1]]
                 x = self.convs[i]((x, x_target), edge_index)
@@ -96,6 +95,7 @@ class SAGE(torch.nn.Module):
                     torch.cuda.reset_max_memory_allocated(device)
                     torch.cuda.empty_cache()
 
+
             x_all = torch.cat(xs, dim=0)
 
         pbar.close()
@@ -103,7 +103,7 @@ class SAGE(torch.nn.Module):
         return x_all
 
 
-def train(epoch, model, data, x, y, train_loader, optimizer):
+def train(epoch, model, data, x, y, train_loader, optimizer, device):
     model.train()
 
     pbar = tqdm(total=int(data.train_mask.sum()))
@@ -133,10 +133,10 @@ def train(epoch, model, data, x, y, train_loader, optimizer):
 
 
 @torch.no_grad()
-def test(model, data, x, y, subgraph_loader, df=None):
+def test(model, data, x, y, subgraph_loader, device, df=None):
     model.eval()
 
-    out = model.inference(x, subgraph_loader, df)
+    out = model.inference(x, subgraph_loader, device, df)
 
     y_true = y.cpu().unsqueeze(-1)
     y_pred = out.argmax(dim=-1, keepdim=True)
@@ -148,7 +148,7 @@ def test(model, data, x, y, subgraph_loader, df=None):
     return results
 
 
-def fit(model, optimizer, train_loader, data, subgraph_loader):
+def fit(model, optimizer, train_loader, data, subgraph_loader, device):
     x = data.x.to(device)
     y = data.y.squeeze().to(device)
     best_model = None 
@@ -156,9 +156,9 @@ def fit(model, optimizer, train_loader, data, subgraph_loader):
     final_test_acc = 0
 
     for epoch in range(1, 11):
-        loss, acc = train(epoch, model, data, x, y, train_loader, optimizer)
+        loss, acc = train(epoch, model, data, x, y, train_loader, optimizer, device)
         print(f'Epoch {epoch:02d}, Loss: {loss:.4f}, Approx. Train: {acc:.4f}')
-        train_acc, val_acc, test_acc = test(model, data, x, y, subgraph_loader)
+        train_acc, val_acc, test_acc = test(model, data, x, y, subgraph_loader, device)
         print(f'Train: {train_acc:.4f}, Val: {val_acc:.4f}, '
             f'Test: {test_acc:.4f}')
         if val_acc > best_val_acc:
@@ -171,10 +171,11 @@ def fit(model, optimizer, train_loader, data, subgraph_loader):
 
 def run_fit():
     args = get_args()
+    device = f'cuda:{args.device}' if torch.cuda.is_available() else 'cpu'
     dataset, train_loader, subgraph_loader = prepare_data(args)
-    model, optimizer = prepare_model_optimizer(dataset)
+    model, optimizer = prepare_model_optimizer(dataset, device)
     data = dataset[0]
-    fit(model, optimizer, train_loader, data, subgraph_loader)
+    fit(model, optimizer, train_loader, data, subgraph_loader, device)
 
 
 def run_test():
@@ -183,7 +184,7 @@ def run_test():
     print(args)
     device = f'cuda:{args.device}' if torch.cuda.is_available() else 'cpu'
     dataset, train_loader, subgraph_loader = prepare_data(args)
-    model, optimizer = prepare_model_optimizer(dataset)
+    model, optimizer = prepare_model_optimizer(dataset, device)
     data = dataset[0]
     x = data.x.to(device)
     y = data.y.squeeze().to(device)
@@ -196,7 +197,7 @@ def run_test():
         if _ * len(subgraph_loader) >= 40:
             break
         t1 = time.time()
-        train_acc, val_acc, test_acc = test(model, data, x, y, subgraph_loader, df)
+        train_acc, val_acc, test_acc = test(model, data, x, y, subgraph_loader, device, df)
         t2 = time.time()
         test_accs.append(test_acc)
         times.append(t2 - t1)
@@ -204,7 +205,7 @@ def run_test():
     times = np.array(times)
     print(f'{test_accs.mean():.6f} ± {test_accs.std():.6f}')
     print(f'{times.mean():.6f} ± {times.std():.6f}')
-    pd.DataFrame(df).to_csv(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_res', f'reddit_sage_{args.infer_batch_size}_v1.csv'))
+    pd.DataFrame(df).to_csv(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_opt_res', f'reddit_sage_{args.infer_batch_size}_v1.csv'))
     peak_memory = list(map(lambda x: x / (1024 * 1024 * 1024), df['memory']))
     print(f'max: {max(peak_memory)}, min: {np.min(peak_memory)}, medium: {np.median(peak_memory)}, diff: {max(peak_memory)-min(peak_memory)}')
     return test_accs, times
@@ -212,9 +213,8 @@ def run_test():
 
 if __name__ == '__main__':
     tab_data = []
-    for bs in [1024, 2048, 4096, 8192, 16384]:
+    for bs in [16384]:
         sys.argv = [sys.argv[0], '--infer_batch_size', str(bs), '--device', '1']
         test_accs, times = run_test()
         tab_data.append([str(bs)] + list(test_accs) + list(times))
-    pd.DataFrame(tab_data).to_csv(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_res', f'reddit_sage_acc.csv'))
-
+    pd.DataFrame(tab_data).to_csv(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_opt_res', f'reddit_sage_acc.csv'))
