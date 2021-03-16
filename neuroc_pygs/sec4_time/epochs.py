@@ -62,16 +62,15 @@ def run_model(model='gcn', data='amazon-computers'):
 if __name__ == '__main__':
     dir_path = '/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec4_time/exp_res'
     small_datasets = ['pubmed', 'amazon-photo', 'amazon-computers', 'coauthor-physics', 'flickr']
+    tab_data = []
     for model in ['gcn', 'gat']:
-        tab_data = run_model(model=[model], data=small_datasets)
-        with open(dir_path + f'/sampling_epoch_{model}.txt', 'w') as f:
-            f.write('\n'.join([str(t) for t in tab_data]))
-
+        res = run_model(model=[model], data=['coauthor-physics', 'flickr'])
+        tab_data.extend(res)
+        
     for data in ['amazon-computers', 'flickr']:
-        tab_data = run_model(model=['ggnn', 'gaan'], data=[data])
-        with open(dir_path + f'/sampling_epoch_{data}.txt', 'w') as f:
-            f.write('\n'.join([str(t) for t in tab_data]))
+        res = run_model(model=['ggnn', 'gaan'], data=[data])
+        tab_data.extend(res)
+        
+    with open(dir_path + f'/sampling_epoch_v2.txt', 'w') as f:
+        f.write('\n'.join([str(t) for t in tab_data]))
 
-
-# loader: 
-# trainer: 
