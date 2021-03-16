@@ -1,4 +1,5 @@
 import os
+import gc
 import torch
 import traceback
 import numpy as np
@@ -47,6 +48,7 @@ def train(model, data, train_loader, optimizer, args, df, cnt):
         print(f'batch {i}, train_acc: {acc:.4f}, train_loss: {loss.item():.4f}')
         df['memory'].append(torch.cuda.memory_stats(device)["allocated_bytes.all.peak"])
         torch.cuda.reset_max_memory_allocated(device)
+        torch.cuda.empty_cache()
         cnt += 1
         if cnt >= 40:
             break
@@ -69,8 +71,11 @@ def build_train_loader(args, data, Cluster_Loader=ClusterLoader, Neighbor_Loader
     return train_loader
 
 
-def run_one(file_name, args, model, data, optimizer):
-    data = data.to('cpu')
+def run_one(file_name, args):
+    data = build_dataset(args)
+    model, optimizer = build_model_optimizer(args, data)
+    model = model.to(args.device)
+    
     train_loader = build_train_loader(args, data)
     torch.cuda.reset_max_memory_allocated(args.device) # 避免dataloader带来的影响
     torch.cuda.empty_cache()
@@ -81,7 +86,6 @@ def run_one(file_name, args, model, data, optimizer):
     if os.path.exists(real_path):
         res = pd.read_csv(real_path, index_col=0).to_dict(orient='list')
     else:
-    # if True:
         try:
             print('start...')
             res = defaultdict(list)
@@ -105,28 +109,15 @@ def run_all(exp_datasets=EXP_DATASET, exp_models=ALL_MODELS, exp_modes=MODES, ex
     print(f"device: {args.device}")
     for exp_data in ['yelp', 'reddit']:
         args.dataset = exp_data
-        data = build_dataset(args)
         print('build data success')
         for exp_model in ['gcn', 'gat']:
             args.model = exp_model
-            data = data.to('cpu')
-            model, optimizer = build_model_optimizer(args, data)
-            print(model)
-            args.mode = 'cluster'
-            # if exp_model == 'gat':
-            #     re_bs = [100, 150, 250]
-            #     for rs in re_bs:
-            #         args.batch_partitions = rs
-            #         file_name = '_'.join([args.dataset, args.model, str(rs), args.mode, 'v1'])
-            #         run_one(file_name, args, model, data, optimizer)
-            # else:
-            if True:
-                re_bs = [175, 180, 185]
-                for rs in re_bs:
-                    args.batch_partitions = rs
-                    file_name = '_'.join([args.dataset, args.model, str(rs), args.mode, 'v1'])
-                    run_one(file_name, args, model, data, optimizer)
-                        
+            re_bs = [175, 180, 185]
+            for rs in re_bs:
+                args.batch_partitions = rs
+                file_name = '_'.join([args.dataset, args.model, str(rs), args.mode, 'v2'])
+                run_one(file_name, args)
+                gc.collect()           
     return
 
 

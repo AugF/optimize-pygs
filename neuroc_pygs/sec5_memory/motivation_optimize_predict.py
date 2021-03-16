@@ -1,4 +1,5 @@
 import os
+import get_completer()
 import torch
 import traceback
 import numpy as np
@@ -13,7 +14,8 @@ memory_limit = {
     'gcn': 6.5, # 6,979,321,856
     'gat': 8  # 8,589,934,592
 }
-dir_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_motivation_datasets')
+dir_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_automl_datasets')
+
 
 def train(model, data, train_loader, optimizer, args, df, cnt):
     model = model.to(args.device) # special
@@ -28,10 +30,10 @@ def train(model, data, train_loader, optimizer, args, df, cnt):
         # task2
         batch = batch.to(device)
         node, edge = batch.x.shape[0], batch.edge_index.shape[1]
-        reg = load(dir_path + f'/{args.model}_linear_model_v1.pth')
-        memory_pre = reg.predict([[node, edge]]) / 1024
-        if memory_pre > memory_limit[args.model]:
-            print(f'{node}, {edge}, {memory_pre * 1024 * 1024 * 1024}, pass')
+        reg = load(dir_path + f'/{args.model}_{args.predict_model}_v2.pth')
+        memory_pre = reg.predict([[node, edge]])
+        if memory_pre > memory_limit[args.model] * 1024 * 1024 * 1024:
+            print(f'{node}, {edge}, {memory_pre}, pass')
             continue
         df['nodes'].append(node)
         df['edges'].append(edge)
@@ -44,6 +46,7 @@ def train(model, data, train_loader, optimizer, args, df, cnt):
         print(f'batch {i}, train_acc: {acc:.4f}, train_loss: {loss.item():.4f}')
         df['memory'].append(torch.cuda.memory_stats(device)["allocated_bytes.all.peak"])
         torch.cuda.reset_max_memory_allocated(device)
+        torch.cuda.empty_cache()
         cnt += 1
         if cnt >= 40:
             break
@@ -66,8 +69,11 @@ def build_train_loader(args, data, Cluster_Loader=ClusterLoader, Neighbor_Loader
     return train_loader
 
 
-def run_one(file_name, args, model, data, optimizer):
-    data = data.to('cpu')
+def run_one(file_name, args):
+    data = build_dataset(args)
+    model, optimizer = build_model_optimizer(args, data)
+    model = model.to(args.device)
+    
     train_loader = build_train_loader(args, data)
     torch.cuda.reset_max_memory_allocated(args.device) # 避免dataloader带来的影响
     torch.cuda.empty_cache()
@@ -78,7 +84,6 @@ def run_one(file_name, args, model, data, optimizer):
     if os.path.exists(real_path):
         res = pd.read_csv(real_path, index_col=0).to_dict(orient='list')
     else:
-    # if True:
         try:
             print('start...')
             res = defaultdict(list)
@@ -97,25 +102,21 @@ def run_one(file_name, args, model, data, optimizer):
     return
 
 
-def run_all(exp_datasets=EXP_DATASET, exp_models=ALL_MODELS, exp_modes=MODES, exp_relative_batch_sizes=EXP_RELATIVE_BATCH_SIZE):
+def run_all(predict_model='automl'):
     args = get_args()
     print(f"device: {args.device}")
+    args.predict_model = predict_model
     for exp_data in ['yelp', 'reddit']:
         args.dataset = exp_data
-        data = build_dataset(args)
         print('build data success')
         for exp_model in ['gcn', 'gat']:
             args.model = exp_model
-            data = data.to('cpu')
-            model, optimizer = build_model_optimizer(args, data)
-            print(model)
-            args.mode = 'cluster'
-            if True:
-                re_bs = [175, 180, 185]
-                for rs in re_bs:
-                    args.batch_partitions = rs
-                    file_name = '_'.join([args.dataset, args.model, str(rs), args.mode, 'linear_model_v1'])
-                    run_one(file_name, args, model, data, optimizer)       
+            re_bs = [175, 180, 185]
+            for rs in re_bs:
+                args.batch_partitions = rs
+                file_name = '_'.join([args.dataset, args.model, str(rs), args.mode, 'v2'])
+                run_one(file_name, args)
+                gc.collect()           
     return
 
 
@@ -132,4 +133,5 @@ if __name__ == '__main__':
     import sys
     default_args = '--hidden_dims 1024 --gaan_hidden_dims 256 --head_dims 128 --heads 4 --d_a 32 --d_v 32 --d_m 32'
     sys.argv = [sys.argv[0], '--device', 'cuda:2', '--num_workers', '0'] + default_args.split(' ')
-    run_all()
+    run_all(predict_model='automl')
+    run_all(predict_model='linear_model')
