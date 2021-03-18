@@ -24,7 +24,7 @@ def run_exp():
         t1 = time.time()
         reg = LinearRegression().fit(X_train, y_train)
         t2 = time.time()
-        dump(reg, dir_path + f'/{model}_linear_model_v1.pth')
+        dump(reg, dir_path + f'/{model}_linear_model_v2.pth')
         # reg = load(dir_path + f'/{model}_linear_model_v1.pth')
         y_pred = reg.predict(X_test)
         print(y_pred)

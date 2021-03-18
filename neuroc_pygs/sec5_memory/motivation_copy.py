@@ -4,62 +4,64 @@ import torch
 import traceback
 import numpy as np
 import pandas as pd
-from joblib import load
 from collections import defaultdict
 from torch_geometric.data import ClusterData, ClusterLoader, NeighborSampler
 from neuroc_pygs.configs import EXP_DATASET, ALL_MODELS, EXP_RELATIVE_BATCH_SIZE, MODES, PROJECT_PATH
-from neuroc_pygs.options import get_args, build_dataset, build_model_optimizer
+from neuroc_pygs.options import get_args, build_dataset, build_model_optimizer, build_subgraphloader
 
-memory_limit = {
-    'gcn': 6.5, # 6,979,321,856
-    'gat': 8  # 8,589,934,592
-}
-dir_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_automl_datasets_final')
-dir_out = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_motivation_final')
-ratio_dict = pd.read_csv(dir_path + '/regression_mape_res.csv', index_col=0)
 
 def train(model, data, train_loader, optimizer, args, df, cnt):
     model = model.to(args.device) # special
-    device = args.device
+    device, mode = args.device, args.mode
     model.train()
 
+    all_loss, all_acc = 0, 0
+    total_examples = 0
     loader_iter, loader_num = iter(train_loader), len(train_loader)
     for i in range(loader_num):
         # task1
         optimizer.zero_grad()
         batch = next(loader_iter)
+        batch_size = batch.train_mask.sum().item()
         # task2
         batch = batch.to(device)
-        node, edge = batch.x.shape[0], batch.edge_index.shape[1]
-        reg = load(dir_path + f'/{args.model}_{args.predict_model}_v2.pth')
-        if args.predict_model == 'linear_model':
-            memory_pre = reg.predict([[node, edge]])[0]
-        else:
-            paras_dict = model.get_hyper_paras()
-            memory_pre = reg.predict([[node, edge] + [v for v in paras_dict.values()]])[0]
-        if memory_pre > memory_limit[args.model] * (1 + args.memory_ratio) * 1024 * 1024 * 1024:
-            print(f'{node}, {edge}, {memory_pre}, pass')
-            continue
-        df['nodes'].append(node)
-        df['edges'].append(edge)
+        df['nodes'].append(batch.x.shape[0])
+        df['edges'].append(batch.edge_index.shape[1])
         # task3
         logits = model(batch.x, batch.edge_index)
-        loss = model.loss_fn(logits[batch.train_mask], batch.y[batch.train_mask])
+        y = batch.y[batch.train_mask]
+        loss = model.loss_fn(logits[batch.train_mask], y)
         loss.backward()
-        acc = model.evaluator(logits[batch.train_mask], batch.y[batch.train_mask])
+        acc = model.evaluator(logits[batch.train_mask], y)
         optimizer.step()
-        memory = torch.cuda.memory_stats(device)["allocated_bytes.all.peak"]
-        df['acc'].append(acc)
-        df['loss'].append(loss.item())
-        df['memory'].append(memory)
-        print(f'batch {i}, train loss: {loss.item()}, train acc: {acc}')
-        print(f'batch {i}, nodes:{node}, edges: {edge}, predict: {memory_pre}, real: {memory}')
+        # print(f'batch {i}, train_acc: {acc:.4f}, train_loss: {loss.item():.4f}')
+        df['memory'].append(torch.cuda.memory_stats(device)["allocated_bytes.all.peak"])
         torch.cuda.reset_max_memory_allocated(device)
         torch.cuda.empty_cache()
+        all_loss += loss.item() * batch_size
+        all_acc += acc * y.size(0)
+        total_examples += batch_size + y.size(0)
         cnt += 1
         if cnt >= 40:
             break
-    return df, cnt
+    return all_loss / total_examples, all_acc / total_examples, df, cnt
+
+
+@torch.no_grad()
+def infer(model, data, subgraphloader):
+    model.eval()
+    model.reset_parameters()
+    y_pred = model.inference(data.x, subgraphloader) # 这里使用inference_cuda作为测试
+    y_true = data.y.cpu()
+
+    # accs, losses = [], []
+    accs = []
+    for mask in [data.train_mask, data.val_mask, data.test_mask]:
+        # loss = model.loss_fn(y_pred[mask], y_true[mask])
+        acc = model.evaluator(y_pred[mask], y_true[mask]) 
+        # losses.append(loss.item())
+        accs.append(acc)
+    return accs
 
 
 def build_train_loader(args, data, Cluster_Loader=ClusterLoader, Neighbor_Loader=NeighborSampler):
@@ -84,12 +86,13 @@ def run_one(file_name, args):
     model = model.to(args.device)
     
     train_loader = build_train_loader(args, data)
+    subgraph_loader = build_subgraphloader(args, data)
     torch.cuda.reset_max_memory_allocated(args.device) # 避免dataloader带来的影响
     torch.cuda.empty_cache()
     print(file_name)
     base_memory = torch.cuda.memory_stats(args.device)["allocated_bytes.all.current"]
     print(f'base memory: {base_memory}')
-    real_path = dir_out + '/' + file_name + '.csv'
+    real_path = os.path.join(PROJECT_PATH, 'sec5_memory/exp_motivation', file_name) + '.csv'
     if os.path.exists(real_path):
         res = pd.read_csv(real_path, index_col=0).to_dict(orient='list')
     else:
@@ -97,10 +100,14 @@ def run_one(file_name, args):
             print('start...')
             res = defaultdict(list)
             cnt = 0
-            for _ in range(40):
-                res, cnt = train(model, data, train_loader, optimizer, args, res, cnt)
-                if cnt >= 40:
-                    break
+            for _ in range(50):
+                loss, acc, res, cnt = train(model, data, train_loader, optimizer, args, res, cnt)
+                print(f'Epoch: {_:03d}, train loss: {loss:.6f}, train acc: {acc:.6f}')
+                train_acc, val_acc, test_acc = infer(model, data, subgraph_loader)
+                print(f'Epoch: {_:03d}, train acc: {train_acc:.6f}, val acc: {val_acc:.6f}, test_acc: {test_acc:.6f}')
+                # if cnt >= 20:
+                #     break
+            exit(0)
             pd.DataFrame(res).to_csv(real_path)
         except Exception as e:
             print(e.args)
@@ -111,23 +118,20 @@ def run_one(file_name, args):
     return
 
 
-def run_all(predict_model='automl', exp_model='gcn', memory_ratio=0.01):
+def run_all(exp_datasets=EXP_DATASET, exp_models=ALL_MODELS, exp_modes=MODES, exp_relative_batch_sizes=EXP_RELATIVE_BATCH_SIZE):
     args = get_args()
     print(f"device: {args.device}")
-    args.predict_model, args.memory_ratio = predict_model, memory_ratio
     for exp_data in ['yelp', 'reddit']:
         args.dataset = exp_data
         print('build data success')
-        args.model = exp_model
-        if exp_data == 'reddit' and exp_model == 'gat':
-            re_bs = [170, 175, 180]
-        else:
+        for exp_model in ['cluster_gcn', 'gat']:
+            args.model = exp_model
             re_bs = [175, 180, 185]
-        for rs in re_bs:
-            args.batch_partitions = rs
-            file_name = '_'.join([args.dataset, args.model, str(rs), args.predict_model, str(int(100*args.memory_ratio)), 'mape_v2'])
-            run_one(file_name, args)
-            gc.collect()           
+            for rs in re_bs:
+                args.batch_partitions = rs
+                file_name = '_'.join([args.dataset, args.model, str(rs), args.mode, 'copy_v2'])
+                run_one(file_name, args)
+                gc.collect()           
     return
 
 
@@ -144,6 +148,4 @@ if __name__ == '__main__':
     import sys
     default_args = '--hidden_dims 1024 --gaan_hidden_dims 256 --head_dims 128 --heads 4 --d_a 32 --d_v 32 --d_m 32'
     sys.argv = [sys.argv[0], '--device', 'cuda:2', '--num_workers', '0'] + default_args.split(' ')
-    for model in ['gcn', 'gat']:
-        for predict_model in ['linear_model', 'automl']:
-            run_all(predict_model, model, ratio_dict[model][predict_model])
+    run_all()

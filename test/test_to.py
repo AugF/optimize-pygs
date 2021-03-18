@@ -1,19 +1,20 @@
-from mpipe import OrderedStage, Pipeline
+from sklearn.neighbors import (NeighborhoodComponentsAnalysis,
+KNeighborsClassifier)
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression, SGDRegressor
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor, AdaBoostRegressor
 
-def increment(value):
-    return value + 1
+X, y = load_iris(return_X_y=True)
+X_train, X_test, y_train, y_test = train_test_split(X, y,
+stratify=y, test_size=0.7, random_state=42)
 
-def double(value):
-    return value * 2
+# clf = RandomForestRegressor()
+# clf = LinearRegression()
+clf = SGDRegressor(random_state=1)
 
-stage1 = OrderedStage(increment, 3)
-stage2 = OrderedStage(double, 3)
-pipe = Pipeline(stage1.link(stage2))
-
-for number in range(10):
-    pipe.put(number)
-
-pipe.put(None)
-
-for result in pipe.results():
-    print(result)
+clf.partial_fit(X_train[:20], y_train[:20])
+clf.partial_fit(X_train[20:], y_train[20:])
+# clf.fit(X, y)
+print(clf.score(X_test, y_test))

@@ -7,7 +7,7 @@ import numpy as np
 import os.path as osp
 from neuroc_pygs.utils import get_dataset, gcn_norm, normalize, get_split_by_file, small_datasets
 from torch_geometric.data import ClusterData, ClusterLoader, NeighborSampler
-from neuroc_pygs.models import GCN, GGNN, GAT, GaAN
+from neuroc_pygs.models import GCN, GGNN, GAT, GaAN, ClusterGCN
 from neuroc_pygs.utils.evaluator import get_evaluator, get_loss_fn
 from neuroc_pygs.configs import DATASET_METRIC, dataset_root, ALL_MODELS, EXP_DATASET, MODES, EXP_RELATIVE_BATCH_SIZE, PROJECT_PATH
 from tabulate import tabulate
@@ -223,6 +223,12 @@ def build_model(args, data):
             heads=args.heads, d_v=args.d_v,
             d_a=args.d_a, d_m=args.d_m, gpu=args.gpu,
             flag=args.flag, infer_flag=args.infer_flag, device=args.device
+        )
+    elif args.model == 'cluster_gcn':
+        model = ClusterGCN(
+            in_channels=args.num_features, hidden_channels=args.hidden_dims, 
+            out_channels=args.num_classes, num_layers=args.layers,
+            dropout=0.5, device=args.device
         )
 
     # step2 set loss_fn and evaluator

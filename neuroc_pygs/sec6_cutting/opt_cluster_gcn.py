@@ -28,7 +28,7 @@ from neuroc_pygs.sec6_cutting.cutting_methods import cut_by_importance
 
 
 dir_path = '/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec6_cutting/exp_res'
-reg = load(dir_path + '/cluster_gcn_linear_model_v1.pth')
+reg = load(dir_path + '/cluster_gcn_linear_model_v2.pth')
 memory_limit = 2.3 * 1024 * 1024 * 1024
 bsearch = BSearch(clf=reg, memory_limit=memory_limit, ratio=0)
 
@@ -312,7 +312,7 @@ def run_test():
     times = np.array(times)
     print(f'{test_accs.mean():.6f} ± {test_accs.std():.6f}')
     print(f'{times.mean():.6f} ± {times.std():.6f}')
-    pd.DataFrame(df).to_csv(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_res', f'cluster_gcn_{args.infer_batch_size}_v1.csv'))
+    pd.DataFrame(df).to_csv(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_res', f'cluster_gcn_{args.infer_batch_size}_v2.csv'))
     peak_memory = list(map(lambda x: x / (1024 * 1024 * 1024), df['memory']))
     print(f'max: {max(peak_memory)}, min: {np.min(peak_memory)}, medium: {np.median(peak_memory)}, diff: {max(peak_memory)-min(peak_memory)}')
     return test_accs, times
@@ -322,7 +322,7 @@ if __name__ == "__main__":
     for cutting in ['degree_way3', 'degree_way4', 'pagerank_way3', 'pagerank_way4']:
         method, way = cutting.split('_')
         tab_data = []
-        for bs in [1024, 2048, 4096, 8192]:
+        for bs in [1024, 2048, 4096, 8192, 16384]:
             sys.argv = [sys.argv[0], '--infer_batch_size', str(bs), '--device', '2', '--cutting_method', method, '--cutting_way', way]
             test_accs, times = run_test()
             tab_data.append([str(bs)] + list(test_accs) + list(times))

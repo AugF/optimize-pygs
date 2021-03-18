@@ -1,0 +1,6 @@
+gcn build datasets use time, line_model: 255.9134304523468, automl: 369.9130358695984s
+gat build datasets use time, line_model: 259.76527094841003, automl: 1413.783574104309s
+
+# ratio
+model: gcn, automl mpe: 0.0066885437801690005, linear_model: 0.00016560066972769928
+model: gat, automl mpe: 0.023887722290152832, linear_model: -5.814540590836079e-05

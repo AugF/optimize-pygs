@@ -19,7 +19,7 @@ from neuroc_pygs.configs import PROJECT_PATH
 from neuroc_pygs.sec5_memory.configs import MODEL_PARAS
 
 
-dir_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_automl_datasets')
+dir_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_automl_datasets_final')
 
 def train(model, batch, optimizer):
     model.train()
@@ -88,6 +88,7 @@ def run_automl_dataset(model):
     t1 = time.time()
     tab_data = []
     # vars_set = set(range(5000, 100001, 5000)).union(set(range(5000, 100001, 2000)))
+    t1 = time.time()
     vars_set = range(5000, 100001, 5000) 
     for nodes in vars_set:
         for edges in vars_set:
@@ -103,6 +104,7 @@ def run_automl_dataset(model):
                 print(e.args)
                 print(traceback.format_exc())
     pd.DataFrame(tab_data).to_csv(dir_path + f'/{model}_nodes_edges_automl_model_v2.csv')
+    t2 = time.time()
     
     tab_data = []
     nodes, expect_edges = 35000, 45000
@@ -142,20 +144,21 @@ def run_automl_dataset(model):
 
     
     tab_data = []
-    init_argv = [sys.argv[0], '--dataset', 'random_15k_20k', '--device', 'cuda:2', '--model', model]
-    for para, para_values in MODEL_PARAS[model].items():
-        for p_v in para_values: #  paras: 13
-            sys.argv = init_argv + [f'--{para}', str(p_v)]
-            try:
-                tab_data.append(run_automl())
-                gc.collect()
-            except Exception as e:
-                print(e.args)
-                print(traceback.format_exc())
-    pd.DataFrame(tab_data).to_csv(dir_path + f'/{model}_paras_automl_model_v4.csv')
+    init_argv = [sys.argv[0], '--device', 'cuda:2', '--model', model]
+    for dataset in ['random_15k_20k', 'random_25k_10k']:
+        for para, para_values in MODEL_PARAS[model].items():
+            for p_v in para_values: #  paras: 13
+                sys.argv = init_argv + [f'--{para}', str(p_v), '--dataset', dataset]
+                try:
+                    tab_data.append(run_automl())
+                    gc.collect()
+                except Exception as e:
+                    print(e.args)
+                    print(traceback.format_exc())
+        pd.DataFrame(tab_data).to_csv(dir_path + f'/{model}_paras_automl_model_v2.csv')
 
-    t2 = time.time()
-    return t2 - t1
+    t3 = time.time()
+    return t2 - t1, t3 - t1
 
 
 def run_dataset(model):
@@ -177,43 +180,16 @@ def run_dataset(model):
     pd.DataFrame(tab_data, columns=headers).to_csv(os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_automl_datasets', f'{model}_linear_model_v2.csv'))
     return t2 - t1
 
-
 def build_datasets():
     for model in ['gcn', 'gat']:
         use_time = run_dataset(model)
-    print(f'{model} build datasets use time: {use_time}s')
+        print(f'{model} build datasets use time: {use_time}s')
 
 
 def build_automl_datasets():
     for model in ['gcn', 'gat']:
-        use_time = run_automl_dataset(model)
-    print(f'{model} build datasets use time: {use_time}s')
-
-
-def run_exp():
-    for model in ['gcn', 'gat']:
-        real_path = dir_path + f'/{model}_linear_model_v1.csv'
-        df = pd.read_csv(real_path, index_col=0)
-        X, y = df[['Nodes', 'Edges']].values, df['Peak Memory'].values / (1024 * 1024)
-        np.random.seed(1)
-        mask = np.arange(len(y))
-        np.random.shuffle(mask)
-        X, y = X[mask], y[mask]
-        X_train, y_train, X_test, y_test = X[:-1000], y[:-1000], X[-1000:], y[-1000:]
-        t1 = time.time()
-        reg = LinearRegression().fit(X_train, y_train)
-        t2 = time.time()
-        dump(reg, dir_path + f'/{model}_linear_model_v1.pth')
-        # reg = load(dir_path + f'/{model}_linear_model_v0.pth')
-        y_pred = reg.predict(X_test)
-        t3 = time.time()
-        mse = mean_squared_error(y_pred, y_test)
-        max_bias, max_bias_per = 0, 0
-        for i in range(1000):
-            max_bias = max(max_bias, abs(y_pred[i] - y_test[i]))
-            max_bias_per = max(max_bias_per, abs(y_pred[i] - y_test[i]) / y_pred[i])
-        print(model, t2 - t1, (t3 - t2) / 100)
-        print(model, mse, max_bias, max_bias_per)
+        linear_model_use_time, automl_use_time = run_automl_dataset(model)
+        print(f'{model} build datasets use time, line_model: {linear_model_use_time}, automl: {automl_use_time}s')
 
 
 if __name__ == '__main__':

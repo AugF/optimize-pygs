@@ -21,15 +21,17 @@ def train(model, data, train_loader, optimizer, args, df, cnt):
             # task1
             optimizer.zero_grad()
             batch = next(loader_iter)
+            batch_size = batch.train_mask.sum().item()
             # task2
             batch = batch.to(device)
             df['nodes'].append(batch.x.shape[0])
             df['edges'].append(batch.edge_index.shape[1])
             # task3
             logits = model(batch.x, batch.edge_index)
-            loss = model.loss_fn(logits[batch.train_mask], batch.y[batch.train_mask])
+            y = batch.y[batch.train_mask]
+            loss = model.loss_fn(logits[batch.train_mask], y)
             loss.backward()
-            acc = model.evaluator(logits[batch.train_mask], batch.y[batch.train_mask])
+            acc = model.evaluator(logits[batch.train_mask], y)
             optimizer.step()
         else:
             # task1
@@ -46,6 +48,8 @@ def train(model, data, train_loader, optimizer, args, df, cnt):
             acc = model.evaluator(logits, y) / batch_size
             optimizer.step()
         print(f'batch {i}, train_acc: {acc:.4f}, train_loss: {loss.item():.4f}')
+        df['acc'].append(acc)
+        df['loss'].append(loss.item())
         df['memory'].append(torch.cuda.memory_stats(device)["allocated_bytes.all.peak"])
         torch.cuda.reset_max_memory_allocated(device)
         torch.cuda.empty_cache()
@@ -53,6 +57,22 @@ def train(model, data, train_loader, optimizer, args, df, cnt):
         if cnt >= 40:
             break
     return df, cnt
+
+
+@torch.no_grad()
+def infer(model, data, subgraphloader):
+    model.eval()
+    model.reset_parameters()
+    y_pred = model.inference_cuda(data.x, subgraphloader) # 这里使用inference_cuda作为测试
+    y_true = data.y.cpu()
+
+    accs, losses = [], []
+    for mask in [data.train_mask, data.val_mask, data.test_mask]:
+        loss = model.loss_fn(y_pred[mask], y_true[mask])
+        acc = model.evaluator(y_pred[mask], y_true[mask]) 
+        losses.append(loss.item())
+        accs.append(acc)
+    return accs, losses
 
 
 def build_train_loader(args, data, Cluster_Loader=ClusterLoader, Neighbor_Loader=NeighborSampler):
@@ -82,7 +102,7 @@ def run_one(file_name, args):
     print(file_name)
     base_memory = torch.cuda.memory_stats(args.device)["allocated_bytes.all.current"]
     print(f'base memory: {base_memory}')
-    real_path = os.path.join(PROJECT_PATH, 'sec5_memory/exp_motivation', file_name) + '.csv'
+    real_path = os.path.join(PROJECT_PATH, 'sec5_memory/exp_motivation_final', file_name) + '.csv'
     if os.path.exists(real_path):
         res = pd.read_csv(real_path, index_col=0).to_dict(orient='list')
     else:
@@ -90,9 +110,9 @@ def run_one(file_name, args):
             print('start...')
             res = defaultdict(list)
             cnt = 0
-            for _ in range(20):
+            for _ in range(40):
                 res, cnt = train(model, data, train_loader, optimizer, args, res, cnt)
-                if cnt >= 20:
+                if cnt >= 40:
                     break
             pd.DataFrame(res).to_csv(real_path)
         except Exception as e:
@@ -107,12 +127,16 @@ def run_one(file_name, args):
 def run_all(exp_datasets=EXP_DATASET, exp_models=ALL_MODELS, exp_modes=MODES, exp_relative_batch_sizes=EXP_RELATIVE_BATCH_SIZE):
     args = get_args()
     print(f"device: {args.device}")
-    for exp_data in ['yelp', 'reddit']:
+    # for exp_data in ['yelp', 'reddit']:
+    for exp_data in ['reddit']:
         args.dataset = exp_data
         print('build data success')
         for exp_model in ['gcn', 'gat']:
             args.model = exp_model
-            re_bs = [175, 180, 185]
+            if exp_data == 'reddit':
+                re_bs = [160, 165, 170]
+            elif exp_data == 'yelp':
+                re_bs = [175, 180, 185]
             for rs in re_bs:
                 args.batch_partitions = rs
                 file_name = '_'.join([args.dataset, args.model, str(rs), args.mode, 'v2'])

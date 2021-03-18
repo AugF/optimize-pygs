@@ -18,17 +18,18 @@ from neuroc_pygs.configs import PROJECT_PATH
 def get_args():
     parser = argparse.ArgumentParser(description='OGBN-Products (Cluster-GCN)')
     parser.add_argument('--device', type=int, default=0)
+    parser.add_argument('--batch_size', type=int, default=1024)
     parser.add_argument('--infer_batch_size', type=int, default=1024)
     args = parser.parse_args()
     return args
 
 
 def prepare_data(args):
-    dataset = get_dataset('reddit', normalize_features=True)
+    dataset = get_dataset('yelp', normalize_features=True)
     data = dataset[0]
 
     train_loader = NeighborSampler(data.edge_index, node_idx=data.train_mask,
-                                sizes=[25, 10], batch_size=1024, shuffle=True,
+                                sizes=[25, 10], batch_size=args.batch_size, shuffle=True,
                                 num_workers=12)
     subgraph_loader = NeighborSampler(data.edge_index, node_idx=None, sizes=[-1],
                                     batch_size=args.infer_batch_size, shuffle=False,
@@ -169,7 +170,7 @@ def fit(model, optimizer, train_loader, data, subgraph_loader, device):
             final_test_acc = test_acc
             best_model = copy.deepcopy(model)
                     
-    torch.save(best_model.state_dict(), os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_res',  'reddit_sage.pth'))
+    torch.save(best_model.state_dict(), os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_res',  'reddit_sage_v2.pth'))
 
 
 def run_fit():
@@ -215,11 +216,4 @@ def run_test():
 
 
 if __name__ == '__main__':
-    import gc
-    tab_data = []
-    for bs in [1024, 2048, 4096, 8192, 16384]:
-        sys.argv = [sys.argv[0], '--infer_batch_size', str(bs), '--device', '1']
-        test_accs, times = run_test()
-        tab_data.append([str(bs)] + list(test_accs) + list(times))
-        gc.collect()
-    pd.DataFrame(tab_data).to_csv(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_res', f'reddit_sage_acc_v2.csv'))
+    run_fit()
