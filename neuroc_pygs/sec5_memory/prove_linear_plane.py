@@ -3,6 +3,7 @@ import torch
 import sys
 
 import numpy as np 
+import pandas as pd
 import matplotlib.pyplot as plt
 
 from tabulate import tabulate
@@ -35,7 +36,7 @@ def run():
     data = build_dataset(args)
     model, optimizer = build_model_optimizer(args, data)
     model = model.to(args.device)
-    memory = torch.cuda.memory_stats(args.device)["allocated_bytes.all.peak"]
+    memory = torch.cuda.memory_stats(args.device)["allocated_bytes.all.current"]
     torch.cuda.reset_max_memory_allocated(args.device)
     print(f'device: {args.device}, model memory: {memory}, model: {args.model}')
 
@@ -48,7 +49,7 @@ def run():
     peak_memory = torch.cuda.memory_stats(args.device)["allocated_bytes.all.peak"]
     torch.cuda.reset_max_memory_allocated(args.device)
     print(args.dataset, peak_memory, '\n')
-    return [args.dataset, data.num_nodes, data.num_edges, peak_memory]
+    return [args.dataset, data.num_nodes, data.num_edges, peak_memory, peak_memory - memory]
 
 
 def get_linear_plane(model='gat'):
@@ -59,15 +60,17 @@ def get_linear_plane(model='gat'):
             exp_data = f'random_{int(nodes/1000)}k_{int(expect_edges/1000)}k'
             sys.argv = [sys.argv[0], '--dataset', exp_data, '--device', 'cuda:2', '--model', model] + default_args.split(' ')
             tab_data.append(run())
-    np.save(os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_res', f'{model}_linear_plane_data.npy'), tab_data)
-    print(tabulate(tab_data, headers=['Name', 'Nodes', 'Edges', 'Peak Memory'], tablefmt='github'))
+    file_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_res', f'{model}_linear_plane_data_final.csv')
+    print(tabulate(tab_data, headers=['Name', 'Nodes', 'Edges', 'Peak Memory', 'Differ Memory'], tablefmt='github'))
+    pd.DataFrame(tab_data, columns=['Name', 'Nodes', 'Edges', 'Peak Memory', 'Differ Memory']).to_csv(file_path)
 
 
 def pics_linear_plane(model='gat'):
-    tab_data = np.load(os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_res', f'{model}_linear_plane_data.npy'))
+    file_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_res', f'{model}_linear_plane_data_final.csv')
+    tab_data = pd.read_csv(file_path, index_col=0).values[1:]
     nodes = list(map(lambda x: int(x), tab_data[:, 1]))
     edges = list(map(lambda x: int(x), tab_data[:, 2]))
-    memory = list(map(lambda x: int(x) / (1024*1024), tab_data[:, 3]))
+    memory = list(map(lambda x: int(x) / (1024*1024), tab_data[:, 4]))
     print(nodes, edges, memory)
 
     # from mpl_toolkits.mplot3d import Axes3D
@@ -77,8 +80,9 @@ def pics_linear_plane(model='gat'):
     ax.set_ylabel('Number of Edges', fontsize=12)
     ax.set_zlabel('Peak Memory (MB)', fontsize=12)
     ax.scatter3D(nodes, edges, memory, cmap='Blues')
-    fig.savefig(os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_figs', f'{model}_linear_plane_data.png'))
+    fig.savefig(os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_figs', f'{model}_linear_plane_data_final.png'))
 
 
 if __name__ == '__main__':
+    # get_linear_plane()
     pics_linear_plane()

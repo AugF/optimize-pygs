@@ -73,8 +73,8 @@ def run_automl(files, model='gcn', file_type='automl'):
     X, y = [], []
     for file in files:
         real_path = dir_path + f'/{model}_{file}_automl_model_v2.csv'
-        df = pd.read_csv(real_path, index_col=0).values
-        X.append(df[:,:-1]);  y.append(df[:,-1])
+        df = pd.read_csv(real_path, index_col=0).values[:,1:]
+        X.append(df[:,:-2]);  y.append(df[:,-1])
 
     X, y = np.concatenate(X, axis=0), np.concatenate(y, axis=0)
     if file_type == 'linear_model':
@@ -106,7 +106,23 @@ def run_automl(files, model='gcn', file_type='automl'):
         ax.legend(fontsize=16)
         fig.savefig(os.path.join(PROJECT_PATH, 'sec5_memory') + f'/exp_figs/exp_{file_type}_{model}_{names[i]}.png')
 
-           
+
+def run_linear_model(model='gcn'):
+    real_path = dir_path + f'/{model}_linear_model_final_v2.csv'
+    df = pd.read_csv(real_path, index_col=0).values[:, 1:]
+    X, y = np.array(df[:, :-2], dtype=np.float32), np.array(df[:, -1], dtype=np.float32)
+    reg = LinearRegression()
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=50, random_state=0)
+    reg.fit(X_train, y_train)
+    y_pred = reg.predict(X_test) 
+    r2 = r2_score(y_test, y_pred)
+    mae, mape = mean_absolute_error(y_test, y_pred), mean_absolute_percentage_error(y_test, y_pred)
+    mpe = mean_percentage_error(y_test, y_pred)
+    print(f'r2={r2}, mae={mae}, mape={mape}, mpe={mpe}')
+    dump(reg, dir_path + f'/{model}_linear_model_final_v2.pth')
+    return mape, mpe
+
+
 def save_model(files, model, file_type):
     X, y = [], []
     for file in files:
@@ -133,16 +149,18 @@ def save_model(files, model, file_type):
 
 
 if __name__ == '__main__':
-    files = ['classes', 'nodes_edges', 'features', 'paras']
+    run_linear_model('gcn'); run_linear_model('gat')
+    # files = ['classes', 'nodes_edges', 'features', 'paras']
     # for model in ['gcn', 'gat']:
     #     run_automl(files, model, file_type='automl') 
-    #     run_automl(['nodes_edges'], model, file_type='linear_model')
+        # run_automl(['nodes_edges'], model, file_type='linear_model')
 
     # save model
-    ratio_dict = {}
-    for model in ['gcn', 'gat']:
-        mape1, _ = save_model(files, model=model, file_type='automl')
-        mape2, _ = save_model(files=['nodes_edges'], model=model, file_type='linear_model')
-        print(f'model: {model}, automl mpe: {mape1}, linear_model: {mape2}')
-        ratio_dict[model] = [mape1, mape2]
-    pd.DataFrame(ratio_dict, index=['automl', 'linear_model']).to_csv(dir_path + '/regression_mape_res.csv')
+    # ratio_dict = {}
+    # for model in ['gcn', 'gat']:
+        # mape1, _ = save_model(files, model=model, file_type='automl')
+        # mape1 = 0
+    #     mape2, _ = save_model(files=['nodes_edges'], model=model, file_type='linear_model')
+    #     print(f'model: {model}, automl mpe: {mape1}, linear_model: {mape2}')
+    #     ratio_dict[model] = [mape1, mape2]
+    # pd.DataFrame(ratio_dict, index=['automl', 'linear_model']).to_csv(dir_path + '/regression_mape_res.csv')

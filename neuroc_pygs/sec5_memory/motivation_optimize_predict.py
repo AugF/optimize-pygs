@@ -14,7 +14,7 @@ memory_limit = {
     'gcn': 6.5, # 6,979,321,856
     'gat': 8  # 8,589,934,592
 }
-dir_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_automl_datasets_final')
+dir_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_automl_datasets_diff')
 dir_out = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_motivation_final')
 ratio_dict = pd.read_csv(dir_path + '/regression_mape_res.csv', index_col=0)
 
@@ -26,18 +26,21 @@ def train(model, data, train_loader, optimizer, args, df, cnt):
     loader_iter, loader_num = iter(train_loader), len(train_loader)
     for i in range(loader_num):
         # task1
+        torch.cuda.reset_max_memory_allocated(device)
+        torch.cuda.empty_cache()
+        current_memory = torch.cuda.memory_stats(device)["allocated_bytes.all.current"]
         optimizer.zero_grad()
         batch = next(loader_iter)
         # task2
         batch = batch.to(device)
         node, edge = batch.x.shape[0], batch.edge_index.shape[1]
-        reg = load(dir_path + f'/{args.model}_{args.predict_model}_v2.pth')
+        reg = load(dir_path + f'/{args.model}_{args.predict_model}_final_v2.pth')
         if args.predict_model == 'linear_model':
             memory_pre = reg.predict([[node, edge]])[0]
         else:
             paras_dict = model.get_hyper_paras()
             memory_pre = reg.predict([[node, edge] + [v for v in paras_dict.values()]])[0]
-        if memory_pre > memory_limit[args.model] * (1 + args.memory_ratio) * 1024 * 1024 * 1024:
+        if memory_pre / (1 - args.memory_ratio) + current_memory > memory_limit[args.model] * 1024 * 1024 * 1024:
             print(f'{node}, {edge}, {memory_pre}, pass')
             continue
         df['nodes'].append(node)
@@ -53,9 +56,7 @@ def train(model, data, train_loader, optimizer, args, df, cnt):
         df['loss'].append(loss.item())
         df['memory'].append(memory)
         print(f'batch {i}, train loss: {loss.item()}, train acc: {acc}')
-        print(f'batch {i}, nodes:{node}, edges: {edge}, predict: {memory_pre}, real: {memory}')
-        torch.cuda.reset_max_memory_allocated(device)
-        torch.cuda.empty_cache()
+        print(f'batch {i}, nodes:{node}, edges: {edge}, predict: {memory_pre}-{memory_pre/(1 - args.memory_ratio) + current_memory}, real: {memory}')
         cnt += 1
         if cnt >= 40:
             break
@@ -111,10 +112,10 @@ def run_one(file_name, args):
     return
 
 
-def run_all(predict_model='automl', exp_model='gcn', memory_ratio=0.01):
+def run_all(predict_model='automl', exp_model='gcn', memory_ratio=0.01, bias=0.005):
     args = get_args()
     print(f"device: {args.device}")
-    args.predict_model, args.memory_ratio = predict_model, memory_ratio
+    args.predict_model, args.memory_ratio = predict_model, memory_ratio + bias
     for exp_data in ['yelp', 'reddit']:
         args.dataset = exp_data
         print('build data success')
@@ -125,9 +126,9 @@ def run_all(predict_model='automl', exp_model='gcn', memory_ratio=0.01):
             re_bs = [175, 180, 185]
         for rs in re_bs:
             args.batch_partitions = rs
-            file_name = '_'.join([args.dataset, args.model, str(rs), args.predict_model, str(int(100*args.memory_ratio)), 'mape_v2'])
+            file_name = '_'.join([args.dataset, args.model, str(rs), args.predict_model, str(int(100*args.memory_ratio)), 'mape_diff_v2'])
             run_one(file_name, args)
-            gc.collect()           
+            gc.collect()  
     return
 
 
@@ -142,8 +143,9 @@ def test_run_one():
 
 if __name__ == '__main__':
     import sys
+    os.environ["CUDA_VISIBLE_DEVICES"] = '1,2'
     default_args = '--hidden_dims 1024 --gaan_hidden_dims 256 --head_dims 128 --heads 4 --d_a 32 --d_v 32 --d_m 32'
     sys.argv = [sys.argv[0], '--device', 'cuda:2', '--num_workers', '0'] + default_args.split(' ')
     for model in ['gcn', 'gat']:
-        for predict_model in ['linear_model', 'automl']:
+        for predict_model in ['linear_model']:
             run_all(predict_model, model, ratio_dict[model][predict_model])

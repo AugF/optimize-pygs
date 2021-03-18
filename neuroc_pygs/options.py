@@ -106,7 +106,6 @@ def get_args():
     args.flag = not args.json_path == ''
     args.infer_flag = not args.infer_json_path == ''
 
-    os.environ["CUDA_VISIBLE_DEVICES"] = '1,2'
     # 0. set manual seed
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)

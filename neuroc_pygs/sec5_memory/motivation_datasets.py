@@ -19,7 +19,7 @@ from neuroc_pygs.configs import PROJECT_PATH
 from neuroc_pygs.sec5_memory.configs import MODEL_PARAS
 
 
-dir_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_automl_datasets_final')
+dir_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_automl_datasets_diff')
 
 def train(model, batch, optimizer):
     model.train()
@@ -36,7 +36,7 @@ def run_automl():
     data = build_dataset(args)
     model, optimizer = build_model_optimizer(args, data)
     model = model.to(args.device)
-    memory = torch.cuda.memory_stats(args.device)["allocated_bytes.all.peak"]
+    memory = torch.cuda.memory_stats(args.device)["allocated_bytes.all.current"]
     torch.cuda.reset_max_memory_allocated(args.device)
     torch.cuda.empty_cache()
     print(f'device: {args.device}, model memory: {memory}, model: {args.model}')
@@ -48,11 +48,12 @@ def run_automl():
         peak_memory = torch.cuda.memory_stats(args.device)["allocated_bytes.all.peak"]
         torch.cuda.reset_max_memory_allocated(args.device)
         torch.cuda.empty_cache()
-        print(f'Epoch: {epoch}, peak_memory: {peak_memory}')
+        print(f'Epoch: {epoch}, memory: {memory}, peak_memory: {peak_memory}, differ memory: {peak_memory - memory}')
+        memory = torch.cuda.memory_stats(args.device)["allocated_bytes.all.current"]
         if epoch > 0:
             peak_memorys.append(peak_memory)
     paras_dict = model.get_hyper_paras()
-    res = [data.num_nodes, data.num_edges] + [v for v in paras_dict.values()] + [np.mean(peak_memory)]
+    res = [data.num_nodes, data.num_edges] + [v for v in paras_dict.values()] + [np.mean(peak_memory), np.mean(peak_memory) - memory]
     print(res)
     return res
 
@@ -63,9 +64,9 @@ def run_linear():
     data = build_dataset(args)
     model, optimizer = build_model_optimizer(args, data)
     model = model.to(args.device)
-    memory = torch.cuda.memory_stats(args.device)["allocated_bytes.all.peak"]
     torch.cuda.reset_max_memory_allocated(args.device)
     torch.cuda.empty_cache()
+    memory = torch.cuda.memory_stats(args.device)["allocated_bytes.all.current"]
     print(f'device: {args.device}, model memory: {memory}, model: {args.model}')
 
     data = data.to(args.device)
@@ -75,10 +76,11 @@ def run_linear():
         peak_memory = torch.cuda.memory_stats(args.device)["allocated_bytes.all.peak"]
         torch.cuda.reset_max_memory_allocated(args.device)
         torch.cuda.empty_cache()
-        print(f'Epoch: {epoch}, peak_memory: {peak_memory}')
+        print(f'Epoch: {epoch}, memory: {memory}, peak_memory: {peak_memory}, differ memory: {peak_memory - memory}')
+        memory = torch.cuda.memory_stats(args.device)["allocated_bytes.all.current"]
         if epoch > 0:
             peak_memorys.append(peak_memory)
-    res = [args.dataset, data.num_nodes, data.num_edges, np.mean(peak_memory)]
+    res = [args.dataset, data.num_nodes, data.num_edges, np.mean(peak_memory), np.mean(peak_memory) - memory]
     print(res)
     return res
 
@@ -103,7 +105,7 @@ def run_automl_dataset(model):
             except Exception as e:
                 print(e.args)
                 print(traceback.format_exc())
-    pd.DataFrame(tab_data).to_csv(dir_path + f'/{model}_nodes_edges_automl_model_v2.csv')
+    pd.DataFrame(tab_data).to_csv(dir_path + f'/{model}_nodes_edges_automl_model_diff_v2.csv')
     t2 = time.time()
     
     tab_data = []
@@ -120,7 +122,7 @@ def run_automl_dataset(model):
         except Exception as e:
             print(e.args)
             print(traceback.format_exc())
-    pd.DataFrame(tab_data).to_csv(dir_path + f'/{model}_features_automl_model_v2.csv')  
+    pd.DataFrame(tab_data).to_csv(dir_path + f'/{model}_features_automl_model_diff_v2.csv')  
 
     tab_data = []
     for classes in range(3, 301, 30): # 10
@@ -140,7 +142,7 @@ def run_automl_dataset(model):
                 except Exception as e:
                     print(e.args)
                     print(traceback.format_exc())
-        pd.DataFrame(tab_data).to_csv(dir_path + f'/{model}_classes_automl_model_v2.csv')
+    pd.DataFrame(tab_data).to_csv(dir_path + f'/{model}_classes_automl_model_diff_v2.csv')
 
     
     tab_data = []
@@ -155,18 +157,18 @@ def run_automl_dataset(model):
                 except Exception as e:
                     print(e.args)
                     print(traceback.format_exc())
-        pd.DataFrame(tab_data).to_csv(dir_path + f'/{model}_paras_automl_model_v2.csv')
+    pd.DataFrame(tab_data).to_csv(dir_path + f'/{model}_paras_automl_model_diff_v2.csv')
 
     t3 = time.time()
     return t2 - t1, t3 - t1
 
 
 def run_dataset(model):
-    headers = ['Name', 'Nodes', 'Edges', 'Peak Memory']
+    headers = ['Name', 'Nodes', 'Edges', 'Peak Memory', 'Differ Memory']
     default_args = '--hidden_dims 1024 --gaan_hidden_dims 256 --head_dims 128 --heads 4 --d_a 32 --d_v 32 --d_m 32'
     tab_data = []
     t1 = time.time()
-    vars_set = set(range(5000, 100001, 5000)).union(set(range(5000, 100001, 2000)))
+    vars_set = range(5000, 100001, 5000)
     for nodes in vars_set:
         for edges in vars_set:
             exp_data = f'random_{int(nodes/1000)}k_{int(edges/1000)}k'
@@ -177,7 +179,7 @@ def run_dataset(model):
             tab_data.append(run_linear())
             gc.collect()
     t2 = time.time()
-    pd.DataFrame(tab_data, columns=headers).to_csv(os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_automl_datasets', f'{model}_linear_model_v2.csv'))
+    pd.DataFrame(tab_data, columns=headers).to_csv(os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_automl_datasets_final', f'{model}_linear_model_final_v2.csv'))
     return t2 - t1
 
 def build_datasets():
