@@ -55,7 +55,7 @@ def train_model(X, y):
     df_r2, df_mae, df_mape, df_mpe = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=100, random_state=0)
     for i, reg in enumerate([reg1, reg2, reg3, reg4, reg5]):
-        for step in range(50, len(y_train) + 1, 50):
+        for step in range(50, 501, 50):
             reg.fit(X_train[:step], y_train[:step])
             y_pred = reg.predict(X_test) 
             r2 = r2_score(y_test, y_pred)
@@ -89,7 +89,7 @@ def run_automl(files, model='gcn', file_type='automl'):
     # RdYlGn, Greys, Dark2
     linestyles = ['solid', 'dotted', 'dashed', 'dashdot', (0, (5, 5)), (0, (3, 10, 1, 10))]
     # https://matplotlib.org/3.1.0/gallery/lines_bars_and_markers/linestyles.html
-    xs = list(range(50, len(y) - 49, 50))
+    xs = list(range(50, 501, 50))
     x = np.arange(len(xs))
     for i, df in enumerate([df_r2, df_mae, df_mape, df_mpe]):
         fig, ax = plt.subplots(figsize=(7, 5), tight_layout=True)

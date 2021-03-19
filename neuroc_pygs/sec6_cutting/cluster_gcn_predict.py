@@ -91,19 +91,23 @@ class GCN(torch.nn.Module):
                     node, edge = size[0], edge_index.shape[1]
                     memory_pre = reg.predict([[node, edge]])[0]
                     if first_flag:
-                        predict_peak = memory_pre / (1 - memory_ratio - 0.2) + current_memory
+                        real_memory_ratio = memory_ratio + 0.25
                         first_flag = False
                     else:
-                        predict_peak = memory_pre / (1 - memory_ratio) + current_memory
+                        real_memory_ratio = memory_ratio
+                    predict_peak = memory_pre / (1 - real_memory_ratio) + current_memory
                     if predict_peak > memory_limit:
                         print(f'{node}, {edge}, {predict_peak}, begin cutting')
-                        cutting_nums = bsearch.get_cutting_nums(node, edge)
+                        st1 = time.time()
+                        cutting_nums = bsearch.get_cutting_nums(node, edge, real_memory_ratio, current_memory)
                         print(f'cutting {cutting_nums} edges...')
                         if args.cutting_method == 'random':
                             edge_index = cut_by_random(edge_index, cutting_nums)
                         else:
                             edge_index = cut_by_importance(edge_index, cutting_nums, method=args.cutting_method, name=args.cutting_way)
-
+                        st2 = time.time()
+                        print(f'cutting use time {st2 - st1}s')
+                        
                 edge_index = edge_index.to(device)
                 x = x_all[n_id].to(device)
                 x_target = x[:size[1]]
@@ -243,11 +247,11 @@ def run_test():
 
 if __name__ == "__main__":
     for cutting in ['random_0', 'degree_way3', 'degree_way4', 'pagerank_way3', 'pagerank_way4']:
-        method, way = cutting.split('_')
         tab_data = []
         for bs in [9000, 9100, 9200]:
+            method, way = cutting.split('_')
             sys.argv = [sys.argv[0], '--infer_batch_size', str(bs), '--device', '2', '--cutting_method', method, '--cutting_way', way]
             test_accs, times = run_test()
-            tab_data.append([str(bs)] + list(test_accs) + list(times))
+            tab_data.append([str(bs), cutting] + list(test_accs) + list(times))
             gc.collect()
         pd.DataFrame(tab_data).to_csv(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_opt_res', f'cluster_gcn_opt_{cutting}_v0.csv'))
