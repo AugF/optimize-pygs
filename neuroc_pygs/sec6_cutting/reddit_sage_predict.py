@@ -21,9 +21,10 @@ from neuroc_pygs.sec6_cutting.cutting_utils import BSearch
 
 dir_path = '/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec6_cutting/exp_diff_res'
 reg = load(dir_path + '/reddit_sage_linear_model_v0.pth')
-memory_ratio = pd.read_csv(dir_path + '/regression_mape_res.csv', index_col=0)['reddit_sage']['mape']
-memory_limit = 3.1 * 1024 * 1024 * 1024
-bsearch = BSearch(clf=reg, memory_limit=memory_limit, ratio=memory_ratio)
+memory_ratio = pd.read_csv(dir_path + '/regression_mape_res.csv', index_col=0)['reddit_sage']['mape'] + 0.01
+memory_limit = 3 * 1024 * 1024 * 1024 # 3221225472
+bsearch = BSearch(clf=reg, memory_limit=memory_limit)
+print(f'memory_ratio: {memory_ratio}, memory_limit: {memory_limit}')
 
 
 def get_args():
@@ -88,6 +89,7 @@ class SAGE(torch.nn.Module):
 
         for i in range(self.num_layers):
             xs = []
+            first_flag = True
             for batch_size, n_id, adj in subgraph_loader:
                 edge_index, _, size = adj
                 if i == 0:
@@ -97,9 +99,14 @@ class SAGE(torch.nn.Module):
 
                     node, edge = size[0], edge_index.shape[1]
                     memory_pre = reg.predict([[node, edge]])[0]
+                    if first_flag:
+                        predict_peak = memory_pre / (1 - memory_ratio - 0.2) + current_memory
+                        first_flag = False
+                    else:
+                        predict_peak = memory_pre / (1 - memory_ratio) + current_memory
                     if memory_pre > memory_limit:
                         print(f'{node}, {edge}, {memory_pre}, begin cutting')
-                        cutting_nums = bsearch.get_cutting_nums(node, edge, current_memory)
+                        cutting_nums = bsearch.get_cutting_nums(node, edge)
                         if args.cutting_method == 'random':
                             edge_index = cut_by_random(edge_index, cutting_nums)
                         else:
@@ -123,7 +130,9 @@ class SAGE(torch.nn.Module):
                         df['edges'].append(edge)
                         df['memory'].append(memory)
                         df['diff_memory'].append(memory - current_memory)
-                        print(f'nodes={node}, edge={edge}, peak: {memory}, diff: {memory - current_memory}, device: {device}')
+                        df['predict'].append(memory_pre)
+                        df['predict_peak'].append(predict_peak)
+                        print(f'nodes={node}, edge={edge}, predict: {memory_pre}-{predict_peak}, real: {memory}, diff: {memory - current_memory}, device: {device}')
 
             x_all = torch.cat(xs, dim=0)
 
@@ -154,6 +163,7 @@ def run_test():
     real_path = os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_diff_res', f'reddit_sage_{args.infer_batch_size}_opt_{args.cutting_method}_{args.cutting_way}_v0.csv')
     test_accs = []
     times = []
+    print(real_path)
     if os.path.exists(real_path):
         return test_accs, times
     device = f'cuda:{args.device}' if torch.cuda.is_available() else 'cpu'
@@ -188,7 +198,7 @@ if __name__ == '__main__':
     for cutting in ['random_0', 'degree_way3', 'degree_way4', 'pagerank_way3', 'pagerank_way4']:
         method, way = cutting.split('_')
         tab_data = []
-        for bs in [9000, 9100, 9200]:
+        for bs in [8700, 8800, 8900]:
             sys.argv = [sys.argv[0], '--infer_batch_size', str(bs), '--device', '2', '--cutting_method', method, '--cutting_way', way]
             test_accs, times = run_test()
             tab_data.append([str(bs)] + list(test_accs) + list(times))

@@ -15,12 +15,8 @@ dir_path = os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_diff_res')
 df_data = {}
 for model in ['reddit_sage', 'cluster_gcn']:
     X, y = [], []
-    if model == 'reddit_sage':
-        batch_sizes = [9000, 9100, 9200]
-    else:
-        batch_sizes = [2048, 4096, 8192]
         
-    for bs in batch_sizes:
+    for bs in [1024, 2048, 3096]:
         real_path = dir_path + f'/{model}_{bs}_v0.csv'
         df = pd.read_csv(real_path, index_col=0).values
         X.append(df[:, :2]);  y.append(df[:,-1])

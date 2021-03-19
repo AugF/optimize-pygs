@@ -32,11 +32,10 @@ for i, model in enumerate(['reddit_sage', 'cluster_gcn']):
 
     box_data = []
 
-    # if model == 'reddit_sage':
-    #     batch_sizes = [9000, 9100, 9200]
-    # else:
-    #     batch_sizes = [2048, 4096, 8192]
-    batch_sizes = [9000, 9100, 9200]
+    if model == 'reddit_sage':
+        batch_sizes = [8700, 8800, 8900]
+    else:
+        batch_sizes = [9000, 9100, 9200]
     
     for bs in batch_sizes:
         # read file
@@ -52,7 +51,8 @@ for i, model in enumerate(['reddit_sage', 'cluster_gcn']):
     bp = ax.boxplot(box_data, labels=batch_sizes)
 
     xlim = ax.get_xlim()
-    ax.plot(xlim, [3.1] * len(xlim), linestyle='dashed', color='b', linewidth=1.5, label='GPU内存上限')
+    line = 3 if model == 'reddit_sage' else 2
+    ax.plot(xlim, [line] * len(xlim), linestyle='dashed', color='b', linewidth=1.5, label='GPU内存上限')
     ax.legend(fontsize=12)
 
 fig.savefig(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_figs', f'exp_inference_motivation.png'))

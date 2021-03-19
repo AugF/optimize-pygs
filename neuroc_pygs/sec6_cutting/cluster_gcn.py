@@ -294,7 +294,7 @@ def run_test():
     times = np.array(times)
     print(f'{test_accs.mean():.6f} ± {test_accs.std():.6f}')
     print(f'{times.mean():.6f} ± {times.std():.6f}')
-    pd.DataFrame(df).to_csv()
+    pd.DataFrame(df).to_csv(real_path)
     peak_memory = list(map(lambda x: x / (1024 * 1024 * 1024), df['memory']))
     print(f'max: {max(peak_memory)}, min: {np.min(peak_memory)}, medium: {np.median(peak_memory)}, diff: {max(peak_memory)-min(peak_memory)}')
     return test_accs, times
@@ -304,9 +304,9 @@ if __name__ == "__main__":
     # run_fit()
     import gc
     tab_data = []
-    for bs in [9000, 9100, 9200]:
+    for bs in [1024, 2048, 3096]:
         sys.argv = [sys.argv[0], '--infer_batch_size', str(bs), '--device', '2']
         test_accs, times = run_test()
         tab_data.append([str(bs)] + list(test_accs) + list(times))
         gc.collect()
-    pd.DataFrame(tab_data).to_csv(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_diff_res', f'cluster_gcn_acc_v1.csv'))
+    pd.DataFrame(tab_data).to_csv(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_diff_res', f'cluster_gcn_acc_v2.csv'))

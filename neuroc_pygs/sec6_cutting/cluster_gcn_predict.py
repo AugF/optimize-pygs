@@ -28,10 +28,10 @@ from neuroc_pygs.sec6_cutting.cutting_utils import BSearch
 
 dir_path = '/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec6_cutting/exp_diff_res'
 reg = load(dir_path + '/cluster_gcn_linear_model_v0.pth')
-memory_ratio = pd.read_csv(dir_path + '/regression_mape_res.csv', index_col=0)['cluster_gcn']['mape']
-memory_limit = 3.1 * 1024 * 1024 * 1024
-bsearch = BSearch(clf=reg, memory_limit=memory_limit, ratio=memory_ratio)
-
+memory_ratio = pd.read_csv(dir_path + '/regression_mape_res.csv', index_col=0)['cluster_gcn']['mape'] + 0.01
+memory_limit = 2 * 1024 * 1024 * 1024 # 2147483648
+bsearch = BSearch(clf=reg, memory_limit=memory_limit)
+print(f'memory_ratio: {memory_ratio}, memory_limit: {memory_limit}')
 
 
 class GCN(torch.nn.Module):
@@ -80,6 +80,7 @@ class GCN(torch.nn.Module):
         out = []
         for i, conv in enumerate(self.convs):
             xs = []
+            first_flag = True
             for batch_size, n_id, adj in subgraph_loader:
                 edge_index, _, size = adj
                 if i == 0:
@@ -89,9 +90,15 @@ class GCN(torch.nn.Module):
 
                     node, edge = size[0], edge_index.shape[1]
                     memory_pre = reg.predict([[node, edge]])[0]
-                    if memory_pre > memory_limit:
-                        print(f'{node}, {edge}, {memory_pre}, begin cutting')
-                        cutting_nums = bsearch.get_cutting_nums(node, edge, current_memory)
+                    if first_flag:
+                        predict_peak = memory_pre / (1 - memory_ratio - 0.2) + current_memory
+                        first_flag = False
+                    else:
+                        predict_peak = memory_pre / (1 - memory_ratio) + current_memory
+                    if predict_peak > memory_limit:
+                        print(f'{node}, {edge}, {predict_peak}, begin cutting')
+                        cutting_nums = bsearch.get_cutting_nums(node, edge)
+                        print(f'cutting {cutting_nums} edges...')
                         if args.cutting_method == 'random':
                             edge_index = cut_by_random(edge_index, cutting_nums)
                         else:
@@ -116,8 +123,10 @@ class GCN(torch.nn.Module):
                         df['edges'].append(edge)
                         df['memory'].append(memory)
                         df['diff_memory'].append(memory - current_memory)
-                        print(f'nodes={node}, edge={edge}, peak: {memory}, diff: {memory - current_memory}, device: {device}')
-                    
+                        df['predict'].append(memory_pre)
+                        df['predict_peak'].append(predict_peak)
+                        print(f'nodes={node}, edge={edge}, predict: {memory_pre}-{predict_peak}, real: {memory}, diff: {memory - current_memory}, device: {device}')
+
             x_all = torch.cat(xs, dim=0)
             if i != len(self.convs) - 1:
                 x_all = x_all + 0.2*inp
@@ -193,6 +202,7 @@ def run_test():
     real_path = os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_diff_res', f'cluster_gcn_{args.infer_batch_size}_opt_{args.cutting_method}_{args.cutting_way}_v0.csv')
     test_accs = []
     times = []
+    print(real_path)
     if os.path.exists(real_path):
         return test_accs, times
     args, data = prepare_data(args)
@@ -217,7 +227,7 @@ def run_test():
         if _ * len(subgraph_loader) >= 40:
             break
         t1 = time.time()
-        train_acc, valid_acc, test_acc = test(model, data, evaluator, subgraph_loader, device, df)
+        train_acc, valid_acc, test_acc = test(model, data, evaluator, subgraph_loader, args, df)
         t2 = time.time()
         test_accs.append(test_acc)
         times.append(t2 - t1)
@@ -235,7 +245,7 @@ if __name__ == "__main__":
     for cutting in ['random_0', 'degree_way3', 'degree_way4', 'pagerank_way3', 'pagerank_way4']:
         method, way = cutting.split('_')
         tab_data = []
-        for bs in [2048, 4096, 8192]:
+        for bs in [9000, 9100, 9200]:
             sys.argv = [sys.argv[0], '--infer_batch_size', str(bs), '--device', '2', '--cutting_method', method, '--cutting_way', way]
             test_accs, times = run_test()
             tab_data.append([str(bs)] + list(test_accs) + list(times))

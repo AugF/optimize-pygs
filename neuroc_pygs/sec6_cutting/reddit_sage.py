@@ -223,9 +223,9 @@ def run_test():
 if __name__ == '__main__':
     import gc
     tab_data = []
-    for bs in [9000, 9100, 9200]:
+    for bs in [1024, 2048, 3096]:
         sys.argv = [sys.argv[0], '--infer_batch_size', str(bs), '--device', '1']
         test_accs, times = run_test()
         tab_data.append([str(bs)] + list(test_accs) + list(times))
         gc.collect()
-    pd.DataFrame(tab_data).to_csv(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_diff_res', f'reddit_sage_acc_v0.csv'))
+    pd.DataFrame(tab_data).to_csv(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_diff_res', f'reddit_sage_acc_v3.csv'))
