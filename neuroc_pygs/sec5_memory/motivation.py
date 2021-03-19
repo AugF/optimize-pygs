@@ -10,53 +10,44 @@ from neuroc_pygs.configs import EXP_DATASET, ALL_MODELS, EXP_RELATIVE_BATCH_SIZE
 from neuroc_pygs.options import get_args, build_dataset, build_model_optimizer
 
 
+dir_path = os.path.join(PROJECT_PATH, 'sec5_memory/exp_motivation_diff')
+
 def train(model, data, train_loader, optimizer, args, df, cnt):
     model = model.to(args.device) # special
-    device, mode = args.device, args.mode
+    device = args.device
     model.train()
 
     loader_iter, loader_num = iter(train_loader), len(train_loader)
     for i in range(loader_num):
-        if mode == "cluster":
-            # task1
-            optimizer.zero_grad()
-            batch = next(loader_iter)
-            batch_size = batch.train_mask.sum().item()
-            # task2
-            batch = batch.to(device)
-            df['nodes'].append(batch.x.shape[0])
-            df['edges'].append(batch.edge_index.shape[1])
-            # task3
-            logits = model(batch.x, batch.edge_index)
-            y = batch.y[batch.train_mask]
-            loss = model.loss_fn(logits[batch.train_mask], y)
-            loss.backward()
-            acc = model.evaluator(logits[batch.train_mask], y)
-            optimizer.step()
-        else:
-            # task1
-            batch_size, n_id, adjs = next(loader_iter)
-            x, y = data.x[n_id], data.y[n_id[:batch_size]]
-            x, y = x.to(device), y.to(device)
-            adjs = [adj.to(device) for adj in adjs]
-            df['nodes'].append(adjs[0][2][0])
-            df['edges'].append(adjs[0][0].shape[1])
-            # task3
-            logits = model(x, adjs)
-            loss = model.loss_fn(logits, y)
-            loss.backward()
-            acc = model.evaluator(logits, y) / batch_size
-            optimizer.step()
-        print(f'batch {i}, train_acc: {acc:.4f}, train_loss: {loss.item():.4f}')
-        df['acc'].append(acc)
-        df['loss'].append(loss.item())
-        df['memory'].append(torch.cuda.memory_stats(device)["allocated_bytes.all.peak"])
+        # task1
         torch.cuda.reset_max_memory_allocated(device)
         torch.cuda.empty_cache()
+        current_memory = torch.cuda.memory_stats(device)["allocated_bytes.all.current"]
+        optimizer.zero_grad()
+        batch = next(loader_iter)
+        # task2
+        batch = batch.to(device)
+        node, edge = batch.x.shape[0], batch.edge_index.shape[1]
+        df['nodes'].append(node)
+        df['edges'].append(edge)
+        # task3
+        logits = model(batch.x, batch.edge_index)
+        loss = model.loss_fn(logits[batch.train_mask], batch.y[batch.train_mask])
+        loss.backward()
+        acc = model.evaluator(logits[batch.train_mask], batch.y[batch.train_mask])
+        optimizer.step()
+        memory = torch.cuda.memory_stats(device)["allocated_bytes.all.peak"]
+        df['acc'].append(acc)
+        df['loss'].append(loss.item())
+        df['memory'].append(memory)
+        df['diff_memory'].append(memory - current_memory)
+        print(f'batch {i}, train loss: {loss.item()}, train acc: {acc}')
+        print(f'batch {i}, nodes:{node}, edges: {edge}, memory: {memory}, diff_memory: {memory-current_memory}')
         cnt += 1
         if cnt >= 40:
             break
     return df, cnt
+
 
 
 @torch.no_grad()
@@ -102,7 +93,7 @@ def run_one(file_name, args):
     print(file_name)
     base_memory = torch.cuda.memory_stats(args.device)["allocated_bytes.all.current"]
     print(f'base memory: {base_memory}')
-    real_path = os.path.join(PROJECT_PATH, 'sec5_memory/exp_motivation_final', file_name) + '.csv'
+    real_path = dir_path + f'/{file_name}.csv'
     if os.path.exists(real_path):
         res = pd.read_csv(real_path, index_col=0).to_dict(orient='list')
     else:
@@ -127,8 +118,8 @@ def run_one(file_name, args):
 def run_all(exp_datasets=EXP_DATASET, exp_models=ALL_MODELS, exp_modes=MODES, exp_relative_batch_sizes=EXP_RELATIVE_BATCH_SIZE):
     args = get_args()
     print(f"device: {args.device}")
-    # for exp_data in ['yelp', 'reddit']:
-    for exp_data in ['reddit']:
+    for exp_data in ['yelp', 'reddit']:
+    # for exp_data in ['reddit']:
         args.dataset = exp_data
         print('build data success')
         for exp_model in ['gcn', 'gat']:

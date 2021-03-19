@@ -21,6 +21,7 @@ def train(model, optimizer, data, loader, device, mode, discard_per=0.01, non_bl
     outilers_batches = np.random.choice(range(loader_num), int(loader_num * discard_per))
     for _ in range(loader_num):
         if _ in outilers_batches:
+            print(f'batch {_} pass!!!')
             continue
         if mode == 'cluster':
             batch = next(loader_iter)
@@ -48,6 +49,7 @@ def train(model, optimizer, data, loader, device, mode, discard_per=0.01, non_bl
 def epoch(discrad_per=0.01): 
     args = get_args()
     print(args)
+    print(f'discard_per: {discard_per}')
     data = build_dataset(args)
     model, optimizer = build_model_optimizer(args, data)
     loader = build_train_loader(args, data)
@@ -66,9 +68,8 @@ def epoch(discrad_per=0.01):
             best_model = copy.deepcopy(model)
         else:
             patience_step += 1
-            if patience_step >= 50:
+            if patience_step >= 50000:
                 break
-        # if epoch % 1 == 0:
         if True:
             print(f"Epoch: {epoch:03d}, Accuracy: Train: {train_acc:.4f}, Best Val: {best_val_acc:.4f}, Test: {final_test_acc:.4f}")
     return final_test_acc
@@ -80,15 +81,15 @@ headers = ['Model', 'Data', 'Per', 'Acc', 'Use time']
 small_datasets =  ['pubmed', 'coauthor-physics']
 for model in ['gcn', 'gat']:
     for data in small_datasets:
-        for discard_per in [0.01, 0.05, 0.1, 0.15]:
-            sys.argv = [sys.argv[0], '--model', model, '--dataset', data, '--epoch', '1000', '--device', 'cuda:0']
+        for discard_per in [0, 0.01, 0.03, 0.06, 0.1, 0.2, 0.5]:
+            sys.argv = [sys.argv[0], '--model', model, '--dataset', data, '--epoch', '10', '--device', 'cuda:2']
             t1 = time.time()
-            final_test_acc = epoch()
+            final_test_acc = epoch(discard_per)
             t2 = time.time()
             res = [model, data, discard_per, final_test_acc, t2 - t1]
             print(res)
             tab_data.append(res)
 print(tabulate(tab_data, headers=headers, tablefmt='github'))
-pd.DataFrame(tab_data, columns=headers).to_csv(dir_out + '/prove_train_acc_small.csv')
+pd.DataFrame(tab_data, columns=headers).to_csv(dir_out + '/prove_train_acc_pass.csv')
 
 # failed

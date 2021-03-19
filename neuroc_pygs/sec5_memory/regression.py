@@ -23,7 +23,7 @@ plt.rcParams['font.sans-serif']=['SimHei'] #用来正常显示中文标签
 plt.rcParams['axes.unicode_minus']=False #用来正常显示负号
 plt.rcParams["font.size"] = 16
 
-dir_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_automl_datasets_final')
+dir_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_automl_datasets_diff')
 
 def mean_percentage_error(y_true, y_pred, sample_weight=None,
                                    multioutput='uniform_average'):
@@ -61,7 +61,7 @@ def train_model(X, y):
             r2 = r2_score(y_test, y_pred)
             mae, mape = mean_absolute_error(y_test, y_pred), mean_absolute_percentage_error(y_test, y_pred)
             mpe = mean_percentage_error(y_test, y_pred)
-            print(f'{filenames[i]}, r2={r2}, mae={mae}, mape={mape}, mpe={mpe}')
+            # print(f'{filenames[i]}, r2={r2}, mae={mae}, mape={mape}, mpe={mpe}')
             df_r2[filenames[i]].append(r2)
             df_mae[filenames[i]].append(mae)
             df_mape[filenames[i]].append(mape)
@@ -72,13 +72,14 @@ def train_model(X, y):
 def run_automl(files, model='gcn', file_type='automl'):
     X, y = [], []
     for file in files:
-        real_path = dir_path + f'/{model}_{file}_automl_model_v2.csv'
-        df = pd.read_csv(real_path, index_col=0).values[:,1:]
+        real_path = dir_path + f'/{model}_{file}_automl_model_diff_v2.csv'
+        df = pd.read_csv(real_path, index_col=0).values
         X.append(df[:,:-2]);  y.append(df[:,-1])
 
     X, y = np.concatenate(X, axis=0), np.concatenate(y, axis=0)
     if file_type == 'linear_model':
         X = X[:, :2]
+
     df_r2, df_mae, df_mape, df_mpe = train_model(X, y)
     df_r2, df_mae, df_mape, df_mpe = pd.DataFrame(df_r2), pd.DataFrame(df_mae), pd.DataFrame(df_mape), pd.DataFrame(df_mpe)
     titles = ['决定系数 (R2)', '平均绝对误差 (MAE)', '平均绝对百分比误差 (MAPE)', '平均百分比误差 (MPE)']
@@ -103,6 +104,7 @@ def run_automl(files, model='gcn', file_type='automl'):
             y_smooth = make_interp_spline(df.index, df[c])(x_smooth)
             # y_smooth = df[c]
             ax.plot(x_smooth, y_smooth, label=c, color=colors[j], linestyle=linestyles[j], linewidth=2)
+
         ax.legend(fontsize=16)
         fig.savefig(os.path.join(PROJECT_PATH, 'sec5_memory') + f'/exp_figs/exp_{file_type}_{model}_{names[i]}.png')
 
@@ -126,9 +128,9 @@ def run_linear_model(model='gcn'):
 def save_model(files, model, file_type):
     X, y = [], []
     for file in files:
-        real_path = dir_path + f'/{model}_{file}_automl_model_v2.csv'
+        real_path = dir_path + f'/{model}_{file}_automl_model_diff_v2.csv'
         df = pd.read_csv(real_path, index_col=0).values
-        X.append(df[:,:-1]);  y.append(df[:,-1])
+        X.append(df[:,:-2]);  y.append(df[:,-1])
 
     X, y = np.concatenate(X, axis=0), np.concatenate(y, axis=0)
     if file_type == 'linear_model':
@@ -144,23 +146,15 @@ def save_model(files, model, file_type):
     y_pred = reg.predict(X_test)
     mape = mean_absolute_percentage_error(y_test, y_pred)
     mpe = mean_percentage_error(y_test, y_pred)
-    dump(reg, dir_path + f'/{model}_{file_type}_v2.pth')
+    dump(reg, dir_path + f'/{model}_{file_type}_final_v2.pth')
     return mape, mpe
 
 
 if __name__ == '__main__':
-    run_linear_model('gcn'); run_linear_model('gat')
-    # files = ['classes', 'nodes_edges', 'features', 'paras']
-    # for model in ['gcn', 'gat']:
-    #     run_automl(files, model, file_type='automl') 
-        # run_automl(['nodes_edges'], model, file_type='linear_model')
-
-    # save model
-    # ratio_dict = {}
-    # for model in ['gcn', 'gat']:
-        # mape1, _ = save_model(files, model=model, file_type='automl')
-        # mape1 = 0
-    #     mape2, _ = save_model(files=['nodes_edges'], model=model, file_type='linear_model')
-    #     print(f'model: {model}, automl mpe: {mape1}, linear_model: {mape2}')
-    #     ratio_dict[model] = [mape1, mape2]
-    # pd.DataFrame(ratio_dict, index=['automl', 'linear_model']).to_csv(dir_path + '/regression_mape_res.csv')
+    # run_linear_model('gcn'); run_linear_model('gat')
+    files = ['classes', 'nodes_edges', 'features', 'paras']
+    for model in ['gcn', 'gat']:
+        run_automl(files, model, file_type='automl') 
+        mape, mpe = save_model(files, model=model, file_type='automl')
+        print(f'model: {model}, automl mape: {mape}, mpe: {mape}')
+    

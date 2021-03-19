@@ -1,4 +1,4 @@
-import os
+import os, sys
 import copy
 import torch
 import numpy as np
@@ -8,7 +8,7 @@ from torch import Tensor
 from torch_sparse import SparseTensor
 from sklearn.metrics import mean_squared_error
 from neuroc_pygs.configs import PROJECT_PATH, EXP_DATASET
-
+from neuroc_pygs.options import get_args, build_dataset, build_model
 
 class EdgeIndex(NamedTuple):
     edge_index: Tensor
@@ -114,4 +114,37 @@ def test():
     
 
 if __name__ == '__main__':
-    test()
+    import pandas as pd
+    dir_path = '/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec5_memory/exp_motivation_diff'
+    dir_out = '/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec5_memory/exp_automl_datasets_diff'
+    default_args = '--hidden_dims 1024 --gaan_hidden_dims 256 --head_dims 128 --heads 4 --d_a 32 --d_v 32 --d_m 32'
+    # gcn: layers, n_features, n_classes, hidden_dims
+    # gat: layers, n_features, n_classes, head_dims, heads
+    # paras = {
+    #     'gcn': [2,]
+    # }
+    for exp_model in ['gcn', 'gat']:
+        for exp_data in ['yelp', 'reddit']:
+            Xs = []
+            if exp_data == 'reddit':
+                re_bs = [160, 165, 170]
+            elif exp_data == 'yelp':
+                re_bs = [175, 180, 185]
+            for rs in re_bs:
+                real_path = dir_path + f'/{exp_data}_{exp_model}_{rs}_cluster_v2.csv'
+                sys.argv = [sys.argv[0], '--dataset', exp_data, '--batch_partitions', str(rs), '--model', exp_model] + default_args.split(' ')
+                args = get_args()
+                data = build_dataset(args)
+                model = build_model(args, data)
+                paras_dict = model.get_hyper_paras()
+                paras = [v for v in paras_dict.values()]
+                df = pd.read_csv(real_path, index_col=0).values
+                X, y = df[:, :2], df[:, -2:]
+                X_paras = np.array(paras * len(y)).reshape(-1, len(paras))
+                X = np.concatenate([X, X_paras, y], axis=1)
+                Xs.append(X)
+            Xs = np.concatenate(Xs, axis=0)
+            pd.DataFrame(Xs).to_csv(dir_out + f'/{exp_model}_{exp_data}_automl_model_diff_v2.csv')
+            
+        
+                                

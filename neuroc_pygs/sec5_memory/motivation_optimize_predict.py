@@ -112,10 +112,10 @@ def run_one(file_name, args):
     return
 
 
-def run_all(predict_model='automl', exp_model='gcn', memory_ratio=0.01, bias=0.005):
+def run_all(predict_model='automl', exp_model='gcn', memory_ratio=0.01, bias=0.01):
     args = get_args()
-    print(f"device: {args.device}")
     args.predict_model, args.memory_ratio = predict_model, memory_ratio + bias
+    print(f"device: {args.device}, memory_ratio: {args.memory_ratio}")
     for exp_data in ['yelp', 'reddit']:
         args.dataset = exp_data
         print('build data success')
@@ -147,5 +147,5 @@ if __name__ == '__main__':
     default_args = '--hidden_dims 1024 --gaan_hidden_dims 256 --head_dims 128 --heads 4 --d_a 32 --d_v 32 --d_m 32'
     sys.argv = [sys.argv[0], '--device', 'cuda:2', '--num_workers', '0'] + default_args.split(' ')
     for model in ['gcn', 'gat']:
-        for predict_model in ['linear_model']:
+        for predict_model in ['automl']:
             run_all(predict_model, model, ratio_dict[model][predict_model])
