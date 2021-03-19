@@ -15,8 +15,9 @@ memory_limit = {
     'gat': 8  # 8,589,934,592
 }
 dir_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_automl_datasets_diff')
-dir_out = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_motivation_final')
+dir_out = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_motivation_diff')
 ratio_dict = pd.read_csv(dir_path + '/regression_mape_res.csv', index_col=0)
+linear_ratio_dict = pd.read_csv(dir_path + '/regression_linear_mape_res.csv', index_col=0)
 
 def train(model, data, train_loader, optimizer, args, df, cnt):
     model = model.to(args.device) # special
@@ -34,7 +35,10 @@ def train(model, data, train_loader, optimizer, args, df, cnt):
         # task2
         batch = batch.to(device)
         node, edge = batch.x.shape[0], batch.edge_index.shape[1]
-        reg = load(dir_path + f'/{args.model}_{args.predict_model}_final_v2.pth')
+        if args.predict_model == 'linear_model':
+            reg = load(dir_path + f'/{args.model}_{args.dataset}_{args.predict_model}_diff_v2.pth')
+        else:
+            reg = load(dir_path + f'/{args.model}_automl_diff_v2.pth')
         if args.predict_model == 'linear_model':
             memory_pre = reg.predict([[node, edge]])[0]
         else:
@@ -112,21 +116,25 @@ def run_one(file_name, args):
     return
 
 
-def run_all(predict_model='automl', exp_model='gcn', memory_ratio=0.01, bias=0.01):
+def run_all(predict_model='automl', exp_model='gcn', bias=0.001):
     args = get_args()
-    args.predict_model, args.memory_ratio = predict_model, memory_ratio + bias
-    print(f"device: {args.device}, memory_ratio: {args.memory_ratio}")
+    args.predict_model = predict_model
+    print(f"device: {args.device}")
     for exp_data in ['yelp', 'reddit']:
         args.dataset = exp_data
         print('build data success')
         args.model = exp_model
+        if predict_model == 'linear_model':
+            args.memory_ratio = linear_ratio_dict[exp_model][exp_data] + bias
+        else:
+            args.memory_ratio = ratio_dict[model][predict_model] + bias
         if exp_data == 'reddit' and exp_model == 'gat':
             re_bs = [170, 175, 180]
         else:
             re_bs = [175, 180, 185]
         for rs in re_bs:
             args.batch_partitions = rs
-            file_name = '_'.join([args.dataset, args.model, str(rs), args.predict_model, str(int(100*args.memory_ratio)), 'mape_diff_v2'])
+            file_name = '_'.join([args.dataset, args.model, str(rs), args.predict_model, str(int(100*args.memory_ratio)), 'mape_diff_v3'])
             run_one(file_name, args)
             gc.collect()  
     return
@@ -147,5 +155,5 @@ if __name__ == '__main__':
     default_args = '--hidden_dims 1024 --gaan_hidden_dims 256 --head_dims 128 --heads 4 --d_a 32 --d_v 32 --d_m 32'
     sys.argv = [sys.argv[0], '--device', 'cuda:2', '--num_workers', '0'] + default_args.split(' ')
     for model in ['gcn', 'gat']:
-        for predict_model in ['automl']:
-            run_all(predict_model, model, ratio_dict[model][predict_model])
+        for predict_model in ['automl', 'linear_model']:
+            run_all(predict_model, model)

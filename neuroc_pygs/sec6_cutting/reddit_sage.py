@@ -9,6 +9,7 @@ import pandas as pd
 import torch
 import torch.nn.functional as F
 from tqdm import tqdm
+from collections import defaultdict
 from torch_geometric.data import NeighborSampler
 from torch_geometric.nn import SAGEConv
 from neuroc_pygs.utils import get_dataset
@@ -69,12 +70,17 @@ class SAGE(torch.nn.Module):
         return x.log_softmax(dim=-1)
 
     def inference(self, x_all, subgraph_loader, device, df=None):
-        pbar = tqdm(total=x_all.size(0) * self.num_layers)
-        pbar.set_description('Evaluating')
+        # pbar = tqdm(total=x_all.size(0) * self.num_layers)
+        # pbar.set_description('Evaluating')
 
         for i in range(self.num_layers):
             xs = []
             for batch_size, n_id, adj in subgraph_loader:
+                if i == 0:
+                    torch.cuda.reset_max_memory_allocated(device)
+                    torch.cuda.empty_cache()
+                    current_memory = torch.cuda.memory_stats(device)["allocated_bytes.all.current"]
+                
                 edge_index, _, size = adj
                 
                 edge_index = edge_index.to(device)
@@ -85,7 +91,7 @@ class SAGE(torch.nn.Module):
                     x = F.relu(x)
                 xs.append(x.cpu())
 
-                pbar.update(batch_size)
+                # pbar.update(batch_size)
 
                 if i == 0:
                     if df is not None:
@@ -94,14 +100,12 @@ class SAGE(torch.nn.Module):
                         df['nodes'].append(node)
                         df['edges'].append(edge)
                         df['memory'].append(memory)
-                        print(f'nodes={node}, edge={edge}, real: {memory}')
-                    torch.cuda.reset_max_memory_allocated(device)
-                    torch.cuda.empty_cache()
-
+                        df['diff_memory'].append(memory - current_memory)
+                        print(f'nodes={node}, edge={edge}, peak: {memory}, diff: {memory - current_memory}, device: {device}')
 
             x_all = torch.cat(xs, dim=0)
 
-        pbar.close()
+        # pbar.close()
 
         return x_all
 
@@ -169,7 +173,7 @@ def fit(model, optimizer, train_loader, data, subgraph_loader, device):
             final_test_acc = test_acc
             best_model = copy.deepcopy(model)
                     
-    torch.save(best_model.state_dict(), os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_res',  'reddit_sage.pth'))
+    torch.save(best_model.state_dict(), os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_diff_res',  'reddit_sage_best_model.pth'))
 
 
 def run_fit():
@@ -182,20 +186,22 @@ def run_fit():
 
 
 def run_test():
-    from collections import defaultdict
     args = get_args()
     print(args)
+    real_path = os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_diff_res', f'reddit_sage_{args.infer_batch_size}_v0.csv')
+    test_accs = []
+    times = []
+    if os.path.exists(real_path):
+        return test_accs, times
     device = f'cuda:{args.device}' if torch.cuda.is_available() else 'cpu'
     dataset, train_loader, subgraph_loader = prepare_data(args)
     model, optimizer = prepare_model_optimizer(dataset, device)
     data = dataset[0]
     x = data.x.to(device)
     y = data.y.squeeze().to(device)
-    save_dict = torch.load(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_res',  'reddit_sage.pth'))
+    save_dict = torch.load(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_diff_res',  'reddit_sage_best_model.pth'))
     model.load_state_dict(save_dict)
     df = defaultdict(list)
-    test_accs = []
-    times = []
     for _ in range(40):
         if _ * len(subgraph_loader) >= 40:
             break
@@ -208,7 +214,7 @@ def run_test():
     times = np.array(times)
     print(f'{test_accs.mean():.6f} ± {test_accs.std():.6f}')
     print(f'{times.mean():.6f} ± {times.std():.6f}')
-    pd.DataFrame(df).to_csv(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_res', f'reddit_sage_{args.infer_batch_size}_v2.csv'))
+    pd.DataFrame(df).to_csv(real_path)
     peak_memory = list(map(lambda x: x / (1024 * 1024 * 1024), df['memory']))
     print(f'max: {max(peak_memory)}, min: {np.min(peak_memory)}, medium: {np.median(peak_memory)}, diff: {max(peak_memory)-min(peak_memory)}')
     return test_accs, times
@@ -217,9 +223,9 @@ def run_test():
 if __name__ == '__main__':
     import gc
     tab_data = []
-    for bs in [1024, 2048, 4096, 8192, 16384]:
+    for bs in [9000, 9100, 9200]:
         sys.argv = [sys.argv[0], '--infer_batch_size', str(bs), '--device', '1']
         test_accs, times = run_test()
         tab_data.append([str(bs)] + list(test_accs) + list(times))
         gc.collect()
-    pd.DataFrame(tab_data).to_csv(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_res', f'reddit_sage_acc_v2.csv'))
+    pd.DataFrame(tab_data).to_csv(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_diff_res', f'reddit_sage_acc_v0.csv'))

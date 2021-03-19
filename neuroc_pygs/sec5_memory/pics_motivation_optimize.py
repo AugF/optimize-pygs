@@ -14,18 +14,24 @@ plt.rcParams['font.sans-serif']=['SimHei'] #用来正常显示中文标签
 plt.rcParams['axes.unicode_minus']=False #用来正常显示负号
 plt.rcParams["font.size"] = 12
 
-dir_path = os.path.join(PROJECT_PATH, 'sec5_memory/exp_motivation_final')
+root_path = os.path.join(PROJECT_PATH, 'sec5_memory/exp_automl_datasets_diff')
+ratio_dict = pd.read_csv(root_path + '/regression_mape_res.csv', index_col=0)
+linear_ratio_dict = pd.read_csv(root_path + '/regression_linear_mape_res.csv', index_col=0)
+dir_path = os.path.join(PROJECT_PATH, 'sec5_memory/exp_motivation_diff')
 dir_out = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_figs')
 
-ratio_dict = pd.read_csv(os.path.join(PROJECT_PATH, 'sec5_memory/exp_automl_datasets_final', 'regression_mape_res.csv'), index_col=0)
 colors = plt.get_cmap('Greys')(np.linspace(0.15, 0.85, 2))
 colors = [colors[-1], colors[0]]
       
-def run(predict_model='linear_model'):
+def run(predict_model='linear_model', bias=0.001):
     for model in ['gat', 'gcn']:
-        memory_ratio = ratio_dict[model][predict_model] + 0.005
         fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(7, 7/2), tight_layout=True)
         for i, data in enumerate(['reddit', 'yelp']):
+            if predict_model == 'linear_model':
+                memory_ratio = linear_ratio_dict[model][data] + bias
+            else:
+                memory_ratio = ratio_dict[model][predict_model] + bias
+            
             ax = axes[i]
         
             ax.set_title(data.capitalize(), fontsize=14)
@@ -45,7 +51,7 @@ def run(predict_model='linear_model'):
                     if var == 'cluster':
                         file_name = '_'.join([data, model, str(bs), var, 'v2'])
                     else:
-                        file_name = '_'.join([data, model, str(bs), var, str(int(100*memory_ratio)), 'mape_diff_v2'])
+                        file_name = '_'.join([data, model, str(bs), var, str(int(100*memory_ratio)), 'mape_diff_v3'])
                     real_path =  dir_path + '/' + file_name + '.csv'
                     print(file_name)
                     if os.path.exists(real_path):
@@ -89,10 +95,10 @@ def run(predict_model='linear_model'):
             legend_colors = [Patch(facecolor=c, edgecolor='black') for c in colors]
             ax.legend(legend_colors + [line], ['优化前', '优化后', 'GPU内存限制'], fontsize=10)
 
-        fig.savefig(dir_out + f'/{model}_cluster_motivation_{predict_model}_mape_diff_v2.png')
+        fig.savefig(dir_out + f'/{model}_cluster_motivation_{predict_model}_mape_diff_v3.png')
 
 
 if __name__ == '__main__':
-    for predict_model in ['linear_model']:
+    for predict_model in ['automl', 'linear_model']:
         run(predict_model)
 

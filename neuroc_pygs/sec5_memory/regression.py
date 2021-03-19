@@ -53,7 +53,7 @@ def train_model(X, y):
     reg5 = DecisionTreeRegressor() # DecisionTree, max_depth=5
     
     df_r2, df_mae, df_mape, df_mpe = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=50, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=100, random_state=0)
     for i, reg in enumerate([reg1, reg2, reg3, reg4, reg5]):
         for step in range(50, len(y_train) + 1, 50):
             reg.fit(X_train[:step], y_train[:step])
@@ -106,22 +106,22 @@ def run_automl(files, model='gcn', file_type='automl'):
             ax.plot(x_smooth, y_smooth, label=c, color=colors[j], linestyle=linestyles[j], linewidth=2)
 
         ax.legend(fontsize=16)
-        fig.savefig(os.path.join(PROJECT_PATH, 'sec5_memory') + f'/exp_figs/exp_{file_type}_{model}_{names[i]}.png')
+        fig.savefig(os.path.join(PROJECT_PATH, 'sec5_memory') + f'/exp_figs/exp_{file_type}_{model}_{names[i]}_diff.png')
 
 
-def run_linear_model(model='gcn'):
-    real_path = dir_path + f'/{model}_linear_model_final_v2.csv'
-    df = pd.read_csv(real_path, index_col=0).values[:, 1:]
-    X, y = np.array(df[:, :-2], dtype=np.float32), np.array(df[:, -1], dtype=np.float32)
+def run_linear_model(model='gcn', data='reddit'):
+    real_path = dir_path + f'/{model}_{data}_automl_model_diff_v2.csv'
+    df = pd.read_csv(real_path, index_col=0).values
+    X, y = np.array(df[:, :2], dtype=np.float32), np.array(df[:, -1], dtype=np.float32)
     reg = LinearRegression()
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=50, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
     reg.fit(X_train, y_train)
     y_pred = reg.predict(X_test) 
     r2 = r2_score(y_test, y_pred)
     mae, mape = mean_absolute_error(y_test, y_pred), mean_absolute_percentage_error(y_test, y_pred)
     mpe = mean_percentage_error(y_test, y_pred)
     print(f'r2={r2}, mae={mae}, mape={mape}, mpe={mpe}')
-    dump(reg, dir_path + f'/{model}_linear_model_final_v2.pth')
+    dump(reg, dir_path + f'/{model}_{data}_linear_model_diff_v2.pth')
     return mape, mpe
 
 
@@ -146,15 +146,25 @@ def save_model(files, model, file_type):
     y_pred = reg.predict(X_test)
     mape = mean_absolute_percentage_error(y_test, y_pred)
     mpe = mean_percentage_error(y_test, y_pred)
-    dump(reg, dir_path + f'/{model}_{file_type}_final_v2.pth')
+    dump(reg, dir_path + f'/{model}_{file_type}_diff_v2.pth')
     return mape, mpe
 
 
 if __name__ == '__main__':
-    # run_linear_model('gcn'); run_linear_model('gat')
-    files = ['classes', 'nodes_edges', 'features', 'paras']
+    # run automl
+    df = defaultdict(list)
+    files = ['classes', 'nodes_edges', 'features', 'reddit', 'yelp',  'paras']
     for model in ['gcn', 'gat']:
         run_automl(files, model, file_type='automl') 
         mape, mpe = save_model(files, model=model, file_type='automl')
         print(f'model: {model}, automl mape: {mape}, mpe: {mape}')
+        df[model].append(mape)
+    pd.DataFrame(df, index=['automl']).to_csv(dir_path + f'/regression_mape_res.csv') 
     
+    # run linear
+    df = defaultdict(list)
+    for model in ['gcn', 'gat']:
+        for data in ['yelp', 'reddit']:
+            mape, _ = run_linear_model(model, data)
+            df[model].append(mape)
+    pd.DataFrame(df, index=['reddit', 'yelp']).to_csv(dir_path + f'/regression_linear_mape_res.csv') 

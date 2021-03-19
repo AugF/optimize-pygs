@@ -43,6 +43,5 @@
         "utility": "cpp",
         "typeindex": "cpp",
         "typeinfo": "cpp"
-    },
-    "python.pythonPath": "/mnt/data/wangzhaokang/wangyunpan/anaconda3/envs/pyg1.5/bin/python"
+    }
 }

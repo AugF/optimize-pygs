@@ -14,11 +14,11 @@ import pandas as pd
 from tqdm import tqdm
 import torch.nn.functional as F
 
+from collections import defaultdict
 from torch_geometric.data import ClusterData, ClusterLoader, NeighborSampler
 from torch_geometric.nn import SAGEConv
 from torch_geometric.utils import to_undirected
 from torch_sparse import SparseTensor
-import numpy as np
 
 from ogb.nodeproppred import PygNodePropPredDataset, Evaluator
 from neuroc_pygs.configs import PROJECT_PATH
@@ -59,8 +59,8 @@ class GCN(torch.nn.Module):
         return torch.log_softmax(x, dim=-1)
 
     def inference(self, x_all, subgraph_loader, device, df=None):
-        pbar = tqdm(total=x_all.size(0) * len(self.convs))
-        pbar.set_description('Evaluating')
+        # pbar = tqdm(total=x_all.size(0) * len(self.convs))
+        # pbar.set_description('Evaluating')
         
         x_all = self.inProj(x_all.to(device))
         x_all = x_all.cpu()
@@ -70,6 +70,11 @@ class GCN(torch.nn.Module):
         for i, conv in enumerate(self.convs):
             xs = []
             for batch_size, n_id, adj in subgraph_loader:
+                if i == 0:
+                    torch.cuda.reset_max_memory_allocated(device)
+                    torch.cuda.empty_cache()
+                    current_memory = torch.cuda.memory_stats(device)["allocated_bytes.all.current"]
+                
                 edge_index, _, size = adj.to(device)
                 x = x_all[n_id].to(device)
                 x_target = x[:size[1]]
@@ -79,7 +84,7 @@ class GCN(torch.nn.Module):
                     x = F.dropout(x, p=self.dropout, training=self.training)
                 xs.append(x.cpu())
 
-                pbar.update(batch_size)
+                # pbar.update(batch_size)
 
                 if i == 0:
                     if df is not None:
@@ -88,14 +93,13 @@ class GCN(torch.nn.Module):
                         df['nodes'].append(node)
                         df['edges'].append(edge)
                         df['memory'].append(memory)
-                        print(f'nodes={node}, edge={edge}, real: {memory}')
-                    torch.cuda.reset_max_memory_allocated(device)
-                    torch.cuda.empty_cache()
+                        df['diff_memory'].append(memory - current_memory)
+                        print(f'nodes={node}, edge={edge}, peak: {memory}, diff: {memory - current_memory}, device: {device}')
                     
             x_all = torch.cat(xs, dim=0)
             if i != len(self.convs) - 1:
                 x_all = x_all + 0.2*inp
-        pbar.close()
+        # pbar.close()
 
         return x_all
 
@@ -187,7 +191,7 @@ def fit(model, data, loader, subgraph_loader, evaluator, optimizer, device, args
                 final_test_acc = test_acc
                 best_model = copy.deepcopy(model)
 
-    torch.save(best_model.state_dict(), os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_res',  'cluster_gcn.pth'))
+    torch.save(best_model.state_dict(), os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_diff_res',  'cluster_gcn_best_model.pth'))
 
 
 
@@ -235,7 +239,6 @@ def prepare_loader(args, data):
 
 
 def run_fit():
-    from collections import defaultdict
     args = get_args()
     print(args)
     args, data = prepare_data(args)
@@ -255,9 +258,13 @@ def run_fit():
     
 
 def run_test():
-    from collections import defaultdict
     args = get_args()
     print(args)
+    real_path = os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_diff_res', f'cluster_gcn_{args.infer_batch_size}_v0.csv')
+    test_accs = []
+    times = []
+    if os.path.exists(real_path):
+        return test_accs, times
     args, data = prepare_data(args)
     device = f'cuda:{args.device}' if torch.cuda.is_available() else 'cpu'
     device = torch.device(device)
@@ -271,12 +278,10 @@ def run_test():
     evaluator = Evaluator(name='ogbn-products')
    
     model.reset_parameters()
-    save_dict = torch.load(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_res',  'cluster_gcn.pth'))
+    save_dict = torch.load(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_diff_res',  'cluster_gcn_best_model.pth'))
     model.load_state_dict(save_dict)
 
     df = defaultdict(list)
-    test_accs = []
-    times = []
     for _ in range(40):
         if _ * len(subgraph_loader) >= 40:
             break
@@ -289,7 +294,7 @@ def run_test():
     times = np.array(times)
     print(f'{test_accs.mean():.6f} ± {test_accs.std():.6f}')
     print(f'{times.mean():.6f} ± {times.std():.6f}')
-    pd.DataFrame(df).to_csv(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_res', f'cluster_gcn_{args.infer_batch_size}_v2.csv'))
+    pd.DataFrame(df).to_csv()
     peak_memory = list(map(lambda x: x / (1024 * 1024 * 1024), df['memory']))
     print(f'max: {max(peak_memory)}, min: {np.min(peak_memory)}, medium: {np.median(peak_memory)}, diff: {max(peak_memory)-min(peak_memory)}')
     return test_accs, times
@@ -299,9 +304,9 @@ if __name__ == "__main__":
     # run_fit()
     import gc
     tab_data = []
-    for bs in [1024, 2048, 4096, 8192, 16384]:
+    for bs in [9000, 9100, 9200]:
         sys.argv = [sys.argv[0], '--infer_batch_size', str(bs), '--device', '2']
         test_accs, times = run_test()
         tab_data.append([str(bs)] + list(test_accs) + list(times))
         gc.collect()
-    pd.DataFrame(tab_data).to_csv(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_res', f'cluster_gcn_acc_v2.csv'))
+    pd.DataFrame(tab_data).to_csv(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_diff_res', f'cluster_gcn_acc_v1.csv'))

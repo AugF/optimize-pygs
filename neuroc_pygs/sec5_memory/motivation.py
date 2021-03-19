@@ -124,9 +124,9 @@ def run_all(exp_datasets=EXP_DATASET, exp_models=ALL_MODELS, exp_modes=MODES, ex
         print('build data success')
         for exp_model in ['gcn', 'gat']:
             args.model = exp_model
-            if exp_data == 'reddit':
-                re_bs = [160, 165, 170]
-            elif exp_data == 'yelp':
+            if exp_data == 'reddit' and exp_model == 'gat':
+                re_bs = [170, 175, 180]
+            else:
                 re_bs = [175, 180, 185]
             for rs in re_bs:
                 args.batch_partitions = rs

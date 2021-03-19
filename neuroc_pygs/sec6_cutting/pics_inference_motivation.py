@@ -18,23 +18,30 @@ plt.rcParams["font.size"] = 14
 colors = plt.get_cmap('Greys')(np.linspace(0.15, 0.85, 2))
 mode = 'cluster'
 
-titles = {'reddit_sage': 'reddit SAGE', 
-          'cluster_gcn': 'ogbn-products GCN'}
+titles = {'reddit_sage': 'SAGE Reddit', 
+          'cluster_gcn': 'ClusterGCN Ogbn-Products'}
 
-for model in ['reddit_sage', 'cluster_gcn']:
-    fig, ax = plt.subplots(figsize=(7, 5), tight_layout=True)
+fig, axes = plt.subplots(
+    nrows=1, ncols=2, figsize=(7, 7/2), tight_layout=True)
+   
+for i, model in enumerate(['reddit_sage', 'cluster_gcn']):
+    ax = axes[i]
     ax.set_title(titles[model])
     ax.set_ylabel('峰值内存 (GB)', fontsize=14)
     ax.set_xlabel('批规模', fontsize=14)
 
     box_data = []
 
-    batch_sizes = [1024, 2048, 4096, 8192]
+    # if model == 'reddit_sage':
+    #     batch_sizes = [9000, 9100, 9200]
+    # else:
+    #     batch_sizes = [2048, 4096, 8192]
+    batch_sizes = [9000, 9100, 9200]
     
     for bs in batch_sizes:
         # read file
-        file_name = '_'.join([model, str(bs), 'v1'])
-        real_path = os.path.join(PROJECT_PATH, 'sec6_cutting/exp_res', file_name) + '.csv'
+        file_name = '_'.join([model, str(bs), 'v0'])
+        real_path = os.path.join(PROJECT_PATH, 'sec6_cutting/exp_diff_res', file_name) + '.csv'
         print(real_path)
         if os.path.exists(real_path):
             res = pd.read_csv(real_path, index_col=0).to_dict(orient='list')['memory']
@@ -43,8 +50,12 @@ for model in ['reddit_sage', 'cluster_gcn']:
             res = []
         box_data.append(list(map(lambda x: x/(1024*1024*1024), res)))
     bp = ax.boxplot(box_data, labels=batch_sizes)
-        
-    fig.savefig(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_figs', f'{model}_inference_motivation.png'))
+
+    xlim = ax.get_xlim()
+    ax.plot(xlim, [3.1] * len(xlim), linestyle='dashed', color='b', linewidth=1.5, label='GPU内存上限')
+    ax.legend(fontsize=12)
+
+fig.savefig(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_figs', f'exp_inference_motivation.png'))
 
 
 

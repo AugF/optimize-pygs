@@ -15,6 +15,8 @@ if not os.path.exists(dir_path):
 def epoch(): 
     args = get_args()
     print(args)
+    if os.path.exists(dir_path + f'/{args.model}_{args.dataset}_best_model_v0.pth'):
+        return
     data = build_dataset(args)
     model, optimizer = build_model_optimizer(args, data)
     model, data = model.to(args.device), data.to(args.device)
@@ -42,8 +44,8 @@ def epoch():
 
 from tabulate import tabulate
 tab_data = []
-small_datasets =  ['amazon-photo', 'pubmed', 'amazon-computers', 'coauthor-physics', 'flickr']
-for model in ['gcn', 'gat']:
+small_datasets =  ['amazon-photo', 'amazon-computers', 'flickr', 'pubmed', 'coauthor-physics']
+for model in ['ggnn', 'gaan']:
     for data in small_datasets:
         sys.argv = [sys.argv[0], '--model', model, '--dataset', data, '--epoch', '2000', '--device', 'cuda:1']
         final_test_acc = epoch()

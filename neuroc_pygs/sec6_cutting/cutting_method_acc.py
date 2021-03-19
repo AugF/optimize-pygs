@@ -12,11 +12,11 @@ from neuroc_pygs.sec6_cutting.cutting_methods import cut_by_random, get_pagerank
 
 dir_path = '/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec6_cutting/exp_cutting_model'
 tab_data = []
-for exp_model in ['gcn', 'gat']:
+for exp_model in ['ggnn', 'gaan']:
 # for exp_model in ['gcn']:
-    # for exp_data in ['amazon-photo', 'pubmed', 'amazon-computers', 'coauthor-physics']:
-    for exp_data in ['flickr']: 
-        sys.argv = [sys.argv[0], '--device', 'cuda:0', '--model', exp_model, '--data', exp_data]
+    for exp_data in ['amazon-photo', 'pubmed', 'amazon-computers', 'coauthor-physics']:
+    # for exp_data in ['flickr']: 
+        sys.argv = [sys.argv[0], '--device', 'cuda:1', '--model', exp_model, '--data', exp_data]
         args = get_args()
         print(args)
         data = build_dataset(args)

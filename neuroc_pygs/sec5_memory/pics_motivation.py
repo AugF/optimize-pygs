@@ -35,7 +35,7 @@ for model in ['gcn', 'gat']:
             # read file
             file_name = '_'.join([data, model, str(bs), mode, 'v2'])
             real_path = os.path.join(
-                PROJECT_PATH, 'sec5_memory/exp_motivation_final', file_name) + '.csv'
+                PROJECT_PATH, 'sec5_memory/exp_motivation_diff', file_name) + '.csv'
             print(real_path)
             if os.path.exists(real_path):
                 res = pd.read_csv(real_path, index_col=0).to_dict(
@@ -58,4 +58,4 @@ for model in ['gcn', 'gat']:
             ax.plot(xlim, [8] * len(xlim), linestyle='dashed', color='b', linewidth=1.5, label='GPU内存上限')
         ax.legend(fontsize=12)
     fig.savefig(os.path.join(PROJECT_PATH, 'sec5_memory',
-                             'exp_figs', f'{model}_{mode}_motivation_final.png'))
+                             'exp_figs', f'{model}_{mode}_motivation_diff.png'))

@@ -9,126 +9,21 @@ from torch_sparse import SparseTensor
 from sklearn.metrics import mean_squared_error
 from neuroc_pygs.configs import PROJECT_PATH, EXP_DATASET
 from neuroc_pygs.options import get_args, build_dataset, build_model
-
-class EdgeIndex(NamedTuple):
-    edge_index: Tensor
-    e_id: Optional[Tensor]
-    size: Tuple[int, int]
-
-    def to(self, *args, **kwargs):
-        edge_index = self.edge_index.to(*args, **kwargs)
-        e_id = self.e_id.to(*args, **kwargs) if self.e_id is not None else None
-        return EdgeIndex(edge_index, e_id, self.size)
-
-
-def get_adj(data, batch_size): # get same device
-    N, E = data.num_nodes, data.num_edges
-    adj = SparseTensor(
-        row=data.edge_index[0], col=data.edge_index[1],
-        value=torch.arange(E, device=data.edge_index.device),
-        sparse_sizes=(N, N))
-    print(adj)
-    def sample_node(batch_size, sampler=''):
-        if sampler == 'node':
-            edge_sample = torch.randint(0, E, (batch_size, batch_size),
-                                        dtype=torch.long)
-            return adj.storage.row()[edge_sample]
-        elif sampler == 'edge':
-            row, col, _ = adj.coo()
-            deg_in = 1. / adj.storage.colcount()
-            deg_out = 1. / adj.storage.rowcount()
-            prob = (1. / deg_in[row]) + (1. / deg_out[col])
-            source_node_sample = col[edge_sample]
-            target_node_sample = row[edge_sample]
-            return torch.cat([source_node_sample, target_node_sample], -1)
-        else:
-            start = torch.randint(0, N, (batch_size, ), dtype=torch.long)
-            node_idx = adj.random_walk(start.flatten(), walk_length=2)
-            return node_idx.view(-1)
-
-    node_idx = sample_node(batch_size).unique()
-    adj, _ = adj.saint_subgraph(node_idx)
-    print('new', adj)
-
-
-def get_neighbor_sampler(data, size='1'):
-    N, E = data.num_nodes, data.num_edges
-    adj = SparseTensor(
-        row=data.edge_index[0], col=data.edge_index[1],
-        value=torch.arange(E, device=data.edge_index.device),
-        sparse_sizes=(N, N))
-    adj_t, n_id = adj_t.sample_adj(n_id, size, replace=False)
-    e_id = adj_t.storage.value()
-    size = adj_t.sparse_sizes()[::-1]    
-    # get edge_index
-    row, col, _ = adj_t.coo()
-    edge_index = torch.stack([col, row], dim=0)
-    return EdgeIndex(edge_index, e_id, size)
-
-
-def get_metrics(y_pred, y_test):
-    mse = mean_squared_error(y_pred, y_test)
-    num = len(y_pred)
-    bad_exps = 0
-    max_bias = 0
-    max_bias_percent = 0
-    for i in range(num):
-        if y_pred[i] >= y_test[i]:
-            max_bias_percent = max(max_bias_percent, (y_pred[i] - y_test[i]) / y_test[i])
-            max_bias = max(max_bias, y_pred[i] - y_test[i])
-            bad_exps += 1
-    return mse, bad_exps / num, max_bias, max_bias_percent
-
-
-def get_automl_datasets(model='gcn'):
-    # 之后再灵活变化来做
-    train_datasets = ['pubmed', 'amazon-photo', 'amazon-computers', 'coauthor-physics', 'reddit']
-    test_datasets = ['flickr', 'yelp']
-
-    x_train, y_train = [], []
-    for data in train_datasets:
-        file_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_motivation_datasets', f'{model}_{data}_automl_datasets.csv')
-        df = pd.read_csv(file_path, index_col=0)
-        y_train.extend(df['memory'].values / (1024 * 1024))
-        del df['memory']
-        x_train.extend(df.values.tolist())
-
-    x_test, y_test = [], []
-    for data in test_datasets:
-        file_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_motivation_datasets', f'{model}_{data}_automl_datasets.csv')
-        df = pd.read_csv(file_path, index_col=0)
-        y_test.extend(df['memory'].values / (1024 * 1024))
-        del df['memory']
-        x_test.extend(df.values.tolist())     
-    return x_train, y_train, x_test, y_test
-
-
-def test():
-    for model in ['gcn', 'gat']:
-        print(model)
-        x_train, y_train, x_test, y_test = get_automl_datasets(model)
-        print(len(y_train), len(y_test))
-        print(x_train[:2], y_train[:2])
-    # gcn: 15100, 3940
-    # gat: 11220 1700
     
 
-if __name__ == '__main__':
+def convert_datasets():
     import pandas as pd
     dir_path = '/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec5_memory/exp_motivation_diff'
     dir_out = '/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec5_memory/exp_automl_datasets_diff'
     default_args = '--hidden_dims 1024 --gaan_hidden_dims 256 --head_dims 128 --heads 4 --d_a 32 --d_v 32 --d_m 32'
     # gcn: layers, n_features, n_classes, hidden_dims
     # gat: layers, n_features, n_classes, head_dims, heads
-    # paras = {
-    #     'gcn': [2,]
-    # }
     for exp_model in ['gcn', 'gat']:
         for exp_data in ['yelp', 'reddit']:
             Xs = []
-            if exp_data == 'reddit':
-                re_bs = [160, 165, 170]
-            elif exp_data == 'yelp':
+            if exp_data == 'reddit' and exp_model == 'gat':
+                re_bs = [170, 175, 180]
+            else:
                 re_bs = [175, 180, 185]
             for rs in re_bs:
                 real_path = dir_path + f'/{exp_data}_{exp_model}_{rs}_cluster_v2.csv'
@@ -145,6 +40,59 @@ if __name__ == '__main__':
                 Xs.append(X)
             Xs = np.concatenate(Xs, axis=0)
             pd.DataFrame(Xs).to_csv(dir_out + f'/{exp_model}_{exp_data}_automl_model_diff_v2.csv')
-            
-        
+
+
+import re
+from collections import defaultdict
+from tabulate import tabulate
+dir_out = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_train_res')
+log_path = '/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec5_memory/exp_log_diff/prove_train_acc_resampling.log'
+tab_data = []
+headers = ['Model', 'Data', 'Per', 'Acc1', 'Acc2', 'Acc3', 'Use time']
+columns = ['train_acc', 'val_acc', 'test_acc', 'best_val_acc', 'final_test_acc']
+small_datasets =  ['pubmed', 'coauthor-physics']
+
+f = open(log_path)
+for data in small_datasets:
+    for model in ['gcn', 'gat']:
+        for discard_per in [0, 0.01, 0.03, 0.06, 0.1, 0.2, 0.5]:
+            test_accs = []
+            for run in range(3):
+                real_path = dir_out + f'/{model}_{data}_{str(int(100*discard_per))}_{run}.csv'
+                if os.path.exists(real_path):
+                    test_acc = pd.read_csv(real_path, index_col=0).values[-1, -1]
+                    test_accs.append(test_acc)
+                    continue
+                df = defaultdict(list)
+                # on  df:50
+                cnt = 0
+                while cnt < 50:
+                    mystr = f.readline()
+                    if not mystr.startswith('Epoch'):
+                        continue
+                    matchline = re.match(r'.*Train: (.*), Val: (.*), Test: (.*), Best Val: (.*), Test: (.*)', mystr)
+                    print(mystr)
+                    if matchline:
+                        df['train_acc'].append(float(matchline.group(1)))
+                        df['val_acc'].append(float(matchline.group(2)))
+                        df['test_acc'].append(float(matchline.group(3)))
+                        df['best_val_acc'].append(float(matchline.group(4)))
+                        df['final_test_acc'].append(float(matchline.group(5)))   
+                        cnt += 1
+                pd.DataFrame(df).to_csv(real_path)
+                # off
+            print('begin matchline')
+            while True:
+                mystr = f.readline()
+                if not mystr.startswith('['):
+                    continue
+                matchline = re.match(r".*, (.*), (.*)]", mystr) 
+                if matchline:
+                    test_acc, use_time = float(matchline.group(1)), float(matchline.group(2))
+                    break
+            res = [model, data, discard_per] + test_accs + [use_time]
+            print(res)
+            tab_data.append(res)
+print(tabulate(tab_data, headers=headers, tablefmt='github'))
+pd.DataFrame(tab_data, columns=headers).to_csv(dir_out + '/prove_train_acc_all.csv')
                                 

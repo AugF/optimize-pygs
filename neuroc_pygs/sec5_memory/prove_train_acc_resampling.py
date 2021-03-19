@@ -98,5 +98,4 @@ for data in small_datasets:
             tab_data.append(res)
 print(tabulate(tab_data, headers=headers, tablefmt='github'))
 pd.DataFrame(tab_data, columns=headers).to_csv(dir_out + '/prove_train_acc_small.csv')
-
-# time不准确, 以后再说
+     
