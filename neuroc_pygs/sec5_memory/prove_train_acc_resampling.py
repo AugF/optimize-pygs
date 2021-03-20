@@ -57,7 +57,7 @@ def epoch(discard_per=0.01, df=None):
             best_model = copy.deepcopy(model)
         else:
             patience_step += 1
-            if patience_step >= 50000:
+            if patience_step >= 100:
                 break
         # if epoch % 1 == 0:
         if df is not None:
@@ -77,17 +77,17 @@ columns = ['train_acc', 'val_acc', 'test_acc', 'best_val_acc', 'final_test_acc']
 small_datasets =  ['pubmed', 'coauthor-physics', 'amazon-computers', 'amazon-photo', 'flickr']
 
 for data in small_datasets:
-    for model in ['gcn', 'gat']:
+    for model in ['gcn']:
         for discard_per in [0, 0.01, 0.03, 0.06, 0.1, 0.2, 0.5]:
             test_accs, use_times = [], []
-            for run in range(3):
-                real_path = dir_out + f'/{model}_{data}_{str(int(100*discard_per))}_{run}.csv'
+            for run in range(1):
+                real_path = dir_out + f'/{model}_{data}_{str(int(100*discard_per))}_{run}_v1.csv'
                 if os.path.exists(real_path):
                     test_accs.append(pd.read_csv(real_path, index_col=0).values[-1,-1])
                     use_times.append(0)
                     continue
                 df = defaultdict(list)
-                sys.argv = [sys.argv[0], '--model', model, '--dataset', data, '--epoch', '50', '--device', 'cuda:1']
+                sys.argv = [sys.argv[0], '--model', model, '--dataset', data, '--epoch', '2000', '--device', 'cuda:0']
                 t1 = time.time()
                 final_test_acc = epoch(discard_per, df=df)
                 t2 = time.time()
@@ -97,5 +97,5 @@ for data in small_datasets:
             print(res)
             tab_data.append(res)
 print(tabulate(tab_data, headers=headers, tablefmt='github'))
-pd.DataFrame(tab_data, columns=headers).to_csv(dir_out + '/prove_train_acc_small.csv')
+pd.DataFrame(tab_data, columns=headers).to_csv(dir_out + '/prove_train_acc_gcn_v1.csv')
      
