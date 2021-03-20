@@ -165,7 +165,7 @@ def test(model, data, x, y, subgraph_loader, args, df=None):
 def run_test():
     args = get_args()
     print(args)
-    real_path = os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_diff_res', f'reddit_sage_{args.infer_batch_size}_opt_{args.cutting_method}_{args.cutting_way}_v0.csv')
+    real_path = os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_diff_res', f'reddit_sage_{args.infer_batch_size}_opt_{args.cutting_method}_{args.cutting_way}_v1.csv')
     test_accs = []
     times = []
     print(real_path)
@@ -200,7 +200,7 @@ def run_test():
 
 
 if __name__ == '__main__':
-    for bs in [8900]:
+    for bs in [8800]:
         tab_data = []
         for cutting in ['random_0', 'degree_way3', 'degree_way4', 'pagerank_way3', 'pagerank_way4']:
             method, way = cutting.split('_')
@@ -208,4 +208,4 @@ if __name__ == '__main__':
             test_accs, times = run_test()
             tab_data.append([str(bs), cutting] + list(test_accs) + list(times))
             gc.collect()
-        pd.DataFrame(tab_data).to_csv(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_opt_res', f'reddit_sage_opt_{bs}_v0.csv'))
+        pd.DataFrame(tab_data).to_csv(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_opt_res', f'reddit_sage_opt_{bs}_v1.csv'))
