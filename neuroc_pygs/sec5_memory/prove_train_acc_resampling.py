@@ -12,6 +12,15 @@ from neuroc_pygs.sec4_time.epoch_utils import test_full
 from neuroc_pygs.configs import PROJECT_PATH
 
 
+datasets_maps = {
+    'amazon-photo': 'amp',
+    'pubmed': 'pub',
+    'amazon-computers': 'amc',
+    'coauthor-physics': 'cph',
+    'flickr': 'fli',
+    'com-amazon': 'cam'
+}
+
 dir_out = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_train_res')
 def train(model, optimizer, data, loader, device, mode, discard_per=0.01, non_blocking=False):
     model.reset_parameters()
@@ -71,13 +80,22 @@ def epoch(discard_per=0.01, df=None):
 
 
 os.environ["CUDA_VISIBLE_DEVICES"] = '0,1'
-tab_data = []
 headers = ['Model', 'Data', 'Per', 'Acc', 'Use time']
 columns = ['train_acc', 'val_acc', 'test_acc', 'best_val_acc', 'final_test_acc']
-small_datasets =  ['pubmed', 'coauthor-physics', 'amazon-computers', 'amazon-photo', 'flickr']
+# small_datasets =  ['amazon-computers', 'amazon-photo', 'flickr', 'pubmed', 'coauthor-physics']
+small_datasets =  ['pubmed', 'coauthor-physics']
+config_paras = pd.read_csv("/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec5_memory/exp_res/max_res.csv", index_col=0)
 
-for data in small_datasets:
-    for model in ['gcn']:
+for model in ['gcn', 'gat']:
+    tab_data = []
+    for data in small_datasets:
+        # paras = str(config_paras.loc[datasets_maps[data], model]).split('_')
+        # if model in ["gcn", "ggnn"]:
+        #     config_str = f"--hidden_dims {paras[0]}"
+        # elif model == "gat":
+        #     config_str = f"--heads {paras[0]} --head_dims {paras[1]}"
+        config_str = ''
+
         for discard_per in [0, 0.01, 0.03, 0.06, 0.1, 0.2, 0.5]:
             test_accs, use_times = [], []
             for run in range(1):
@@ -87,7 +105,7 @@ for data in small_datasets:
                     use_times.append(0)
                     continue
                 df = defaultdict(list)
-                sys.argv = [sys.argv[0], '--model', model, '--dataset', data, '--epoch', '2000', '--device', 'cuda:0']
+                sys.argv = [sys.argv[0], '--model', model, '--dataset', data, '--epoch', '50', '--device', 'cuda:0'] + config_str.split(' ')
                 t1 = time.time()
                 final_test_acc = epoch(discard_per, df=df)
                 t2 = time.time()
@@ -96,6 +114,6 @@ for data in small_datasets:
             res = [model, data, discard_per, np.mean(test_accs), np.mean(use_times)]
             print(res)
             tab_data.append(res)
-print(tabulate(tab_data, headers=headers, tablefmt='github'))
-pd.DataFrame(tab_data, columns=headers).to_csv(dir_out + '/prove_train_acc_gcn_v1.csv')
+    print(tabulate(tab_data, headers=headers, tablefmt='github'))
+    pd.DataFrame(tab_data, columns=headers).to_csv(dir_out + f'/prove_train_acc_{model}_v3.csv')
      

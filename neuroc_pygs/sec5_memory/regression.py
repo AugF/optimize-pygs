@@ -55,7 +55,7 @@ def train_model(X, y):
     df_r2, df_mae, df_mape, df_mpe = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=100, random_state=0)
     for i, reg in enumerate([reg1, reg2, reg3, reg4, reg5]):
-        for step in range(50, 501, 50):
+        for step in range(50, 651, 50):
             reg.fit(X_train[:step], y_train[:step])
             y_pred = reg.predict(X_test) 
             r2 = r2_score(y_test, y_pred)
@@ -83,20 +83,24 @@ def run_automl(files, model='gcn', file_type='automl'):
     df_r2, df_mae, df_mape, df_mpe = train_model(X, y)
     df_r2, df_mae, df_mape, df_mpe = pd.DataFrame(df_r2), pd.DataFrame(df_mae), pd.DataFrame(df_mape), pd.DataFrame(df_mpe)
     titles = ['决定系数 (R2)', '平均绝对误差 (MAE)', '平均绝对百分比误差 (MAPE)', '平均百分比误差 (MPE)']
-    names = ['r2', 'mae', 'mape', 'mpe']
+    names = ['r2', 'mape', 'mae', 'mpe']
     markers = 'oD^sdp'
     colors = plt.get_cmap('Dark2')(np.linspace(0.15, 0.85, 5))
     # RdYlGn, Greys, Dark2
     linestyles = ['solid', 'dotted', 'dashed', 'dashdot', (0, (5, 5)), (0, (3, 10, 1, 10))]
     # https://matplotlib.org/3.1.0/gallery/lines_bars_and_markers/linestyles.html
-    xs = list(range(50, 501, 50))
-    x = np.arange(len(xs))
-    for i, df in enumerate([df_r2, df_mae, df_mape, df_mpe]):
+    xs = list(range(50, 651, 100))
+    x = np.arange(len(xs) * 2)
+    xticklabels = []
+    for t in xs:
+        xticklabels.extend([t, None])
+
+    for i, df in enumerate([df_r2, df_mape, df_mae, df_mpe][:2]):
         fig, ax = plt.subplots(figsize=(7, 5), tight_layout=True)
         ax.set_xlabel('训练集规模', fontsize=18)
         ax.set_ylabel(titles[i], fontsize=18)
         ax.set_xticks(x)
-        ax.set_xticklabels(xs, fontsize=18)
+        ax.set_xticklabels(xticklabels, fontsize=18)
         
         x_smooth = np.linspace(df.index.min(), df.index.max(), 300)
         # x_smooth = df.index
@@ -106,7 +110,7 @@ def run_automl(files, model='gcn', file_type='automl'):
             ax.plot(x_smooth, y_smooth, label=c, color=colors[j], linestyle=linestyles[j], linewidth=2)
 
         ax.legend(fontsize=16)
-        fig.savefig(os.path.join(PROJECT_PATH, 'sec5_memory') + f'/exp_figs/exp_{file_type}_{model}_{names[i]}_diff.png')
+        fig.savefig(os.path.join(PROJECT_PATH, 'sec5_memory') + f'/exp_figs/exp_memory_training_{model}_{file_type}_{names[i]}_diff.png')
 
 
 def run_linear_model(model='gcn', data='reddit'):
@@ -122,7 +126,7 @@ def run_linear_model(model='gcn', data='reddit'):
     mpe = mean_percentage_error(y_test, y_pred)
     print(f'r2={r2}, mae={mae}, mape={mape}, mpe={mpe}')
     dump(reg, dir_path + f'/{model}_{data}_linear_model_diff_v2.pth')
-    return mape, mpe
+    return mape, r2
 
 
 def save_model(files, model, file_type):
@@ -145,26 +149,27 @@ def save_model(files, model, file_type):
         reg.fit(X_train, y_train)
     y_pred = reg.predict(X_test)
     mape = mean_absolute_percentage_error(y_test, y_pred)
-    mpe = mean_percentage_error(y_test, y_pred)
+    r2 = r2_score(y_test, y_pred)
     dump(reg, dir_path + f'/{model}_{file_type}_diff_v2.pth')
-    return mape, mpe
+    return mape, r2
 
 
 if __name__ == '__main__':
     # run automl
     df = defaultdict(list)
     files = ['classes', 'nodes_edges', 'features', 'reddit', 'yelp',  'paras']
-    for model in ['gcn', 'gat']:
-        run_automl(files, model, file_type='automl') 
-        mape, mpe = save_model(files, model=model, file_type='automl')
-        print(f'model: {model}, automl mape: {mape}, mpe: {mape}')
-        df[model].append(mape)
-    pd.DataFrame(df, index=['automl']).to_csv(dir_path + f'/regression_mape_res.csv') 
+    # for model in ['gcn', 'gat']:
+    #     run_automl(files, model, file_type='automl') 
+    #     mape, r2 = save_model(files, model=model, file_type='automl')
+    #     print(f'model: {model}, automl mape: {mape}, r2: {r2}')
+    #     df[model].append(mape)
+    # pd.DataFrame(df, index=['automl']).to_csv(dir_path + f'/regression_mape_res.csv') 
     
     # run linear
     df = defaultdict(list)
     for model in ['gcn', 'gat']:
-        for data in ['yelp', 'reddit']:
-            mape, _ = run_linear_model(model, data)
-            df[model].append(mape)
-    pd.DataFrame(df, index=['reddit', 'yelp']).to_csv(dir_path + f'/regression_linear_mape_res.csv') 
+        for data in ['reddit', 'yelp']:
+            mape, r2 = run_linear_model(model, data)
+            print(f'model: {model}, data: {data}, mape: {mape}, r2: {r2}')
+            df[model + '_' + data].extend([mape, r2])
+    pd.DataFrame(df, index=['mape', 'r2']).to_csv(dir_path + f'/regression_linear_model_metrics.csv') 

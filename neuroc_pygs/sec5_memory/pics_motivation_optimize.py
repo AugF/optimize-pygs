@@ -95,7 +95,7 @@ def run(predict_model='linear_model', bias=0.001):
             legend_colors = [Patch(facecolor=c, edgecolor='black') for c in colors]
             ax.legend(legend_colors + [line], ['优化前', '优化后', 'GPU内存限制'], fontsize=10)
 
-        fig.savefig(dir_out + f'/{model}_cluster_motivation_{predict_model}_mape_diff_v3.png')
+        fig.savefig(dir_out + f'/exp_memory_training_{model}_cluster_motivation_{predict_model}_mape_diff_v3.png')
 
 
 if __name__ == '__main__':

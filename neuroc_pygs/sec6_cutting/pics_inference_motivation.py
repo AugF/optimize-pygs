@@ -55,7 +55,7 @@ for i, model in enumerate(['reddit_sage', 'cluster_gcn']):
     ax.plot(xlim, [line] * len(xlim), linestyle='dashed', color='b', linewidth=1.5, label='GPU内存上限')
     ax.legend(fontsize=12)
 
-fig.savefig(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_figs', f'exp_inference_motivation.png'))
+fig.savefig(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_figs', f'exp_memory_inference_motivation.png'))
 
 
 

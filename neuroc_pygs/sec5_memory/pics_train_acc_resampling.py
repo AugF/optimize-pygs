@@ -9,40 +9,38 @@ from neuroc_pygs.configs import PROJECT_PATH
 
 _rebuild()
 
-# plt.style.use("grayscale")
+plt.style.use("grayscale")
 plt.rcParams['font.sans-serif'] = ['SimHei']  # 用来正常显示中文标签
 plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
-plt.rcParams["font.size"] = 14
+plt.rcParams["font.size"] = 18
 
 dir_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_train_res')
-dir_out = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_train_figs')
+dir_out = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_figs')
+# df = pd.read_csv(dir_path + f'/prove_train_acc_all.csv', index_col=0)
 
+labels = ['GCN Pubmed', 'GCN Coauthor-physics', 'GAT Pubmed', 'GAT Coauthor-physics']
+markers = 'oD^sdp'
+linestyles = ['solid', 'dotted', 'dashed', 'dashdot', (0, (5, 5)), (0, (3, 10, 1, 10))]
 
+fig, ax = plt.subplots(figsize=(7, 5), tight_layout=True)
+df_data = defaultdict(list)
 for model in ['gcn', 'gat']:
+    df = pd.read_csv(dir_path + f'/prove_train_acc_{model}_v3.csv', index_col=0)
+    df.index = [f"{df['Model'][i]}_{df['Data'][i]}_{df['Per'][i]}" for i in range(len(df.index))]
     for data in ['pubmed', 'coauthor-physics']:
-        for run in range(3):
-            fig, axes = plt.subplots(2, 3, figsize=(7*3, 5*2), tight_layout=True)
-            df = defaultdict(dict)
-            for discard_per in [0, 0.01, 0.03, 0.06, 0.1, 0.2, 0.5]:
-                dis_per = str(int(100*discard_per))
-                real_path = dir_path + f'/{model}_{data}_{dis_per}_{run}.csv'
-                pd_data = pd.read_csv(real_path, index_col=0)
-                df['train'][dis_per] = pd_data['train_acc']
-                df['val'][dis_per] = pd_data['val_acc']
-                df['test'][dis_per] = pd_data['test_acc']
-                df['best val'][dis_per] = pd_data['best_val_acc']
-                df['final test'][dis_per] = pd_data['final_test_acc']
-                
-            for i, x in enumerate(['train', 'val', 'test', 'best val', 'final test']):
-                ax = axes[i//3][i%3]
-                ax.set_title(model.upper() + ' ' + data.capitalize())
-                ax.set_ylabel(x.capitalize() + ' Acc')
-                df_data = pd.DataFrame(df[x])
-                print(df_data)
-                for j, c in enumerate(df_data.columns):
-                    ax.plot(df_data.index, df_data[c], label=c)
-                ax.legend()
-            fig.savefig(dir_out + f'/exp_{model}_{data}_{run}.png')
-            
-                
+        cur_name = model + '_' + data
+        for rs in [0.0, 0.01, 0.03, 0.06, 0.1, 0.2, 0.5]:
+            index = cur_name + '_' + str(rs)
+            # df_data[cur_name].append(np.mean([df['Acc1'][index], df['Acc2'][index], df['Acc3'][index]]))
+            df_data[cur_name].append(np.mean([df['Acc'][index]]))
+
+df_data = pd.DataFrame(df_data)
+ax.set_ylabel('精度', fontsize=20)
+ax.set_xlabel('重采样相对比例', fontsize=20)
+for j, c in enumerate(df_data.columns):
+    ax.plot(df_data.index, df_data[c], label=labels[j], marker=markers[j], markersize=10, linestyle=linestyles[j])
+ax.set_xticks(np.arange(7))
+ax.set_xticklabels(['Zero', '1%', '3%', '6%', '10%', '20%', '50%'])
+ax.legend()
+fig.savefig(dir_out + f'/exp_memory_training_resampling_acc.png')
 

@@ -10,6 +10,8 @@ from tabulate import tabulate
 from collections import defaultdict
 from neuroc_pygs.options import build_dataset, get_args, build_dataset, build_model_optimizer
 from neuroc_pygs.configs import PROJECT_PATH
+from matplotlib.font_manager import _rebuild
+_rebuild()
 
 
 def train(model, batch, optimizer):
@@ -76,11 +78,11 @@ def pics_linear_plane(model='gat'):
     # from mpl_toolkits.mplot3d import Axes3D
     fig = plt.figure()
     ax = plt.axes(projection='3d')
-    ax.set_xlabel('Number of Vertices', fontsize=12)
-    ax.set_ylabel('Number of Edges', fontsize=12)
-    ax.set_zlabel('Peak Memory (MB)', fontsize=12)
+    ax.set_xlabel('点数', fontsize=14)
+    ax.set_ylabel('边数', fontsize=14)
+    ax.set_zlabel('膨胀内存', fontsize=14)
     ax.scatter3D(nodes, edges, memory, cmap='Blues')
-    fig.savefig(os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_figs', f'{model}_linear_plane_data_final.png'))
+    fig.savefig(os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_figs', f'exp_memory_{model}_linear_plane.png'))
 
 
 if __name__ == '__main__':
