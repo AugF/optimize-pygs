@@ -23,7 +23,8 @@ def get_pagerank(edge_index):
     return pagerank(G, p=0.85)
 
 
-def cut_by_random(edge_index, cutting_nums):
+def cut_by_random(edge_index, cutting_nums, seed=2):
+    np.random.seed(seed)
     outliers = np.random.choice(edge_index.shape[1], cutting_nums, replace=False)
     mask = list(set(range(edge_index.shape[1])) - set(outliers))
     return edge_index[:, mask]
@@ -38,6 +39,8 @@ def do_method(d1, d2, name='way1'):
         return d1 + d2
     elif name == 'way4':
         return d1 * d2
+    elif name == 'way5':
+        return d1 * d2 / (d1 + d2)
 
 
 def get_importance(v, name='degree', **args):
@@ -96,5 +99,46 @@ def test():
 
     # print(random_, degree1, degree2, pr1, pr2, sep='\n')
 
+import time
+import pandas as pd
+from neuroc_pygs.options import get_args, build_dataset
 
-# test()
+dir_path = '/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec6_cutting/exp_cutting_res'
+# 实验1
+# rs = [0.01, 0.03, 0.06, 0.1, 0.2, 0.5]
+# args = get_args()
+# args.dataset = 'random_10k_100k'
+# data = build_dataset(args)
+# df = {}
+# for r in rs:
+#     cutting_nums = int(100000 * r)
+#     t1 = time.time()
+#     cut_by_random(data.edge_index, cutting_nums)
+#     t2 = time.time()
+#     cut_by_importance(data.edge_index, cutting_nums, method='degree', name='way3')
+#     t3 = time.time()
+#     cut_by_importance(data.edge_index, cutting_nums, method='pagerank', name='way4')
+#     t4 = time.time()
+#     df[r] = [t2 - t1, t3 - t2, t4 - t3]
+#     print(r, df[r])
+# pd.DataFrame(df, columns=['random', 'degree3', 'pr4']).to_csv(dir_path + f'/cutting_method_fix_edges_use_time.csv')
+
+# 实验2
+df = {}
+edges = [10, 15, 30, 50, 70, 90]
+args = get_args()
+for e in edges:
+    args.dataset = f'random_10k_{e}k'
+    cutting_nums = 5000
+    data = build_dataset(args)
+    t1 = time.time()
+    cut_by_random(data.edge_index, cutting_nums)
+    t2 = time.time()
+    cut_by_importance(data.edge_index, cutting_nums, method='degree', name='way3')
+    t3 = time.time()
+    cut_by_importance(data.edge_index, cutting_nums, method='pagerank', name='way4')
+    t4 = time.time()
+    df[e] = [t2 - t1, t3 - t2, t4 - t3]
+    print(e, df[e])
+
+pd.DataFrame(df, columns=['random', 'degree3', 'pr4']).to_csv(dir_path + f'/cutting_method_fix_cutting_nums_use_time.csv')

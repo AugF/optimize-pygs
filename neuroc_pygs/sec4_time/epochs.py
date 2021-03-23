@@ -78,22 +78,24 @@ if __name__ == '__main__':
     # for data in ['amazon-computers', 'flickr']:
     #     res = run_model(model=['ggnn', 'gaan'], data=[data])
     #     tab_data.extend(res)
-    # res = run_model(model='gcn', data='amazon-computers', mode='cluster')
-    # tab_data.append(res)
-    # res = run_model(model='gcn', data='amazon-computers', mode='graphsage')
-    # tab_data.append(res)
-    # res = run_model(model='gat', data='flickr', mode='cluster')
-    # tab_data.append(res)
-    # res = run_model(model='gat', data='flickr', mode='graphsage')
-    # tab_data.append(res)
+    res = run_model(model='gaan', data='amazon-computers', mode='cluster')
+    tab_data.append(res)
+    res = run_model(model='gcn', data='coauthor-physics', mode='cluster')
+    tab_data.append(res)
+    res = run_model(model='gcn', data='flickr', mode='cluster')
+    tab_data.append(res)
+    res = run_model(model='gat', data='flickr', mode='cluster')
+    tab_data.append(res)
     # with open(dir_path + f'/sampling_epoch_modes.txt', 'w') as f:
     #     f.write('\n'.join([str(t) for t in tab_data]))
 
-    tab_data = []
-    res = run_model(model='gcn', data='amazon-computers', re_bs=[0.01, 0.03, 0.06, 0.1, 0.2, 0.5])
-    tab_data.append(res)
-    res = run_model(model='gat', data='flickr', re_bs=[0.01, 0.03, 0.06, 0.1, 0.2, 0.5])
-    tab_data.append(res)
-    with open(dir_path + f'/sampling_epoch_re_bs.txt', 'w') as f:
-        f.write('\n'.join([str(t) for t in tab_data]))
+    # tab_data = []
+    # res = run_model(model='gcn', data='amazon-computers', re_bs=[0.01, 0.06])
+    # tab_data.append(res)
+    # res = run_model(model='gat', data='flickr', re_bs=[0.01, 0.03, 0.1, 0.25, 0.5])
+    # tab_data.append(res)
+    for line in tab_data:
+        print(line)
+    # with open(dir_path + f'/sampling_epoch_re_bs.txt', 'w') as f:
+    #     f.write('\n'.join([str(t) for t in tab_data]))
 

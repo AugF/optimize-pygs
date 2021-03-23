@@ -115,19 +115,19 @@ if __name__ == '__main__':
     nodes, expect_edges = 35000, 45000
     edges = expect_edges * 0.75
     base_name = f'random_{int(nodes/1000)}k_{int(expect_edges/1000)}k'
-    for features in range(50, 5001, 500): # 10
-        file_name = base_name + f'_{features}_7'
-        print(file_name)
-        if not os.path.exists(os.path.join(root, file_name)):
-            create_random_dataset(file_name, nodes=nodes, edges=edges, expect_edges=expect_edges,
-                features=features, classes=10, split_train=0.50, split_val=0.25,
-                        root=root)
+    # for features in range(50, 5001, 500): # 10
+    #     file_name = base_name + f'_{features}_7'
+    #     print(file_name)
+    #     if not os.path.exists(os.path.join(root, file_name)):
+    #         create_random_dataset(file_name, nodes=nodes, edges=edges, expect_edges=expect_edges,
+    #             features=features, classes=10, split_train=0.50, split_val=0.25,
+    #                     root=root)
 
-    for classes in range(3, 301, 30): # 10
-        file_name = base_name + f'_500_{classes}'
-        print(file_name)
-        if not os.path.exists(os.path.join(root, file_name)):
-            create_random_dataset(file_name, nodes=nodes, edges=edges, expect_edges=expect_edges,
-                features=500, classes=classes, split_train=0.50, split_val=0.25,
-                        root=root)
+    # for classes in range(3, 301, 30): # 10
+    #     file_name = base_name + f'_500_{classes}'
+    #     print(file_name)
+    #     if not os.path.exists(os.path.join(root, file_name)):
+    #         create_random_dataset(file_name, nodes=nodes, edges=edges, expect_edges=expect_edges,
+    #             features=500, classes=classes, split_train=0.50, split_val=0.25,
+    #                     root=root)
     

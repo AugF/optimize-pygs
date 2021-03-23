@@ -102,7 +102,7 @@ class GCN(torch.nn.Module):
                         cutting_nums = bsearch.get_cutting_nums(node, edge, real_memory_ratio, current_memory)
                         print(f'cutting {cutting_nums} edges...')
                         if args.cutting_method == 'random':
-                            edge_index = cut_by_random(edge_index, cutting_nums)
+                            edge_index = cut_by_random(edge_index, cutting_nums, seed=int(args.cutting_way))
                         else:
                             edge_index = cut_by_importance(edge_index, cutting_nums, method=args.cutting_method, name=args.cutting_way)
                         st2 = time.time()
@@ -246,12 +246,12 @@ def run_test():
 
 
 if __name__ == "__main__":
-    for cutting in ['random_0', 'degree_way3', 'degree_way4', 'pagerank_way3', 'pagerank_way4']:
+    for bs in [9000, 9100, 9200]:
         tab_data = []
-        for bs in [9000, 9100, 9200]:
+        for cutting in ['random_1', 'random_2', 'random_3', 'random_4', 'random_5']:
             method, way = cutting.split('_')
-            sys.argv = [sys.argv[0], '--infer_batch_size', str(bs), '--device', '2', '--cutting_method', method, '--cutting_way', way]
+            sys.argv = [sys.argv[0], '--infer_batch_size', str(bs), '--device', '0', '--cutting_method', method, '--cutting_way', way]
             test_accs, times = run_test()
             tab_data.append([str(bs), cutting] + list(test_accs) + list(times))
             gc.collect()
-        pd.DataFrame(tab_data).to_csv(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_opt_res', f'cluster_gcn_opt_{cutting}_v0.csv'))
+        pd.DataFrame(tab_data).to_csv(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_opt_res', f'cluster_gcn_opt_{bs}_random_v0_v0.csv'))

@@ -9,7 +9,7 @@ from neuroc_pygs.configs import PROJECT_PATH
 
 _rebuild()
 
-plt.style.use("grayscale")
+# plt.style.use("grayscale")
 plt.rcParams['font.sans-serif'] = ['SimHei']  # 用来正常显示中文标签
 plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
 plt.rcParams["font.size"] = 18

@@ -6,10 +6,11 @@ from neuroc_pygs.sec4_time.utils import datasets_maps, algorithms, sampling_mode
 from matplotlib.font_manager import _rebuild
 _rebuild() 
 
+base_size = 16
 plt.style.use("grayscale")
 plt.rcParams['font.sans-serif']=['SimHei'] #用来正常显示中文标签
 plt.rcParams['axes.unicode_minus']=False #用来正常显示负号
-plt.rcParams["font.size"] = 16
+plt.rcParams["font.size"] = base_size
 
 
 headers = ['Name', 'Baseline', 'Batch Opt', 'Epoch Opt', 'Opt', 'Batch Ratio%', 'Epoch Raio%', 'Opt%']
@@ -38,10 +39,10 @@ for data in ['flickr', 'amazon-computers']:
 
     x = np.arange(len(xs))
     width = 0.2
-    fig, ax = plt.subplots(figsize=(7, 5), tight_layout=True)
-    ax.set_title(data.capitalize(), fontsize=18)
-    ax.set_ylabel('30轮训练时间 (秒)', fontsize=18)
-    ax.set_xlabel('算法', fontsize=18)
+    fig, ax = plt.subplots(figsize=(7/1.5, 5/1.5), tight_layout=True)
+    ax.set_title(data.capitalize(), fontsize=base_size+2)
+    ax.set_ylabel('30轮训练时间 (秒)', fontsize=base_size+2)
+    ax.set_xlabel('算法', fontsize=base_size+2)
     ax.set_xticks(x)
     ax.set_xticklabels([algorithms[i] for i in xs], fontsize=18)
 
@@ -49,8 +50,11 @@ for data in ['flickr', 'amazon-computers']:
     ax.bar(x - 0.5 * width, tab_data['Batch Opt'], width, label='优化1')
     ax.bar(x + 0.5 * width, tab_data['Epoch Opt'], width, label='优化2')
     ax.bar(x + 1.5 * width, tab_data['Opt'], width, label='优化1+优化2')
-    ax.legend(ncol=2, fontsize=14)
-    fig.savefig(root_path + f'/exp_figs/exp_epoch_sampling_models_{data}.png')
+    if data == 'flickr':
+        ax.legend(fontsize='x-small', ncol=1)
+    else:
+        ax.legend(fontsize='x-small', loc='lower center', ncol=2)
+    fig.savefig(root_path + f'/exp_figs_final/exp_epoch_sampling_models_{data}.png')
 
 
 

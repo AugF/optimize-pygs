@@ -10,10 +10,11 @@ _rebuild()
 def float_x(x):
     return [float(i) for i in x]
 
+base_size = 12
 plt.style.use("grayscale")
 plt.rcParams['font.sans-serif']=['SimHei'] #用来正常显示中文标签
 plt.rcParams['axes.unicode_minus']=False #用来正常显示负号
-plt.rcParams["font.size"] = 14
+plt.rcParams["font.size"] = base_size
 
 root_path = '/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec4_time'
 real_path = root_path + '/exp_res/sampling_training_batch_size.txt'
@@ -38,13 +39,13 @@ xs = [0.01, 0.03, 0.06, 0.1, 0.25, 0.5]
 modes = ['graphsage', 'cluster']
 MODES = ['GraphSAGE Sampler', 'Cluster Sampler']
 y_lims = {
-    'cluster_amazon-computers_gcn': 1600,
+    'cluster_amazon-computers_gcn': 1500,
     'graphsage_amazon-computers_gcn': 1000,
-    'cluster_flickr_gat': 2600,
+    'cluster_flickr_gat': 2000,
     'graphsage_flickr_gat': 3000
 }
 
-for k, mode in enumerate(modes):
+for k, mode in enumerate(['cluster']):
     for file in file_names:
         base_times, opt_times, base_error, opt_error = [], [], [], []
         for v in xs:
@@ -57,7 +58,7 @@ for k, mode in enumerate(modes):
         
         base_times, opt_times, base_error, opt_error = np.cumsum(np.array(base_times).T, axis=0) * 1000, np.cumsum(np.array(opt_times).T, axis=0)*1000, np.array(base_error).T * 1000, np.array(opt_error).T * 1000 # 单位ms
 
-        fig, ax = plt.subplots(figsize=(7, 5), tight_layout=True)
+        fig, ax = plt.subplots(figsize=(7/2, 5/2), tight_layout=True)
         xticklabels = [f'{int(100 * i)}%' for i in xs]
         x = np.arange(len(xticklabels))
 
@@ -69,18 +70,18 @@ for k, mode in enumerate(modes):
         errors_bar = [base_error, opt_error]
         for i, times in enumerate([base_times, opt_times]):
             ax.bar(x + locations[i] * width / 2, times[0], width, color=colors[i], edgecolor='black', hatch="///")
-            ax.bar(x + locations[i] * width / 2, times[1], width, color=colors[i], edgecolor='black', bottom=times[0], hatch='...')
-            ax.bar(x + locations[i] * width / 2, times[2], width, yerr=[errors_bar[i][1], errors_bar[i][0]], color=colors[i], edgecolor='black', bottom=times[1], hatch='xxx')
+            ax.bar(x + locations[i] * width / 2, times[1] - times[0], width, color=colors[i], edgecolor='black', bottom=times[0], hatch='...')
+            ax.bar(x + locations[i] * width / 2, times[2] - times[1], width, yerr=[errors_bar[i][1], errors_bar[i][0]], color=colors[i], edgecolor='black', bottom=times[1], hatch='xxx')
             # 待做: error bar
-        ax.set_title(MODES[k])
-        ax.set_xticklabels([''] + xticklabels)
+        ax.set_title(titles[k], fontsize=base_size+2)
+        ax.set_xticklabels([''] + xticklabels, fontsize=base_size+2)
 
         legend_colors = [Patch(facecolor=c, edgecolor='black') for c in colors]
         legend_hatchs = [Patch(facecolor='white', edgecolor='black', hatch='xxxx'), Patch(facecolor='white',edgecolor='black', hatch='....'), Patch(facecolor='white', edgecolor='black', hatch='////')]
-        ax.legend(legend_hatchs + legend_colors, ['训练', '数据传输', '采样'] + ['优化前', '优化后'], ncol=2, loc='upper left')
+        ax.legend(legend_hatchs + legend_colors, ['训练', '数据传输', '采样'] + ['优化前', '优化后'], ncol=2, loc='upper left', fontsize='x-small')
         ax.set_ylim(0, y_lims[f'{mode}_{file}'])
-        ax.set_ylabel('每轮训练时间 (毫秒)')
-        ax.set_xlabel('相对批大小')
-        fig.savefig(root_path + f'/exp_figs/exp_batch_batch_size_{file}_{mode}.png')
+        ax.set_ylabel('每轮训练时间 (毫秒)', fontsize=base_size+2)
+        ax.set_xlabel('相对批大小', fontsize=base_size+2)
+        fig.savefig(root_path + f'/exp_figs_final/exp_batch_batch_size_{file}_{mode}.png')
         plt.close()
 

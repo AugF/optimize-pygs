@@ -5,10 +5,11 @@ from matplotlib.font_manager import _rebuild
 # print(_rebuild())
 _rebuild() 
 
+base_size = 12
 plt.style.use("grayscale")
 plt.rcParams['font.sans-serif']=['SimHei'] #用来正常显示中文标签
 plt.rcParams['axes.unicode_minus']=False #用来正常显示负号
-plt.rcParams["font.size"] = 16
+plt.rcParams["font.size"] = base_size
 
 df = {
     'gcn': {
@@ -34,13 +35,13 @@ for i, item in enumerate(df.keys()):
     x = np.arange(len(xs))  # the label locations
     width = 0.35  # the width of the bars
 
-    fig, ax = plt.subplots(figsize=(7, 5), tight_layout=True)
-    ax.set_title(item.upper(), fontsize=18)
-    ax.set_ylabel('100轮训练时间 (秒)', fontsize=18)
-    ax.set_xlabel('数据集', fontsize=18)
+    fig, ax = plt.subplots(figsize=(7/2, 5/2), tight_layout=True)
+    ax.set_title(item.upper(), fontsize=base_size+2)
+    ax.set_ylabel('100轮训练时间 (秒)', fontsize=base_size+2)
+    ax.set_xlabel('数据集', fontsize=base_size+2)
     ax.set_xticks(x)
-    ax.set_xticklabels(xs, fontsize=18)
+    ax.set_xticklabels(xs, fontsize=base_size+2)
     ax.bar(x - width/2, tab_data['Baseline'], width, color=colors[0], edgecolor='black', label='优化前')
     ax.bar(x + width/2, tab_data['Optimize'], width, color=colors[1], edgecolor='black', label='优化后')
-    ax.legend(fontsize=18)
-    fig.savefig(root_path + f'/exp_figs/exp_epoch_full_datasets_{item}.png')
+    ax.legend(loc='upper left')
+    fig.savefig(root_path + f'/exp_figs_final/exp_epoch_full_datasets_{item}.png')
