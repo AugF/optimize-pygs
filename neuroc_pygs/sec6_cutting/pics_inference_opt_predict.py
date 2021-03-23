@@ -52,5 +52,5 @@ for file in filenames:
     ax.set_ylabel('精度', fontsize=base_size+2)
     ax.set_xlabel('批规模', fontsize=base_size+2)
     ax.legend(fontsize='small', ncol=2)
-    fig.savefig(dir_path + f'/exp_figs/exp_inference_motivation_{file.lower()}_acc.png')
+    fig.savefig(dir_path + f'/exp_figs/exp_memory_inference_motivation_{file.lower()}_acc.png')
 

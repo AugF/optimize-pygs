@@ -40,5 +40,5 @@ for exp_model in ['gcn', 'gat']:
             ax.plot(x_smooth, y_smooth, label=labels[k], linestyle=linestyles[k])
             ax.legend()
 
-    fig.savefig(dir_out + f'/exp_memory_{exp_model}_{predict_model}_reddit_175_train_info.png')
+    fig.savefig(dir_out + f'/exp_memory_training_{exp_model}_{predict_model}_reddit_175_train_info.png')
 
