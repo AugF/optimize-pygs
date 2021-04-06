@@ -24,8 +24,10 @@ titles = {'reddit_sage': 'SAGE Reddit',
 
 fig, axes = plt.subplots(
     nrows=1, ncols=2, figsize=(7, 7/2), tight_layout=True)
-   
+
+
 for i, model in enumerate(['reddit_sage', 'cluster_gcn']):
+# for i, model in enumerate(['reddit_sage']):
     ax = axes[i]
     ax.set_title(titles[model])
     ax.set_ylabel('峰值内存 (GB)', fontsize=14)
@@ -43,9 +45,9 @@ for i, model in enumerate(['reddit_sage', 'cluster_gcn']):
         for var in ['_', '_opt_random_0_']:
             file_name = '_'.join([model, str(bs)])
             if i == 0 and var == '_opt_random_0_':
-                k = 2
-            else: k = 0
-            real_path = os.path.join(PROJECT_PATH, 'sec6_cutting/exp_diff_res', file_name) + var + f'v{k}.csv'
+                k = 'final_v3'
+            else: k = 'v0'
+            real_path = os.path.join(PROJECT_PATH, 'sec6_cutting/exp_diff_res', file_name) + var + f'{k}.csv'
             print(real_path)
             if os.path.exists(real_path):
                 res = pd.read_csv(real_path, index_col=0).to_dict(orient='list')['memory']
@@ -56,6 +58,13 @@ for i, model in enumerate(['reddit_sage', 'cluster_gcn']):
     bp = ax.boxplot(box_data)
 
     numBoxes = len(batch_sizes) * 2
+    for i in range(numBoxes):
+        if i % 2 == 1:
+            plt.setp(bp['medians'][i], color='red')
+            plt.setp(bp['boxes'][i], color='red')
+            # plt.setp(bp['caps'][i], color='red')
+            plt.setp(bp['fliers'][i], markeredgecolor='red')
+            # https://matplotlib.org/stable/gallery/statistics/boxplot.html#sphx-glr-gallery-statistics-boxplot-py
     medians = list(range(numBoxes))
     for i in range(numBoxes):
         box = bp['boxes'][i]
@@ -77,7 +86,7 @@ for i, model in enumerate(['reddit_sage', 'cluster_gcn']):
     line = 3 if model == 'reddit_sage' else 2
     line, = ax.plot(xlim, [line] * len(xlim), linestyle='dashed', color='b', linewidth=1.5, label='GPU内存上限')
 
-    legend_colors = [Patch(facecolor=c, edgecolor='black') for c in colors]
+    legend_colors = [Patch(facecolor=colors[0], edgecolor='black'), Patch(facecolor=colors[1], edgecolor='red')]
     ax.legend(legend_colors + [line], ['优化前', '优化后', 'GPU内存限制'], fontsize=10)
 
 fig.savefig(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_figs', f'exp_memory_inference_motivation_optimize.png'))

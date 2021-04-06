@@ -35,4 +35,5 @@ num_batches = subgraph_loader.get_num_batches()
 subgraph_loader.reset_iter()
 for i in range(num_batches):
     batch = subgraph_loader.get_next_batch()
+    print(batch)
     

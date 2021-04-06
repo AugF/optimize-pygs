@@ -173,7 +173,7 @@ def train(epoch, mode):
                 out = model(batch.x, batch.edge_index)
                 print("out", out, out.shape)
                 print("batch.y", batch.y, batch.y.shape)
-                if args.dataset in ['yelp']:
+                if args.dataset in ['yelp', 'reddit']:
                     loss = torch.nn.BCEWithLogitsLoss()(out[batch.train_mask, :], batch.y[batch.train_mask, :])
                 else:
                     if args.dataset == 'amazon':
@@ -188,7 +188,7 @@ def train(epoch, mode):
                 nodes, edges = adjs[0][2][0], adjs[0][0].shape[1]
                 print(f"nodes: {nodes}, edges: {edges}")
                 x = data.x[n_id].to(device)
-                if args.dataset in ['yelp', 'amazon']:
+                if args.dataset in ['yelp', 'reddit']:
                     y = data.y[n_id[:batch_size], :].to(device)
                 else:
                     y = data.y[n_id[:batch_size]].to(device)
@@ -196,7 +196,7 @@ def train(epoch, mode):
                 to_time = t2 - t1
                 optimizer.zero_grad()            
                 out = model(data.x[n_id].to(device), adjs)
-                if args.dataset in ['yelp', 'amazon']:
+                if args.dataset in ['yelp', 'reddit']:
                     loss = torch.nn.BCEWithLogitsLoss()(out, y)
                 else:
                     loss = F.nll_loss(out.log_softmax(dim=-1), y)

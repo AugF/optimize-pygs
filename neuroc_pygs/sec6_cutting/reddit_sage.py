@@ -16,6 +16,8 @@ from neuroc_pygs.utils import get_dataset
 from neuroc_pygs.configs import PROJECT_PATH
 
 
+dir_out = '/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec6_cutting/exp_thesis_outlier_per'
+
 def get_args():
     parser = argparse.ArgumentParser(description='OGBN-Products (Cluster-GCN)')
     parser.add_argument('--device', type=int, default=0)
@@ -185,10 +187,10 @@ def run_fit():
     fit(model, optimizer, train_loader, data, subgraph_loader, device)
 
 
-def run_test():
+def run_test(file_suffix):
     args = get_args()
     print(args)
-    real_path = os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_diff_res', f'reddit_sage_{args.infer_batch_size}_v0.csv')
+    real_path = os.path.join(dir_out, f'reddit_sage_{args.infer_batch_size}_{file_suffix}.csv')
     test_accs = []
     times = []
     if os.path.exists(real_path):
@@ -222,10 +224,11 @@ def run_test():
 
 if __name__ == '__main__':
     import gc
+    file_suffix = 'v1'
     tab_data = []
-    for bs in [1024, 2048, 3096]:
+    for bs in [1024, 2048, 4096, 8192, 16384]:
         sys.argv = [sys.argv[0], '--infer_batch_size', str(bs), '--device', '1']
-        test_accs, times = run_test()
+        test_accs, times = run_test(file_suffix)
         tab_data.append([str(bs)] + list(test_accs) + list(times))
         gc.collect()
-    pd.DataFrame(tab_data).to_csv(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_diff_res', f'reddit_sage_acc_v3.csv'))
+    pd.DataFrame(tab_data).to_csv(dir_out + f'/reddit_sage_acc_{file_suffix}.csv')

@@ -43,7 +43,7 @@ labels = [0.01, 0.1, 0.2, 0.5]
 
 for i in range(3):
     ax.plot(x, arr1[i], marker=markers[i], linestyle=linestyles[i], label=names[i])
-ax.set_xlabel('剪枝相对比例 (百分比)', fontsize=base_size + 2)
+ax.set_xlabel('相对剪枝比例 (百分比)', fontsize=base_size + 2)
 ax.set_ylabel('耗时 (秒)', fontsize=base_size + 2)
 ax.legend(fontsize='small', loc='center')
 ax.set_xticks(labels)

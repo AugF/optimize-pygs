@@ -6,10 +6,11 @@ from torch_geometric.data import Data
 
 class CudaDataLoader(object):
     """ 异步预先将数据从CPU加载到GPU中 """
-    def __init__(self, loader, device, sampler='', data=None, queue_size=2):
+    def __init__(self, loader, device, sampler='', data=None, to_flag=True, queue_size=2):
         self.device = device
         self.sampler = sampler
         self.data = data
+        self.to_flag = to_flag
         self.queue_size = queue_size
         self.loader = loader
 
@@ -26,10 +27,17 @@ class CudaDataLoader(object):
         # The loop that will load into the queue in the background
         while True:
             for i, sample in enumerate(self.loader):
-                if self.sampler == 'infer_sage':
-                    self.queue.put(sample)
+                if self.to_flag:
+                    data = self.load_instance(sample)
+                    if self.sampler == 'graphsage':
+                        with torch.cuda.stream(self.load_stream):
+                            batch_size, n_id, adjs = data
+                            x, y = self.data.x[n_id], self.data.y[n_id[:batch_size]]
+                            x, y = x.to(self.device, non_blocking=True), y.to(self.device, non_blocking=True)
+                            data = [batch_size, n_id, adjs, x, y]
                 else:
-                    self.queue.put(self.load_instance(sample))
+                    data = sample
+                self.queue.put(data)
 
     def load_instance(self, sample):
         """ 将batch数据从CPU加载到GPU中 """

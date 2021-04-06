@@ -1,4 +1,4 @@
-import os
+import os, time
 import numpy as np 
 import pandas as pd
 from scipy.interpolate import make_interp_spline
@@ -18,10 +18,11 @@ from sklearn.metrics import r2_score, mean_absolute_percentage_error, mean_absol
 from matplotlib.font_manager import _rebuild
 _rebuild() 
 
+base_size = 14
 plt.style.use("grayscale")
 plt.rcParams['font.sans-serif']=['SimHei'] #用来正常显示中文标签
 plt.rcParams['axes.unicode_minus']=False #用来正常显示负号
-plt.rcParams["font.size"] = 16
+plt.rcParams["font.size"] = base_size
 
 dir_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_automl_datasets_diff')
 
@@ -82,7 +83,7 @@ def run_automl(files, model='gcn', file_type='automl'):
 
     df_r2, df_mae, df_mape, df_mpe = train_model(X, y)
     df_r2, df_mae, df_mape, df_mpe = pd.DataFrame(df_r2), pd.DataFrame(df_mae), pd.DataFrame(df_mape), pd.DataFrame(df_mpe)
-    titles = ['决定系数 (R2)', '平均绝对误差 (MAE)', '平均绝对百分比误差 (MAPE)', '平均百分比误差 (MPE)']
+    titles = ['决定系数 (R2)', '平均绝对百分比误差 (MAPE)', '平均绝对误差 (MAE)', '平均百分比误差 (MPE)']
     names = ['r2', 'mape', 'mae', 'mpe']
     markers = 'oD^sdp'
     colors = plt.get_cmap('Dark2')(np.linspace(0.15, 0.85, 5))
@@ -96,11 +97,11 @@ def run_automl(files, model='gcn', file_type='automl'):
         xticklabels.extend([t, None])
 
     for i, df in enumerate([df_r2, df_mape, df_mae, df_mpe][:2]):
-        fig, ax = plt.subplots(figsize=(7, 5), tight_layout=True)
-        ax.set_xlabel('训练集规模', fontsize=18)
-        ax.set_ylabel(titles[i], fontsize=18)
+        fig, ax = plt.subplots(figsize=(7/1.5, 5/1.5), tight_layout=True)
+        ax.set_xlabel('训练集规模', fontsize=base_size + 2)
+        ax.set_ylabel(titles[i], fontsize=base_size + 2)
         ax.set_xticks(x)
-        ax.set_xticklabels(xticklabels, fontsize=18)
+        ax.set_xticklabels(xticklabels, fontsize=base_size + 2)
         
         x_smooth = np.linspace(df.index.min(), df.index.max(), 300)
         # x_smooth = df.index
@@ -109,7 +110,7 @@ def run_automl(files, model='gcn', file_type='automl'):
             # y_smooth = df[c]
             ax.plot(x_smooth, y_smooth, label=c, color=colors[j], linestyle=linestyles[j], linewidth=2)
 
-        ax.legend(fontsize=16)
+        ax.legend(fontsize='small')
         fig.savefig(os.path.join(PROJECT_PATH, 'sec5_memory') + f'/exp_figs/exp_memory_training_{model}_{file_type}_{names[i]}_diff.png')
 
 
@@ -150,26 +151,57 @@ def save_model(files, model, file_type):
     y_pred = reg.predict(X_test)
     mape = mean_absolute_percentage_error(y_test, y_pred)
     r2 = r2_score(y_test, y_pred)
-    dump(reg, dir_path + f'/{model}_{file_type}_diff_v2.pth')
+    # dump(reg, dir_path + f'/{model}_{file_type}_diff_v2.pth')
     return mape, r2
+
+
+def get_train_time(files, model, file_type):
+    X, y = [], []
+    for file in files:
+        real_path = dir_path + f'/{model}_{file}_automl_model_diff_v2.csv'
+        df = pd.read_csv(real_path, index_col=0).values
+        X.append(df[:,:-2]);  y.append(df[:,-1])
+
+    X, y = np.concatenate(X, axis=0), np.concatenate(y, axis=0)
+    if file_type == 'linear_model':
+        X = X[:, :2]
+    print(len(X))
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=50, random_state=0)
+    # X_train, y_train = X, y
+    if file_type == 'automl':
+        reg = RandomForestRegressor(random_state=1) # Random Forest
+    elif file_type == 'linear_model':
+        reg = LinearRegression()  # Random Forest
+
+    # for i in range(50, len(X_train), 50):  
+    t1 = time.time()
+    # reg.fit(X_train[:i], y_train[:i])
+    reg.fit(X_train[:120], y_train[:120])
+    t2 = time.time()
+    print(t2 - t1)
+        # print(i, t2-t1)
+    return
 
 
 if __name__ == '__main__':
     # run automl
     df = defaultdict(list)
     files = ['classes', 'nodes_edges', 'features', 'reddit', 'yelp',  'paras']
-    # for model in ['gcn', 'gat']:
-    #     run_automl(files, model, file_type='automl') 
+    for model in ['gat']:
+        get_train_time(files, model, file_type='automl')
+        get_train_time(files, model, file_type='linear_model')
+
+        # run_automl(files, model, file_type='automl') 
     #     mape, r2 = save_model(files, model=model, file_type='automl')
     #     print(f'model: {model}, automl mape: {mape}, r2: {r2}')
     #     df[model].append(mape)
     # pd.DataFrame(df, index=['automl']).to_csv(dir_path + f'/regression_mape_res.csv') 
     
     # run linear
-    df = defaultdict(list)
-    for model in ['gcn', 'gat']:
-        for data in ['reddit', 'yelp']:
-            mape, r2 = run_linear_model(model, data)
-            print(f'model: {model}, data: {data}, mape: {mape}, r2: {r2}')
-            df[model + '_' + data].extend([mape, r2])
-    pd.DataFrame(df, index=['mape', 'r2']).to_csv(dir_path + f'/regression_linear_model_metrics.csv') 
+    # df = defaultdict(list)
+    # for model in ['gcn', 'gat']:
+    #     for data in ['reddit', 'yelp']:
+    #         mape, r2 = run_linear_model(model, data)
+    #         print(f'model: {model}, data: {data}, mape: {mape}, r2: {r2}')
+    #         df[model + '_' + data].extend([mape, r2])
+    # pd.DataFrame(df, index=['mape', 'r2']).to_csv(dir_path + f'/regression_linear_model_metrics.csv') 

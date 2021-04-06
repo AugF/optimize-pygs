@@ -4,7 +4,6 @@ from matplotlib.patches import Patch
 import matplotlib.pyplot as plt
 from neuroc_pygs.sec4_time.utils import datasets_maps, algorithms, sampling_modes
 from matplotlib.font_manager import _rebuild
-# print(_rebuild())
 _rebuild() 
 
 def float_x(x):

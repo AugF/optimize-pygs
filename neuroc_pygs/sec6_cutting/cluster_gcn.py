@@ -24,6 +24,8 @@ from ogb.nodeproppred import PygNodePropPredDataset, Evaluator
 from neuroc_pygs.configs import PROJECT_PATH
 
 
+dir_out = '/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec6_cutting/exp_thesis_outlier_per'
+
 class GCN(torch.nn.Module):
     def __init__(self, in_channels, hidden_channels, out_channels, num_layers,
                  dropout):
@@ -257,10 +259,10 @@ def run_fit():
     fit(model, data, loader, subgraph_loader, evaluator, optimizer, device, args)
     
 
-def run_test():
+def run_test(file_suffix):
     args = get_args()
     print(args)
-    real_path = os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_diff_res', f'cluster_gcn_{args.infer_batch_size}_v0.csv')
+    real_path = os.path.join(dir_out, f'cluster_gcn_{args.infer_batch_size}_{file_suffix}.csv')
     test_accs = []
     times = []
     if os.path.exists(real_path):
@@ -301,12 +303,12 @@ def run_test():
 
 
 if __name__ == "__main__":
-    # run_fit()
     import gc
+    file_suffix = 'v1'
     tab_data = []
-    for bs in [1024, 2048, 3096]:
-        sys.argv = [sys.argv[0], '--infer_batch_size', str(bs), '--device', '2']
-        test_accs, times = run_test()
+    for bs in [1024, 2048, 4096, 8192, 16384]:
+        sys.argv = [sys.argv[0], '--infer_batch_size', str(bs), '--device', '1']
+        test_accs, times = run_test(file_suffix)
         tab_data.append([str(bs)] + list(test_accs) + list(times))
         gc.collect()
-    pd.DataFrame(tab_data).to_csv(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_diff_res', f'cluster_gcn_acc_v2.csv'))
+    pd.DataFrame(tab_data).to_csv(dir_out + f'/cluster_gcn_acc_{file_suffix}.csv')

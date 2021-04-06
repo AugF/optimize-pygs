@@ -20,7 +20,7 @@ def evaluate(model_path, model, data, subgraph_loader):
     t2 = time.time()
     epoch, train_time = save_dict['epoch'], save_dict['train_time']
     print(f'Epoch: {epoch:03d}, Train: {accs[0]:.8f}, Val: {accs[1]:.8f}, Test: {accs[2]:.8f}, Train Time: {train_time}, Val Time: {t2-t1}')
-    return
+    return 
 
 
 class CREATE_EventHandler(pyinotify.ProcessEvent):
@@ -34,7 +34,7 @@ class CREATE_EventHandler(pyinotify.ProcessEvent):
         newest_file = os.path.join(
             self.args.checkpoint_dir, 'model_%d.pth' % self.cur_epoch)
         if os.path.exists(newest_file):
-            stopping_flag = evaluate(
+            evaluate(
                 newest_file, self.model, self.data, self.subgraph_loader)
             self.cur_epoch += 1
             if self.cur_epoch >= self.args.epochs:
@@ -46,7 +46,6 @@ class CREATE_EventHandler(pyinotify.ProcessEvent):
 
 def run_eval():
     args = get_args()
-    # print(args)
     data = build_dataset(args)
     subgraph_loader = build_subgraphloader(args, data)
     if args.opt_eval_flag:

@@ -1,4 +1,5 @@
 import os, sys
+import time
 import torch
 import numpy as np
 import torch.nn.functional as F
@@ -41,32 +42,50 @@ def infer(model, data, subgraphloader):
     return accs, losses
 
 
-def train(model, optimizer, data, loader, device, mode, non_blocking=False):
+def train(model, optimizer, data, loader, device, mode, non_blocking=False, df=None, opt_flag=False):
     model.reset_parameters()
     model.train()
     all_loss = []
     loader_num, loader_iter = len(loader), iter(loader)
     for _ in range(loader_num):
         if mode == 'cluster':
+            t1 = time.time()
             batch = next(loader_iter)
+            t2 = time.time()
             batch = batch.to(device, non_blocking=non_blocking)
+            t3 = time.time()
             batch_size = batch.train_mask.sum().item()
             optimizer.zero_grad()
             logits = model(batch.x, batch.edge_index)
             loss = model.loss_fn(logits[batch.train_mask], batch.y[batch.train_mask])
             loss.backward()
             optimizer.step()
+            t4 = time.time()
         elif mode == 'graphsage':
-            batch_size, n_id, adjs = next(loader_iter)
-            x, y = data.x[n_id], data.y[n_id[:batch_size]]
+            t1 = time.time()
+            if opt_flag:
+                batch_size, n_id, adjs, x, y = next(loader_iter)
+            else:
+                batch_size, n_id, adjs = next(loader_iter)
+                x, y = data.x[n_id], data.y[n_id[:batch_size]]
+            t2 = time.time()
             x, y = x.to(device, non_blocking=non_blocking), y.to(device, non_blocking=non_blocking)
             adjs = [adj.to(device, non_blocking=non_blocking) for adj in adjs]
+            t3 = time.time()
             optimizer.zero_grad()
             logits = model(x, adjs)
             loss = model.loss_fn(logits, y)
             loss.backward()
             optimizer.step()
+            t4 = time.time()
+        if df is not None:
+            df['sample'].append(t2 - t1)
+            df['move'].append(t3 - t2)
+            df['cal'].append(t4 - t3)
+            df['cnt'][0] += 1
+            if df['cnt'][0] >= 50:
+                break
+            print(f"Batch:{df['cnt'][0]}, sample: {t2-t1}, move: {t3-t2}, cal: {t4-t3}")
         all_loss.append(loss.item() * batch_size)
     return np.sum(all_loss) / int(data.train_mask.sum())
-
 

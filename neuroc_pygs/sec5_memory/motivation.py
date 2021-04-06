@@ -136,6 +136,26 @@ def run_all(exp_datasets=EXP_DATASET, exp_models=ALL_MODELS, exp_modes=MODES, ex
     return
 
 
+def run_motivation(exp_datasets=EXP_DATASET, exp_models=ALL_MODELS, exp_modes=MODES, exp_relative_batch_sizes=EXP_RELATIVE_BATCH_SIZE):
+    args = get_args()
+    print(f"device: {args.device}")
+    for exp_data in ['yelp', 'reddit']:
+    # for exp_data in ['reddit']:
+        args.dataset = exp_data
+        print('build data success')
+        for exp_model in ['gcn', 'gat']:
+            args.model = exp_model
+            if exp_data == 'reddit' and exp_model == 'gat':
+                re_bs = [170, 175, 180]
+            else:
+                re_bs = [175, 180, 185]
+            for rs in re_bs:
+                args.batch_partitions = rs
+                file_name = '_'.join([args.dataset, args.model, str(rs), args.mode, 'v2'])
+                run_one(file_name, args)
+                gc.collect()           
+    return
+
 def test_run_one():
     args = get_args()
     data = build_dataset(args)
@@ -147,6 +167,7 @@ def test_run_one():
 
 if __name__ == '__main__':
     import sys
-    default_args = '--hidden_dims 1024 --gaan_hidden_dims 256 --head_dims 128 --heads 4 --d_a 32 --d_v 32 --d_m 32'
+    default_args = ''
+    # default_args = '--hidden_dims 1024 --gaan_hidden_dims 256 --head_dims 128 --heads 4 --d_a 32 --d_v 32 --d_m 32'
     sys.argv = [sys.argv[0], '--device', 'cuda:2', '--num_workers', '0'] + default_args.split(' ')
     run_all()

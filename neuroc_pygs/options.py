@@ -101,6 +101,10 @@ def get_args():
                         default=0, help='opt_flag')
     parser.add_argument('--opt_eval_flag', type=int,
                         default=0, help='opt_flag')
+    parser.add_argument('--eval_per', type=float,
+                        default=None, help='eval_per')
+    parser.add_argument('--opt_num_batches', type=int,
+                        default=50, help='opt num_batches')
     args = parser.parse_args()
     args.gpu = args.nvtx_flag and torch.cuda.is_available() # nvtx
     args.flag = not args.json_path == ''

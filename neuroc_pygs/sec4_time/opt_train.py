@@ -25,11 +25,10 @@ def run_train():
         save_dict = {
             'model_state_dict': model.state_dict(),
             'epoch': epoch,
-            'train_time': t2 - t1
+            'train_time': t2 - t1,
         }
         os.makedirs(args.checkpoint_dir, exist_ok=True)
         torch.save(save_dict, os.path.join(args.checkpoint_dir, 'model_%d.pth' % epoch))
-
 
 if __name__ == '__main__':
     run_train()

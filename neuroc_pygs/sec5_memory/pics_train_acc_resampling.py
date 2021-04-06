@@ -18,7 +18,7 @@ dir_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_train_res')
 dir_out = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_figs')
 # df = pd.read_csv(dir_path + f'/prove_train_acc_all.csv', index_col=0)
 
-labels = ['GCN Pubmed', 'GCN Coauthor-physics', 'GAT Pubmed', 'GAT Coauthor-physics']
+labels = ['GCN Pubmed', 'GCN Coauthor-Physics', 'GAT Pubmed', 'GAT Coauthor-Physics']
 markers = 'oD^sdp'
 linestyles = ['solid', 'dotted', 'dashed', 'dashdot', (0, (5, 5)), (0, (3, 10, 1, 10))]
 
@@ -36,7 +36,7 @@ for model in ['gcn', 'gat']:
 
 df_data = pd.DataFrame(df_data)
 ax.set_ylabel('精度', fontsize=20)
-ax.set_xlabel('重采样相对比例', fontsize=20)
+ax.set_xlabel('相对重采样比例', fontsize=20)
 for j, c in enumerate(df_data.columns):
     ax.plot(df_data.index, df_data[c], label=labels[j], marker=markers[j], markersize=10, linestyle=linestyles[j])
 ax.set_xticks(np.arange(7))

@@ -10,6 +10,7 @@ def get_ratio(baseline, opt):
     return 100 * (baseline - opt) / baseline
 
 def opt_epoch(args=''):
+    print(args)
     pro_train = subprocess.Popen(
         "python /home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec4_time/opt_train.py --device cuda:1 " + args, shell=True)
     pro_eval = subprocess.Popen(
@@ -21,6 +22,7 @@ def opt_epoch(args=''):
 
 
 def epoch(args=''):
+    print(args)
     pro = subprocess.Popen("python /home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec4_time/base_epoch.py --device cuda:2 " + args, shell=True)
     pro.communicate()
     pro.wait()
@@ -43,7 +45,7 @@ def run_model(model='gcn', data='amazon-computers', re_bs=None, mode='cluster'):
             for md in mode:
                 for rs in re_bs:
                     default_args = '--hidden_dims 1024 --gaan_hidden_dims 256 --head_dims 128 --heads 4 --d_a 32 --d_v 32 --d_m 32'
-                    args = default_args + f' --num_workers 0 --model {exp_model} --dataset {exp_data} --epochs 30 --mode {md}'
+                    args = default_args + f' --num_workers 0 --model {exp_model} --dataset {exp_data} --epochs 50 --mode {md}'
                     if rs != None:
                         args = args + f' --relative_batch_size {rs}'
                     cur_name = f'{exp_model}_{exp_data}_{md}_{rs}'
@@ -69,33 +71,26 @@ def run_model(model='gcn', data='amazon-computers', re_bs=None, mode='cluster'):
 
 if __name__ == '__main__':
     dir_path = '/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec4_time/exp_res'
-    small_datasets = ['pubmed', 'amazon-photo', 'amazon-computers', 'coauthor-physics', 'flickr']
-    tab_data = []
-    # for model in ['gcn', 'gat']:
-    #     res = run_model(model=[model], data=['coauthor-physics', 'flickr'])
-    #     tab_data.extend(res)
-        
-    # for data in ['amazon-computers', 'flickr']:
-    #     res = run_model(model=['ggnn', 'gaan'], data=[data])
-    #     tab_data.extend(res)
-    res = run_model(model='gaan', data='amazon-computers', mode='cluster')
-    tab_data.append(res)
-    res = run_model(model='gcn', data='coauthor-physics', mode='cluster')
-    tab_data.append(res)
-    res = run_model(model='gcn', data='flickr', mode='cluster')
-    tab_data.append(res)
-    res = run_model(model='gat', data='flickr', mode='cluster')
-    tab_data.append(res)
-    # with open(dir_path + f'/sampling_epoch_modes.txt', 'w') as f:
-    #     f.write('\n'.join([str(t) for t in tab_data]))
+    for files in ['gaan_amazon-computers']:
+    # for files in ['gcn_amazon-computers', 'gaan_amazon-computers']:
+        exp_model, exp_data = files.split('_')
+        for exp_mode in ['cluster']:
+            # for exp_pr in [0.01, 0.03, 0.06, 0.1, 0.25, 0.5]:
+            # for bs in [64, 128, 256, 512, 1024, 2048]:
+            for N in [10, 20, 50, 80, 100, 200]:
+            # if True:
+                # args = f'--epochs 30 --num_workers 0 --model {exp_model} --dataset {exp_data} --mode {exp_mode} --relative_batch_size {exp_pr}'
+                args = f'--epochs {N} --num_workers 0 --model {exp_model} --dataset {exp_data} --mode {exp_mode}'
+                # if exp_model == 'gcn':
+                #     args = args + f' --hidden_dims {bs}'
+                # elif exp_model == 'gaan':
+                #     args = args + f' --gaan_hidden_dims {bs}'
 
-    # tab_data = []
-    # res = run_model(model='gcn', data='amazon-computers', re_bs=[0.01, 0.06])
-    # tab_data.append(res)
-    # res = run_model(model='gat', data='flickr', re_bs=[0.01, 0.03, 0.1, 0.25, 0.5])
-    # tab_data.append(res)
-    for line in tab_data:
-        print(line)
-    # with open(dir_path + f'/sampling_epoch_re_bs.txt', 'w') as f:
-    #     f.write('\n'.join([str(t) for t in tab_data]))
-
+                t1 = time.time()
+                opt_epoch(args)
+                t2 = time.time()
+                epoch(args)
+                t3 = time.time()
+                baseline, opt = t3 - t2, t2 - t1
+                ratio = opt / baseline
+                print(f'model: {exp_model}, dataset: {exp_data}, mode: {exp_mode}, baseline: {baseline}, opt:{opt}, ratio: {ratio}')

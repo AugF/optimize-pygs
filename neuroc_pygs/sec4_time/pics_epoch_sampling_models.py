@@ -47,8 +47,8 @@ for data in ['flickr', 'amazon-computers']:
     ax.set_xticklabels([algorithms[i] for i in xs], fontsize=18)
 
     ax.bar(x - 1.5 * width, tab_data['Baseline'], width, label='未优化')
-    ax.bar(x - 0.5 * width, tab_data['Batch Opt'], width, label='优化1')
-    ax.bar(x + 0.5 * width, tab_data['Epoch Opt'], width, label='优化2')
+    ax.bar(x - 0.5 * width, tab_data['Epoch Opt'], width, label='优化1')
+    ax.bar(x + 0.5 * width, tab_data['Batch Opt'], width, label='优化2')
     ax.bar(x + 1.5 * width, tab_data['Opt'], width, label='优化1+优化2')
     if data == 'flickr':
         ax.legend(fontsize='x-small', ncol=1)

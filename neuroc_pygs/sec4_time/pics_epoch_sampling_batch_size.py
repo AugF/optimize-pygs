@@ -53,8 +53,8 @@ for data in ['gcn_amazon-computers', 'gat_flickr']:
     ax.set_xticklabels([str(int(100*i)) + '%' for i in xs], fontsize=base_size + 2)
 
     ax.bar(x - 1.5 * width, tab_data['Baseline'], width, label='未优化')
-    ax.bar(x - 0.5 * width, tab_data['Batch Opt'], width, label='优化1')
-    ax.bar(x + 0.5 * width, tab_data['Epoch Opt'], width, label='优化2')
+    ax.bar(x - 0.5 * width, tab_data['Epoch Opt'], width, label='优化1')
+    ax.bar(x + 0.5 * width, tab_data['Batch Opt'], width, label='优化2')
     ax.bar(x + 1.5 * width, tab_data['Opt'], width, label='优化1+优化2')
     ax.legend(ncol=2, fontsize='small', loc='lower center')
     fig.savefig(root_path + f'/exp_figs_final/exp_epoch_sampling_batch_size_{data}.png')

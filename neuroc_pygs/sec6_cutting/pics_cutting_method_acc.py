@@ -56,7 +56,7 @@ for model in ['gcn', 'gat', 'ggnn', 'gaan']:
         df_data = pd.DataFrame(df_data)
         fig, ax = plt.subplots(figsize=(7, 5), tight_layout=True)
         ax.set_xlabel('剪枝相对比例(%)')
-        ax.set_ylabel('测试集精度')
+        ax.set_ylabel('精度')
         ax.set_xticks(range(len(df_data.index)))
         ax.set_xticklabels([str(int(100 * x)) + '%' for x in xs])
         for j, c in enumerate(df_data.columns):

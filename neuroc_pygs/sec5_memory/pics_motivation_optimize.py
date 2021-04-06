@@ -61,9 +61,20 @@ def run(predict_model='linear_model', bias=0.001):
                         res = []
                     box_data.append(list(map(lambda x: x/(1024*1024*1024), res)))
             bp = ax.boxplot(box_data)
-            
+
+            # for key in ['medians', 'boxes', 'caps', 'fliers']:
+            #     print(bp[key])
+            #     print(len(bp[key]))
             # color
             numBoxes = len(batch_sizes) * 2
+            for i in range(numBoxes):
+                if i % 2 == 1:
+                    plt.setp(bp['medians'][i], color='red')
+                    plt.setp(bp['boxes'][i], color='red')
+                    # plt.setp(bp['caps'][i], color='red')
+                    plt.setp(bp['fliers'][i], markeredgecolor='red')
+                    # https://matplotlib.org/stable/gallery/statistics/boxplot.html#sphx-glr-gallery-statistics-boxplot-py
+
             medians = list(range(numBoxes))
             for i in range(numBoxes):
                 box = bp['boxes'][i]
@@ -92,7 +103,7 @@ def run(predict_model='linear_model', bias=0.001):
                 ax.set_yticks([2, 4, 6, 8, 9])
                 line, = ax.plot(xlim, [8] * len(xlim), linestyle='dashed', color='b', linewidth=1.5, label='GPU内存上限')
 
-            legend_colors = [Patch(facecolor=c, edgecolor='black') for c in colors]
+            legend_colors = [Patch(facecolor=colors[0], edgecolor='black'), Patch(facecolor=colors[1], edgecolor='red')]
             ax.legend(legend_colors + [line], ['优化前', '优化后', 'GPU内存限制'], fontsize=10)
 
         fig.savefig(dir_out + f'/exp_memory_training_{model}_cluster_motivation_{predict_model}_mape_diff_v3.png')

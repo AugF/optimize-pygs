@@ -115,9 +115,12 @@ if __name__ == '__main__':
     from neuroc_pygs.options import prepare_trainer
     data, train_loader, subgraph_loader, model, optimizer, args = prepare_trainer(log_batch=True, mode='graphsage') # 观察一下
     batch_size, n_id, adjs = iter(subgraph_loader).next()
-    print(batch_size, n_id, adjs)
-    for k in adjs:
-        print(k, k.shape)
+    edge_index, e_id, size = adjs
+    print(batch_size, len(n_id))
+    print(edge_index, e_id, size)
+    print('my', np.max(edge_index.numpy()))
+    # for k in adjs:
+    #     print(k, k.shape)
     # batch_size, n_id, adjs = batch
     # Adj: edge_index;  e_id;
     # size=[4343, 1024]

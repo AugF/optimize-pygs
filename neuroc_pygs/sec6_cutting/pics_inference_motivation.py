@@ -10,10 +10,11 @@ from neuroc_pygs.options import get_args
 from matplotlib.font_manager import _rebuild
 _rebuild() 
 
+base_size = 16
 plt.style.use("grayscale")
 plt.rcParams['font.sans-serif']=['SimHei'] #用来正常显示中文标签
 plt.rcParams['axes.unicode_minus']=False #用来正常显示负号
-plt.rcParams["font.size"] = 14
+plt.rcParams["font.size"] = base_size
 
 colors = plt.get_cmap('Greys')(np.linspace(0.15, 0.85, 2))
 mode = 'cluster'
@@ -26,9 +27,9 @@ fig, axes = plt.subplots(
    
 for i, model in enumerate(['reddit_sage', 'cluster_gcn']):
     ax = axes[i]
-    ax.set_title(titles[model])
-    ax.set_ylabel('峰值内存 (GB)', fontsize=14)
-    ax.set_xlabel('批规模', fontsize=14)
+    ax.set_title(titles[model], fontsize=base_size + 2)
+    ax.set_ylabel('峰值内存 (GB)', fontsize=base_size + 2)
+    ax.set_xlabel('批规模', fontsize=base_size + 2)
 
     box_data = []
 
@@ -49,11 +50,12 @@ for i, model in enumerate(['reddit_sage', 'cluster_gcn']):
             res = []
         box_data.append(list(map(lambda x: x/(1024*1024*1024), res)))
     bp = ax.boxplot(box_data, labels=batch_sizes)
+    ax.set_xticklabels(batch_sizes, fontsize=base_size + 2)
 
     xlim = ax.get_xlim()
     line = 3 if model == 'reddit_sage' else 2
     ax.plot(xlim, [line] * len(xlim), linestyle='dashed', color='b', linewidth=1.5, label='GPU内存上限')
-    ax.legend(fontsize=12)
+    ax.legend()
 
 fig.savefig(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_figs', f'exp_memory_inference_motivation.png'))
 
