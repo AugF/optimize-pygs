@@ -46,9 +46,9 @@ for data in datasets:
 
             df['Baseline'].append(float(tmp_data['baseline']))
             df['Optimize'].append(float(tmp_data['opt']))
-            df['real_ratio'].append(float(tmp_data['real_ratio']))
-            df['exp_ratio'].append(float(tmp_data['exp_ratio']))
-            df['r1'].append(float(tmp_data['r1']))
+            df['real_ratio'].append(1/float(tmp_data['real_ratio']))
+            df['exp_ratio'].append(1/float(tmp_data['exp_ratio']))
+            df['r1'].append(1/float(tmp_data['r1']))
             df['y'].append(100 * float(tmp_data['y']))
             df['z'].append(100 * float(tmp_data['z']))
 
@@ -78,7 +78,7 @@ for data in datasets:
 
         ax.set_ylabel('每批次训练时间 (毫秒)', fontsize=base_size+2)
         ax.set_xlabel('数据集', fontsize=base_size+2)
-        fig.savefig(f'out_thesis_figs/exp_batch_modes_{alg}_{data}.png')
+        fig.savefig(f'exp_thesis_figs/batch_figs/exp_batch_modes_{alg}_{data}.png')
 
         xs = xticklabels
         x = np.arange(len(xs))  # the label locations
@@ -88,19 +88,19 @@ for data in datasets:
         ax.set_title(datasets_maps[data], fontsize=base_size+2)
         ax.set_ylabel('比值', fontsize=base_size+2)
         ax.set_xlabel('算法', fontsize=base_size+2)
-        line1, = ax.plot(x, df['exp_ratio'], 'ob', label='预期加速比', linestyle='-')
+        line1, = ax.plot(x, df['exp_ratio'], 'ob', label='理想加速比', linestyle='-')
         line2, = ax.plot(x, df['real_ratio'], 'Dg', label='实际加速比', linestyle='-')
         line3, = ax.plot(x, df['r1'], '^r', label='优化效果', linestyle='-')
         
         ax2 = ax.twinx()
         ax2.set_ylabel("耗时比例 (百分比)", fontsize=base_size + 2)
-        line4, = ax2.plot(x, df['y'], 's--', color='black', label='采样耗时比例' + r"$Y$" )
-        line5, = ax2.plot(x, df['z'], 'd--', color='black', label='数据传输耗时比例' + r"$Z$" )
+        line4, = ax2.plot(x, df['y'], 's--', color='black', label='采样耗时占比' + r"$Y$" )
+        line5, = ax2.plot(x, df['z'], 'd--', color='black', label='数据传输耗时占比' + r"$Z$" )
         plt.legend(handles=[line1, line2, line3, line4, line5], ncol=2, fontsize='x-small')
         plt.xticks(ticks=x, labels=xs, fontsize=base_size)
         plt.yticks(fontsize=base_size)
         fig.tight_layout() # 防止重叠
 
-        fig.savefig(f'out_thesis_figs/exp_batch_modes_else_{alg}_{data}.png')
+        fig.savefig(f'exp_thesis_figs/batch_figs/exp_batch_modes_else_{alg}_{data}.png')
 
 

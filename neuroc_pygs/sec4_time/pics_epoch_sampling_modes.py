@@ -60,7 +60,7 @@ for data in ['gcn_amazon-computers', 'gat_flickr']:
         ax.legend(fontsize='small', loc='lower center', ncol=2)
     else:
         ax.legend(fontsize='small')
-    fig.savefig(root_path + f'/exp_figs_total/exp_epoch_sampling_modes_{data}.png')
+    fig.savefig(f'exp_thesis_figs/total_before_figs/exp_epoch_sampling_modes_{data}.png')
 
 
 

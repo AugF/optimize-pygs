@@ -58,7 +58,7 @@ for file in ['gcn_pubmed', 'gaan_amazon-computers']:
     ax.bar(x + 0.5 * width, tab_data['Batch Opt'], width, label='优化2')
     ax.bar(x + 1.5 * width, tab_data['Opt'], width, label='优化1+优化2')
     ax.legend(ncol=2, fontsize='x-small')
-    fig.savefig(f'out_total_figs/exp_epoch_sampling_batch_size_{mode}_{file}.png')
+    fig.savefig(f'exp_thesis_figs/total_figs/exp_epoch_sampling_batch_size_{mode}_{file}.png')
 
 
 

@@ -35,12 +35,12 @@ def read_file(file_name, dir_path='opt_batches'):
     return dd_data
 
 index = []
-for exp_data in ['pubmed', 'amazon-computers', 'coauthor-physics', 'flickr', 'com-amazon']:
-    for exp_model in ['gcn', 'ggnn', 'gat', 'gaan']:
-        for var in [1024, 2048, 4096, 8192]:
+for exp_data in ['reddit']:
+    for exp_model in ['gcn', 'gaan']:
+        for var in [1024]:
             index.append(f'{exp_model}_{exp_data}_{var}')
             
-dd_data = read_file('batches_infer.log')
+dd_data = read_file('batches_infer_gcn_gaan.log')
 dd_data = pd.DataFrame(dd_data.values(), index=index, columns=columns)
 print(dd_data)
 dd_data['1-y-z'] = [1 - dd_data['y'][i] - dd_data['z'][i] for i in dd_data.index]
@@ -50,5 +50,5 @@ dd_data['z1'] = [dd_data['opt_move'][i] / (dd_data['opt_sample'][i] + dd_data['o
 dd_data['1-y1-z1'] = [dd_data['opt_cal'][i] / (dd_data['opt_sample'][i] + dd_data['opt_move'][i] + dd_data['opt_cal'][i]) for i in dd_data.index]
 dd_data['max(y,z,1-y-z)'] = [max(1 - dd_data['y'][i] - dd_data['z'][i], max(dd_data['y'][i], dd_data['z'][i])) for i in dd_data.index]
 res = dd_data.reindex(columns=['baseline', 'opt', 'y', 'z', 'max(y,z,1-y-z)', 'exp_ratio', 'real_ratio', 'r1', 'base_sample', 'base_move', 'base_cal', 'opt_sample', 'opt_move', 'opt_cal', 'y', 'z', '1-y-z', 'y1', 'z1', '1-y1-z1'])
-res.to_csv(dir_out + f'/batches_infer.csv')
+res.to_csv(dir_out + f'/batches_infer_gcn_gaan.csv')
 

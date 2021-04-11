@@ -23,9 +23,9 @@ def build_subgraphloader(args, data, Neighbor_Loader=NeighborSampler):
     return subgraph_loader
 
 
-for exp_data in ['pubmed', 'amazon-computers', 'coauthor-physics', 'flickr', 'com-amazon']:
-    for exp_model in ['gcn', 'ggnn', 'gat', 'gaan']:
-        for var in [1024, 2048, 4096, 8192]:
+for exp_data in ['reddit']:
+    for exp_model in ['gcn', 'gaan']:
+        for var in [1024]:
             args = get_args()
             args.num_workers = 0
             args.dataset, args.model = exp_data, exp_model

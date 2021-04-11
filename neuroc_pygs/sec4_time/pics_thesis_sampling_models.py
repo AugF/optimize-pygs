@@ -42,7 +42,7 @@ for data in ['amazon-computers', 'flickr', 'pubmed']:
     x = np.arange(len(xs))
     width = 0.2
     fig, ax = plt.subplots(figsize=(7/1.5, 5/1.5), tight_layout=True)
-    ax.set_title(data.capitalize(), fontsize=base_size+2)
+    ax.set_title(data, fontsize=base_size+2)
     ax.set_ylabel('30轮训练时间 (秒)', fontsize=base_size+2)
     ax.set_xlabel('算法', fontsize=base_size+2)
     ax.set_xticks(x)
@@ -56,7 +56,7 @@ for data in ['amazon-computers', 'flickr', 'pubmed']:
         ax.legend(fontsize='x-small', ncol=1)
     else:
         ax.legend(fontsize='x-small', loc='lower center', ncol=2)
-    fig.savefig(f'exp_thesis_figs/exp_epoch_sampling_models_{mode}_{data}.png')
+    fig.savefig(f'exp_thesis_figs/total_figs/exp_epoch_sampling_models_{mode}_{data}.png')
 
 
 

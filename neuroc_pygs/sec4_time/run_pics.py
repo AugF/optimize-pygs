@@ -1,5 +1,6 @@
 import os
 
 for file in os.listdir('.'):
-    if 'pics_epoch_sampling' in file:
+    if 'thesis' in file:
+        print(file)
         os.system('python ' + file)

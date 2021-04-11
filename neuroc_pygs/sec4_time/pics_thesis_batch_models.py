@@ -72,7 +72,7 @@ for i, mode in enumerate(['cluster']):
         #     ax.set_ylim(0, 2000)
         ax.set_ylabel('每批次训练时间 (毫秒)', fontsize=base_size+2)
         ax.set_xlabel('数据集', fontsize=base_size+2)
-        fig.savefig(f'out_thesis_figs/exp_batch_models_{mode}_batch_{data}.png')
+        fig.savefig(f'exp_thesis_figs/batch_figs/exp_batch_models_{mode}_batch_{data}.png')
         plt.close()
 
 
@@ -87,9 +87,9 @@ for i, mode in enumerate(['cluster']):
         for alg in algs:
             df[data]['Baseline'].append(float(df_data['baseline'][alg]))
             df[data]['Optimize'].append(float(df_data['opt'][alg]))
-            df[data]['real_ratio'].append(float(df_data['real_ratio'][alg]))
-            df[data]['exp_ratio'].append(float(df_data['exp_ratio'][alg]))
-            df[data]['r1'].append(float(df_data['r1'][alg]))
+            df[data]['real_ratio'].append(float(1/df_data['real_ratio'][alg]))
+            df[data]['exp_ratio'].append(float(1/df_data['exp_ratio'][alg]))
+            df[data]['r1'].append(float(1/df_data['r1'][alg]))
             df[data]['y'].append(100 * float(df_data['y'][alg]))
             df[data]['z'].append(100 * float(df_data['z'][alg]))
 
@@ -125,17 +125,17 @@ for i, mode in enumerate(['cluster']):
         ax.set_title(datasets_maps[data], fontsize=base_size+2)
         ax.set_ylabel('比值', fontsize=base_size+2)
         ax.set_xlabel('算法', fontsize=base_size+2)
-        line1, = ax.plot(x, tab_data['exp_ratio'], 'ob', label='预期加速比', linestyle='-')
+        line1, = ax.plot(x, tab_data['exp_ratio'], 'ob', label='理想加速比', linestyle='-')
         line2, = ax.plot(x, tab_data['real_ratio'], 'Dg', label='实际加速比', linestyle='-')
         line3, = ax.plot(x, tab_data['r1'], '^r', label='优化效果', linestyle='-')
         
         ax2 = ax.twinx()
-        ax2.set_ylabel("耗时比例 （百分比)", fontsize=base_size + 2)
-        line4, = ax2.plot(x, tab_data['y'], 's--', color='black', label='采样耗时比例' + r"$Y$" )
-        line5, = ax2.plot(x, tab_data['z'], 'd--', color='black', label='数据传输耗时比例' + r"$Z$" )
+        ax2.set_ylabel("耗时比例 (百分比)", fontsize=base_size + 2)
+        line4, = ax2.plot(x, tab_data['y'], 's--', color='black', label='采样耗时占比' + r"$Y$" )
+        line5, = ax2.plot(x, tab_data['z'], 'd--', color='black', label='数据传输耗时占比' + r"$Z$" )
         plt.legend(handles=[line1, line2, line3, line4, line5], ncol=2, fontsize='x-small')
         plt.xticks(ticks=x, labels=xs, fontsize=base_size)
         plt.yticks(fontsize=base_size)
         fig.tight_layout() # 防止重叠
 
-        fig.savefig(f'out_thesis_figs/exp_batch_models_{mode}_else_{data}.png')
+        fig.savefig(f'exp_thesis_figs/batch_figs/exp_batch_models_{mode}_else_{data}.png')

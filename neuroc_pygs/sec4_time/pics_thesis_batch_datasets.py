@@ -78,7 +78,7 @@ for i, mode in enumerate(['cluster']):
         #     ax.set_ylim(0, 2000)
         ax.set_ylabel('每批次训练时间 (毫秒)', fontsize=base_size+2)
         ax.set_xlabel('数据集', fontsize=base_size+2)
-        fig.savefig(f'out_thesis_figs/exp_batch_infer_datasets_{mode}_batch_{alg}.png')
+        fig.savefig(f'exp_thesis_figs/batch_figs/exp_batch_datasets_{mode}_batch_{alg}.png')
         plt.close()
 
 
@@ -93,9 +93,9 @@ for i, mode in enumerate(['cluster']):
         for alg in algs:
             df[alg]['Baseline'].append(float(df_data['baseline'][alg]))
             df[alg]['Optimize'].append(float(df_data['opt'][alg]))
-            df[alg]['real_ratio'].append(float(df_data['real_ratio'][alg]))
-            df[alg]['exp_ratio'].append(float(df_data['exp_ratio'][alg]))
-            df[alg]['r1'].append(float(df_data['r1'][alg]))
+            df[alg]['real_ratio'].append(1/float(df_data['real_ratio'][alg]))
+            df[alg]['exp_ratio'].append(1/float(df_data['exp_ratio'][alg]))
+            df[alg]['r1'].append(1/float(df_data['r1'][alg]))
             df[alg]['y'].append(100 * float(df_data['y'][alg]))
             df[alg]['z'].append(100 * float(df_data['z'][alg]))
 
@@ -117,7 +117,7 @@ for i, mode in enumerate(['cluster']):
         ax.bar(x - width/2, tab_data['Baseline'], width, color=colors[0], edgecolor='black', label='优化前')
         ax.bar(x + width/2, tab_data['Optimize'], width, color=colors[1], edgecolor='black', label='优化后')
         ax.legend()
-        fig.savefig(f'out_thesis_figs/exp_batch_infer_datasets_{mode}_total_{alg}.png')
+        fig.savefig(f'exp_thesis_figs/batch_figs/exp_batch_datasets_{mode}_total_{alg}.png')
 
     base_size = 14
     for alg in algs:
@@ -131,17 +131,17 @@ for i, mode in enumerate(['cluster']):
         ax.set_title(titles[alg], fontsize=base_size+2)
         ax.set_ylabel('比值', fontsize=base_size+2)
         ax.set_xlabel('数据集', fontsize=base_size+2)
-        line1, = ax.plot(x, tab_data['exp_ratio'], 'ob', label='预期加速比', linestyle='-')
+        line1, = ax.plot(x, tab_data['exp_ratio'], 'ob', label='理想加速比', linestyle='-')
         line2, = ax.plot(x, tab_data['real_ratio'], 'Dg', label='实际加速比', linestyle='-')
         line3, = ax.plot(x, tab_data['r1'], '^r', label='优化效果', linestyle='-')
         
         ax2 = ax.twinx()
-        ax2.set_ylabel("耗时比例 （百分比)", fontsize=base_size + 2)
-        line4, = ax2.plot(x, tab_data['y'], 's--', color='black', label='采样耗时比例' + r"$Y$" )
-        line5, = ax2.plot(x, tab_data['z'], 'd--', color='black', label='数据传输耗时比例' + r"$Z$" )
+        ax2.set_ylabel("耗时比例 (百分比)", fontsize=base_size + 2)
+        line4, = ax2.plot(x, tab_data['y'], 's--', color='black', label='采样耗时占比' + r"$Y$" )
+        line5, = ax2.plot(x, tab_data['z'], 'd--', color='black', label='数据传输耗时占比' + r"$Z$" )
         plt.legend(handles=[line1, line2, line3, line4, line5], fontsize='xx-small')
         plt.xticks(ticks=x, labels=xs, fontsize=base_size)
         plt.yticks(fontsize=base_size)
         fig.tight_layout() # 防止重叠
 
-        fig.savefig(f'out_thesis_figs/exp_batch_infer_datasets_{mode}_else_{alg}.png')
+        fig.savefig(f'exp_thesis_figs/batch_figs/exp_batch_datasets_{mode}_else_{alg}.png')

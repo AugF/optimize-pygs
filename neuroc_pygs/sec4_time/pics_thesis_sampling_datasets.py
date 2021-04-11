@@ -28,8 +28,9 @@ df.index = [x for x in df['Name']]
 del df['Name']
 print(df)
 
+modelnames = ['GCN', 'GaAN']
 xs = ['pubmed', 'amazon-computers', 'coauthor-physics', 'flickr']
-for model in ['gcn', 'gaan']:
+for i, model in enumerate(['gcn', 'gaan']):
     tab_data = defaultdict(list)
     for data in xs:
         index = f'{model}_{data}_{mode}_{None}'
@@ -42,7 +43,7 @@ for model in ['gcn', 'gaan']:
     x = np.arange(len(xs))
     width = 0.2
     fig, ax = plt.subplots(figsize=(7/1.5, 5/1.5), tight_layout=True)
-    ax.set_title(model.upper(), fontsize=base_size+2)
+    ax.set_title(modelnames[i], fontsize=base_size+2)
     ax.set_ylabel('30轮训练时间 (秒)', fontsize=base_size+2)
     ax.set_xlabel('数据集', fontsize=18)
     ax.set_xticks(x)
@@ -52,4 +53,4 @@ for model in ['gcn', 'gaan']:
     ax.bar(x + 0.5 * width, tab_data['Batch Opt'], width, label='优化2')
     ax.bar(x + 1.5 * width, tab_data['Opt'], width, label='优化1+优化2')
     ax.legend(fontsize='small')
-    fig.savefig(f'out_total_figs/exp_epoch_sampling_datasets_{mode}_{model}.png')
+    fig.savefig(f'exp_thesis_figs/total_figs/exp_epoch_sampling_datasets_{mode}_{model}.png')

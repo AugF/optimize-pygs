@@ -50,4 +50,4 @@ for model in ['gcn', 'gat']:
     ax.bar(x + 0.5 * width, tab_data['Batch Opt'], width, label='优化2')
     ax.bar(x + 1.5 * width, tab_data['Opt'], width, label='优化1+优化2')
     ax.legend(fontsize='small')
-    fig.savefig(root_path + f'/exp_figs_total/exp_epoch_sampling_datasets_{model}.png')
+    fig.savefig(f'exp_thesis_figs/total_before_figs/exp_epoch_sampling_datasets_{model}.png')

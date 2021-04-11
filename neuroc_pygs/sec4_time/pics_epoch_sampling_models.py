@@ -54,7 +54,7 @@ for data in ['flickr', 'amazon-computers']:
         ax.legend(fontsize='x-small', ncol=1)
     else:
         ax.legend(fontsize='x-small', loc='lower center', ncol=2)
-    fig.savefig(root_path + f'/exp_figs_total/exp_epoch_sampling_models_{data}.png')
+    fig.savefig(f'exp_thesis_figs/total_before_figs/exp_epoch_sampling_models_{data}.png')
 
 
 
