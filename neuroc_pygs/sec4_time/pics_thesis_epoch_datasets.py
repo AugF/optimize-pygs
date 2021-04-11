@@ -14,7 +14,7 @@ plt.rcParams["font.size"] = base_size
 titles = {'gcn': 'GCN', 'ggnn': 'GGNN', 'gat': 'GAT', 'gaan': 'GaAN'}
 df = {}
 for var in ['gcn', 'ggnn', 'gat', 'gaan']:
-    df[var] = {'Baseline': [], 'Optimize': [], 'x': [], 'real_ratio': [], 'exp_ratio': []}
+    df[var] = {'Baseline': [], 'Optimize': [], 'x': [], 'real_ratio': [], 'exp_ratio': [], 'r1': []}
 
 for file in ['pubmed', 'amazon-computers', 'flickr', 'com-amazon']:
     df_data = pd.read_csv('out_csv/' + file + '.csv', index_col=0)
@@ -24,6 +24,7 @@ for file in ['pubmed', 'amazon-computers', 'flickr', 'com-amazon']:
         df[var]['x'].append(float(100 * df_data['x'][var]))
         df[var]['real_ratio'].append(float(df_data['real_ratio'][var]))
         df[var]['exp_ratio'].append(float(df_data['exp_ratio'][var]))
+        df[var]['r1'].append(float(df_data['r1'][var]))
 
 
 colors = plt.get_cmap('Greys')(np.linspace(0.15, 0.85, 2))
@@ -47,7 +48,7 @@ for i, item in enumerate(df.keys()):
     ax.bar(x - width/2, tab_data['Baseline'], width, color=colors[0], edgecolor='black', label='优化前')
     ax.bar(x + width/2, tab_data['Optimize'], width, color=colors[1], edgecolor='black', label='优化后')
     ax.legend(loc='upper left')
-    fig.savefig(f'out_figs/exp_epoch_full_datasets_{item}.png')
+    fig.savefig(f'out_thesis_figs/exp_epoch_full_datasets_{item}.png')
 
 
 base_size = 10
@@ -61,18 +62,19 @@ for item in df.keys():
 
     fig, ax = plt.subplots(figsize=(7/2, 5/2), tight_layout=True)
     ax.set_title(titles[item], fontsize=base_size+2)
-    ax.set_ylabel('加速比', fontsize=base_size+2)
+    ax.set_ylabel('比值', fontsize=base_size+2)
     ax.set_xlabel('数据集', fontsize=base_size+2)
     line1, = ax.plot(x, tab_data['exp_ratio'], 'ob', label='预期加速比', linestyle='-')
     line2, = ax.plot(x, tab_data['real_ratio'], 'Dg', label='实际加速比', linestyle='-')
+    line3, = ax.plot(x, tab_data['r1'], 'r^', label='优化效果', linestyle='-')
     
     ax2 = ax.twinx()
-    ax2.set_ylabel("评估耗时占比" + r"$X$" + " (%)", fontsize=base_size + 2)
-    line3, = ax2.plot(x, tab_data['x'], 'rs--', label='评估耗时占比' + r"$X$" )
-    plt.legend(handles=[line1, line2, line3], fontsize='x-small')
+    ax2.set_ylabel("耗时比例 (百分比)", fontsize=base_size + 2)
+    line4, = ax2.plot(x, tab_data['x'], 's--', color='black', label='评估耗时比例' + r"$X$" )
+    plt.legend(handles=[line1, line2, line3, line4], fontsize='x-small')
     plt.xticks(ticks=x, labels=xs, fontsize=base_size)
     plt.yticks(fontsize=base_size)
     fig.tight_layout() # 防止重叠
 
-    fig.savefig(f'out_figs/exp_epoch_full_datasets_{item}_else.png')
+    fig.savefig(f'out_thesis_figs/exp_epoch_full_datasets_{item}_else.png')
     i += 2

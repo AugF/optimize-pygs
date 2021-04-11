@@ -43,10 +43,11 @@ for item in df.keys():
     ax.set_xticklabels(xs, fontsize=base_size+2)
     ax.bar(x - width/2, tab_data['Baseline'], width, color=colors[0], edgecolor='black', label='优化前')
     ax.bar(x + width/2, tab_data['Optimize'], width, color=colors[1], edgecolor='black', label='优化后')
-    if i == 0:
-        ax.legend(loc='upper left')
-    else:
-        ax.legend(loc='upper right')
+    # if i == 0:
+    #     ax.legend(loc='upper left')
+    # else:
+    #     ax.legend(loc='upper right')
+    ax.legend(fontsize='x-small')
     fig.savefig(root_path + f'/exp_figs_final/exp_epoch_full_models_{item}.png')
     i += 2
 

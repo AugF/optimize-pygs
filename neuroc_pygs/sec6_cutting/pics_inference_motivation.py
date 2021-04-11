@@ -19,8 +19,8 @@ plt.rcParams["font.size"] = base_size
 colors = plt.get_cmap('Greys')(np.linspace(0.15, 0.85, 2))
 mode = 'cluster'
 
-titles = {'reddit_sage': 'SAGE Reddit', 
-          'cluster_gcn': 'ClusterGCN Ogbn-Products'}
+titles = {'reddit_sage': 'SAGE reddit', 
+          'cluster_gcn': 'ClusterGCN ogbn-products'}
 
 fig, axes = plt.subplots(
     nrows=1, ncols=2, figsize=(7, 7/2), tight_layout=True)

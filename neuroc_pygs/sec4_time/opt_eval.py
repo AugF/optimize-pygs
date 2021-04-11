@@ -13,13 +13,14 @@ from neuroc_pygs.options import get_args, build_dataset, build_subgraphloader, b
 
 
 def evaluate(model_path, model, data, subgraph_loader):
+    t0 = time.time()
     save_dict = torch.load(model_path)
     model.load_state_dict(save_dict['model_state_dict'])
     t1 = time.time()
     accs, losses = infer(model, data, subgraph_loader)
-    t2 = time.time()
-    epoch, train_time = save_dict['epoch'], save_dict['train_time']
-    print(f'Epoch: {epoch:03d}, Train: {accs[0]:.8f}, Val: {accs[1]:.8f}, Test: {accs[2]:.8f}, Train Time: {train_time}, Val Time: {t2-t1}')
+    ed_time = time.time()
+    epoch, st_time, ed_train_time = save_dict['epoch'], save_dict['st_time'], save_dict['ed_train_time']
+    print(f'Epoch: {epoch:03d}, opt_train: {t0-st_time}, opt_eval: {ed_time - t0}, opt_train_overhead: {t0-ed_train_time}, opt_eval_overhead: {t1 - t0}, train_time: {ed_train_time-st_time}, eval_time: {ed_time-t1}')
     return 
 
 

@@ -13,10 +13,10 @@ plt.rcParams['axes.unicode_minus']=False #用来正常显示负号
 plt.rcParams["font.size"] = base_size
 
 sampling_maps = {
-    'cluster': 'Cluster Sampler',
-    'graphsage': 'Neighbor Sampler',
-    'gcn_amazon-computers': 'GCN Amazon-computers',
-    'gat_flickr': 'GAT Flickr'
+    'cluster': '聚类采样',
+    'graphsage': '邻居采样',
+    'gcn_amazon-computers': 'GCN amazon-computers',
+    'gat_flickr': 'GAT flickr'
 }
 
 headers = ['Name', 'Baseline', 'Batch Opt', 'Epoch Opt', 'Opt', 'Batch Ratio%', 'Epoch Raio%', 'Opt%']
@@ -48,7 +48,7 @@ for data in ['gcn_amazon-computers', 'gat_flickr']:
     fig, ax = plt.subplots(figsize=(7/1.5, 5/1.5), tight_layout=True)
     ax.set_title(sampling_maps[data], fontsize=base_size + 2)
     ax.set_ylabel('30轮训练时间 (秒)', fontsize=base_size + 2)
-    ax.set_xlabel('相对批大小 (百分比)', fontsize=base_size + 2)
+    ax.set_xlabel('相对批规模大小 (百分比)', fontsize=base_size + 2)
     ax.set_xticks(x)
     ax.set_xticklabels([str(int(100*i)) + '%' for i in xs], fontsize=base_size + 2)
 
@@ -57,7 +57,7 @@ for data in ['gcn_amazon-computers', 'gat_flickr']:
     ax.bar(x + 0.5 * width, tab_data['Batch Opt'], width, label='优化2')
     ax.bar(x + 1.5 * width, tab_data['Opt'], width, label='优化1+优化2')
     ax.legend(ncol=2, fontsize='small', loc='lower center')
-    fig.savefig(root_path + f'/exp_figs_final/exp_epoch_sampling_batch_size_{data}.png')
+    fig.savefig(root_path + f'/exp_figs_total/exp_epoch_sampling_batch_size_{data}.png')
 
 
 

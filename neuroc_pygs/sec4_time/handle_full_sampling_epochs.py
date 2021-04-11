@@ -44,11 +44,35 @@ index = {
     'model_datasets_v2.log': {
         'vars': ['gcn_coauthor-physics', 'gat_amazon-computers', 'gat_coauthor-physics', 'gat_flickr', 'gaan_flickr', 'ggnn_flickr']
     },
+    'model_hidden_size.log': {
+        'props': 'gcn_gaan_amazon-computers',
+        'vars': [f'gcn_{i}' for i in [64, 128, 256, 512, 1024, 2048]] + [f'gaan_{i}' for i in [64, 128, 256, 512, 1024, 2048]] 
+    },
+    'model_hidden_size.log': {
+        'props': 'gcn_gaan_amazon-computers',
+        'vars': [f'gcn_{i}' for i in [64, 128, 256, 512, 1024, 2048]] + [f'gaan_{i}' for i in [64, 128, 256, 512, 1024, 2048]] 
+    },
+    'gcn_amazon-computers_N.log': {
+        'vars': [10, 20, 50, 80, 100, 200]
+    },
+    'gaan_amazon-computers_N.log': {
+        'vars': [10, 20, 50, 80, 100, 200]
+    },
+    'graphsage_models.log': {
+        'vars': ['gcn_pubmed', 'ggnn_pubmed', 'gat_pubmed', 'gaan_pubmed'] +
+         ['gcn_amazon-computers', 'ggnn_amazon-computers', 'gat_amazon-computers', 'gaan_amazon-computers']
+    },
+    'gcn_datasets.log': {
+        'vars': ['pubmed', 'amazon-computers', 'flickr', 'com-amazon']
+    },
+    'gaan_datasets.log': {
+        'vars': ['pubmed', 'amazon-computers', 'flickr', 'com-amazon']
+    }
 }
 
 for key in index.keys():
     # for key in ['pubmed.log', 'amazon-computers.log', 'flickr.log', 'com-amazon.log']:
-    if 'v2' in key:
+    if 'graphsage_models' in key:
     # if True:
         print(key)
         dd_data = read_file(key)
@@ -57,4 +81,4 @@ for key in index.keys():
         dd_data['r1'] = dd_data['real_ratio'] / dd_data['exp_ratio']
         dd_data['max(x,1-x)'] = [max(dd_data['x'][i], 1- dd_data['x'][i]) for i in dd_data.index]
         res = dd_data.reindex(columns=['baseline', 'opt', 'x', 'max(x,1-x)', 'exp_ratio', 'real_ratio', 'r1'])
-        res.to_csv(dir_out + f'/{key[:-4]}.csv')
+        res.to_csv(dir_out + f'/sampling_{key[:-4]}.csv')

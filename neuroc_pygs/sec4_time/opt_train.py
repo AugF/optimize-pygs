@@ -20,15 +20,17 @@ def run_train():
     model.reset_parameters()
     for epoch in range(args.epochs):
         t1 = time.time()
-        train(model, optimizer, data, train_loader, args.device, args.mode, non_blocking=False)
+        train(model, optimizer, data, train_loader, args.device, args.mode, non_blocking=False, opt_flag=args.opt_flag)
         t2 = time.time()
         save_dict = {
             'model_state_dict': model.state_dict(),
             'epoch': epoch,
-            'train_time': t2 - t1,
+            'st_time': t1,
+            'ed_train_time': t2
         }
         os.makedirs(args.checkpoint_dir, exist_ok=True)
         torch.save(save_dict, os.path.join(args.checkpoint_dir, 'model_%d.pth' % epoch))
+
 
 if __name__ == '__main__':
     run_train()

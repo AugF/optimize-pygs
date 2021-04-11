@@ -27,10 +27,10 @@ def test_full(model, data):
 
 
 @torch.no_grad()
-def infer(model, data, subgraphloader):
+def infer(model, data, subgraphloader, df_time=None):
     model.eval()
     model.reset_parameters()
-    y_pred = model.inference_cuda(data.x, subgraphloader) # 这里使用inference_cuda作为测试
+    y_pred = model.inference(data.x, subgraphloader, df_time=df_time) # 这里使用inference_cuda作为测试
     y_true = data.y.cpu()
 
     accs, losses = [], []
@@ -83,7 +83,7 @@ def train(model, optimizer, data, loader, device, mode, non_blocking=False, df=N
             df['move'].append(t3 - t2)
             df['cal'].append(t4 - t3)
             df['cnt'][0] += 1
-            if df['cnt'][0] >= 50:
+            if df['cnt'][0] >= df['max_cnt'][0]:
                 break
             print(f"Batch:{df['cnt'][0]}, sample: {t2-t1}, move: {t3-t2}, cal: {t4-t3}")
         all_loss.append(loss.item() * batch_size)

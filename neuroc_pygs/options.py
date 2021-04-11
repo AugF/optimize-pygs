@@ -97,6 +97,8 @@ def get_args():
                         default='/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec4_time/exp_checkpoints', help='eval step')
     
     # for opt
+    parser.add_argument('--opt_flag', type=bool,
+                        default=False, help='opt_flag')
     parser.add_argument('--opt_train_flag', type=int,
                         default=0, help='opt_flag')
     parser.add_argument('--opt_eval_flag', type=int,

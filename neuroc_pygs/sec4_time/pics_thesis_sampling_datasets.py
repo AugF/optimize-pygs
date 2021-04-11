@@ -15,22 +15,24 @@ plt.rcParams["font.size"] = base_size
 
 headers = ['Name', 'Baseline', 'Batch Opt', 'Epoch Opt',
            'Opt', 'Batch Ratio%', 'Epoch Raio%', 'Opt%']
-root_path = '/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec4_time'
-real_path = root_path + f'/exp_res/sampling_epoch.txt'
-df = []
-with open(real_path) as f:
-    for line in f.readlines():
-        df.append(line.strip()[1:-1].split(','))
-df = pd.DataFrame(df, columns=headers)
-df.index = [x[1:-1] for x in df['Name']]
+mode = 'graphsage'
+
+df_data = []
+for model in ['gcn', 'gaan']:
+    for exp_data in ['pubmed', 'amazon-computers', 'coauthor-physics', 'flickr']:
+        real_path = 'opt_total/' + model + '_' + exp_data + '_' + mode + '_None.csv'
+        res = open(real_path).read().split(',')
+        df_data.append(res)
+df = pd.DataFrame(df_data, columns=headers)
+df.index = [x for x in df['Name']]
 del df['Name']
+print(df)
 
-
-xs = ['pubmed', 'amazon-photo', 'amazon-computers', 'coauthor-physics', 'flickr']
-for model in ['gcn', 'gat']:
+xs = ['pubmed', 'amazon-computers', 'coauthor-physics', 'flickr']
+for model in ['gcn', 'gaan']:
     tab_data = defaultdict(list)
     for data in xs:
-        index = f'{model}_{data}'
+        index = f'{model}_{data}_{mode}_{None}'
         tmp_data = df.loc[index]
         tab_data['Baseline'].append(float(tmp_data['Baseline']))
         tab_data['Batch Opt'].append(float(tmp_data['Batch Opt']))
@@ -50,4 +52,4 @@ for model in ['gcn', 'gat']:
     ax.bar(x + 0.5 * width, tab_data['Batch Opt'], width, label='优化2')
     ax.bar(x + 1.5 * width, tab_data['Opt'], width, label='优化1+优化2')
     ax.legend(fontsize='small')
-    fig.savefig(root_path + f'/exp_figs_total/exp_epoch_sampling_datasets_{model}.png')
+    fig.savefig(f'out_total_figs/exp_epoch_sampling_datasets_{mode}_{model}.png')

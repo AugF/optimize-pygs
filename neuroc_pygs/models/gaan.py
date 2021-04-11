@@ -65,7 +65,7 @@ class GaAN(Module):
                 
         return x
 
-    def inference(self, x_all, subgraph_loader, log_batch=False, opt_loader=False):
+    def inference(self, x_all, subgraph_loader, log_batch=False, opt_loader=False, df_time=None):
         device = torch.device(self.device)
         flag = self.infer_flag
         
@@ -103,6 +103,13 @@ class GaAN(Module):
                     sampling_time += et1 - et0
                     to_time += et2 - et1
                     train_time += time.time() - et2
+
+                    if i == 0 and df_time is not None:
+                        df_time['sample'].append(sampling_time)
+                        df_time['move'].append(to_time)
+                        df_time['cal'].append(train_time)
+                        df_time['cnt'][0] += 1
+                        print(f"Batch:{df_time['cnt'][0]}, sample: {sampling_time}, move: {to_time}, cal: {train_time}")
                 except StopIteration:
                     break
             

@@ -40,16 +40,20 @@ def run_model(model='gcn', data='amazon-computers', re_bs=None, mode='cluster'):
         mode = [mode]
     
     tab_data = []
-    for exp_model in model:
-        for exp_data in data:
-            for md in mode:
-                for rs in re_bs:
-                    default_args = '--hidden_dims 1024 --gaan_hidden_dims 256 --head_dims 128 --heads 4 --d_a 32 --d_v 32 --d_m 32'
-                    args = default_args + f' --num_workers 0 --model {exp_model} --dataset {exp_data} --epochs 50 --mode {md}'
+    for md in mode:
+        for rs in re_bs:
+            for exp_model in model:
+                for exp_data in data:
+                    # default_args = '--hidden_dims 1024 --gaan_hidden_dims 256 --head_dims 128 --heads 4 --d_a 32 --d_v 32 --d_m 32'
+                    args = f' --num_workers 0 --model {exp_model} --dataset {exp_data} --epochs 50 --mode {md}'
                     if rs != None:
                         args = args + f' --relative_batch_size {rs}'
                     cur_name = f'{exp_model}_{exp_data}_{md}_{rs}'
-                    print(cur_name)
+                    real_path = 'opt_total/'+ cur_name + '_final_v1.csv'
+                    print(real_path)
+                    if os.path.exists(real_path):
+                        tab_data.append(open(real_path).read().split(','))
+                        continue
                     for _ in range(1):
                         t1 = time.time()
                         opt_epoch(args + ' --opt_train_flag 1 --opt_eval_flag 0') 
@@ -64,23 +68,29 @@ def run_model(model='gcn', data='amazon-computers', re_bs=None, mode='cluster'):
                         ratio1, ratio2, ratio12 = get_ratio(baseline, opt1), get_ratio(baseline, opt2), get_ratio(baseline, opt12)
                         res = [cur_name, baseline, opt1, opt2, opt12, ratio1, ratio2, ratio12]
                         print(res)
+                        with open(real_path, 'w') as f:
+                            f.write(','.join([str(r) for r in res]))
                         tab_data.append(res) 
                 print(tabulate(tab_data, headers=headers, tablefmt='github'))
     return tab_data
 
 
-if __name__ == '__main__':
+def test():
     dir_path = '/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec4_time/exp_res'
-    for files in ['gaan_amazon-computers']:
-    # for files in ['gcn_amazon-computers', 'gaan_amazon-computers']:
-        exp_model, exp_data = files.split('_')
-        for exp_mode in ['cluster']:
+    # for files in ['gaan_amazon-computers']:
+    # exp_model = 'gcn'
+    # for m in [10, 20, 50, 100, 150, 500]:
+    for exp_data in ['reddit']:
+        # exp_data = f'random_100k_{m}k'
+        for exp_model in ['gcn']:
+        # for exp_mode in ['graphsage']:
+            exp_mode = 'cluster'
             # for exp_pr in [0.01, 0.03, 0.06, 0.1, 0.25, 0.5]:
             # for bs in [64, 128, 256, 512, 1024, 2048]:
-            for N in [10, 20, 50, 80, 100, 200]:
-            # if True:
+            # for N in [10, 20, 50, 80, 100, 200]:
+            if True:
                 # args = f'--epochs 30 --num_workers 0 --model {exp_model} --dataset {exp_data} --mode {exp_mode} --relative_batch_size {exp_pr}'
-                args = f'--epochs {N} --num_workers 0 --model {exp_model} --dataset {exp_data} --mode {exp_mode}'
+                args = f'--epochs 50 --num_workers 0 --model {exp_model} --dataset {exp_data} --mode {exp_mode}'
                 # if exp_model == 'gcn':
                 #     args = args + f' --hidden_dims {bs}'
                 # elif exp_model == 'gaan':
@@ -94,3 +104,15 @@ if __name__ == '__main__':
                 baseline, opt = t3 - t2, t2 - t1
                 ratio = opt / baseline
                 print(f'model: {exp_model}, dataset: {exp_data}, mode: {exp_mode}, baseline: {baseline}, opt:{opt}, ratio: {ratio}')
+
+
+if __name__ == '__main__':
+    # run_model(model=['gcn', 'ggnn', 'gat', 'gaan'], data=['amazon-computers', 'flickr'], re_bs=None, mode=['cluster', 'graphsage'])
+    run_model(model=['gat', 'ggnn'], data=['pubmed', 'amazon-computers', 'coauthor-physics', 'flickr'], re_bs=None, mode=['cluster'])
+    # run_model(model=['gcn'], data=['pubmed'], re_bs=[0.01, 0.03, 0.06, 0.1, 0.25, 0.5], mode=['cluster', 'graphsage'])
+    # run_model(model=['gaan'], data=['amazon-computers'], re_bs=[0.01, 0.03, 0.06, 0.1, 0.25, 0.5], mode=['cluster', 'graphsage'])
+    # run_model(model=['gcn', 'ggnn', 'gat', 'gaan'], data=['com-amazon'], re_bs=None, mode=['graphsage'])
+    # run_model(model=['gcn', 'gaan', 'gat', 'ggnn'], data=['amazon-photo'], re_bs=None, mode=['cluster', 'graphsage'])
+    # run_model(model=['gcn'], data=['amazon-computers'], re_bs=[0.01, 0.03, 0.06, 0.1, 0.25, 0.5], mode=['cluster', 'graphsage'])
+    # run_model(model=['gat'], data=['flickr'], re_bs=[0.01, 0.03, 0.06, 0.1, 0.25, 0.5], mode=['cluster', 'graphsage'])
+    # run_model(model=['gcn', 'ggnn', 'gat', 'gaan'], data=['reddit'], re_bs=None, mode=['cluster', 'graphsage'])

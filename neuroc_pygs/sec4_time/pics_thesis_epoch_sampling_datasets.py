@@ -12,28 +12,31 @@ plt.rcParams['font.sans-serif']=['SimHei'] #用来正常显示中文标签
 plt.rcParams['axes.unicode_minus']=False #用来正常显示负号
 plt.rcParams["font.size"] = base_size
 
-df_data = pd.read_csv('out_csv/model_datasets.csv', index_col=0)
+mode = 'cluster'
+df_data = pd.read_csv(f'out_csv/sampling_model_{mode}_datasets.csv', index_col=0)
+alg = 'gcn'
 
 # model
 df = {}
-df['gcn'] = {'Baseline': [], 'Optimize': [], 'x': [], 'real_ratio': [], 'exp_ratio': []}
-for data in ['pubmed', 'amazon-computers', 'flickr']:
-    df['gcn']['Baseline'].append(float(df_data['baseline']['gcn_' + data]))
-    df['gcn']['Optimize'].append(float(df_data['opt']['gcn_' + data]))
-    df['gcn']['x'].append(float(100 * df_data['x']['gcn_' + data]))
-    df['gcn']['real_ratio'].append(float(df_data['real_ratio']['gcn_' + data]))
-    df['gcn']['exp_ratio'].append(float(df_data['exp_ratio']['gcn_' + data]))
+df[alg] = {'Baseline': [], 'Optimize': [], 'x': [], 'real_ratio': [], 'exp_ratio': [], 'r1': []}
+for data in ['pubmed', 'amazon-computers','flickr', 'reddit']:
+    df[alg]['Baseline'].append(float(df_data['baseline'][alg + '_' + data]))
+    df[alg]['Optimize'].append(float(df_data['opt'][alg + '_' + data]))
+    df[alg]['x'].append(100-float(100 * df_data['x'][alg + '_' + data]))
+    df[alg]['real_ratio'].append(float(df_data['real_ratio'][alg + '_' + data]))
+    df[alg]['exp_ratio'].append(float(df_data['exp_ratio'][alg + '_' + data]))
+    df[alg]['r1'].append(float(df_data['r1'][alg + '_' + data]))
 
 print(df)
 colors = plt.get_cmap('Greys')(np.linspace(0.15, 0.85, 2))
 colors = [colors[-1], colors[0]]
 titles = {'gcn': 'GCN', 'ggnn': 'GGNN', 'gat': 'GAT', 'gaan': 'GaAN'}
-
+datasets_maps = ['pub', 'amc', 'fli', 'red']
 
 for i, item in enumerate(df.keys()):
     tab_data = df[item]
 
-    xs = ['pub', 'amc', 'fli']
+    xs = datasets_maps
     
     x = np.arange(len(xs))  # the label locations
     width = 0.35  # the width of the bars
@@ -47,7 +50,7 @@ for i, item in enumerate(df.keys()):
     ax.bar(x - width/2, tab_data['Baseline'], width, color=colors[0], edgecolor='black', label='优化前')
     ax.bar(x + width/2, tab_data['Optimize'], width, color=colors[1], edgecolor='black', label='优化后')
     ax.legend(loc='upper left')
-    fig.savefig(f'out_figs/exp_epoch_full_sampling_datasets_{item}.png')
+    fig.savefig(f'out_thesis_figs/exp_epoch_full_sampling_datasets_{mode}_{item}.png')
 
 
 base_size = 10
@@ -55,24 +58,25 @@ i = 0
 for item in df.keys():
     tab_data = df[item]
 
-    xs = ['pub', 'amc', 'fli']
+    xs = datasets_maps
     x = np.arange(len(xs))  # the label locations
     width = 0.35  # the width of the bars
 
     fig, ax = plt.subplots(figsize=(7/2, 5/2), tight_layout=True)
     ax.set_title(titles[item], fontsize=base_size+2)
-    ax.set_ylabel('加速比', fontsize=base_size+2)
+    ax.set_ylabel('比值', fontsize=base_size+2)
     ax.set_xlabel('数据集', fontsize=base_size+2)
     line1, = ax.plot(x, tab_data['exp_ratio'], 'ob', label='预期加速比', linestyle='-')
     line2, = ax.plot(x, tab_data['real_ratio'], 'Dg', label='实际加速比', linestyle='-')
+    line3, = ax.plot(x, tab_data['r1'], 'r^', label='优化效果', linestyle='-')
     
     ax2 = ax.twinx()
-    ax2.set_ylabel("评估耗时占比" + r"$X$" + " (%)", fontsize=base_size + 2)
-    line3, = ax2.plot(x, tab_data['x'], 'rs--', label='评估耗时占比' + r"$X$" )
-    plt.legend(handles=[line1, line2, line3], fontsize='x-small')
+    ax2.set_ylabel('耗时比例', fontsize=base_size + 2)
+    line4, = ax2.plot(x, tab_data['x'], 's--', color='black', label="评估耗时占比" + r"$X$" + " (%)")
+    plt.legend(handles=[line1, line2, line3, line4], fontsize='x-small')
     plt.xticks(ticks=x, labels=xs, fontsize=base_size)
     plt.yticks(fontsize=base_size)
     fig.tight_layout() # 防止重叠
 
-    fig.savefig(f'out_figs/exp_epoch_full_sampling_datasets_{item}_else.png')
+    fig.savefig(f'out_thesis_figs/exp_epoch_full_sampling_datasets_{mode}_{item}_else.png')
     i += 2

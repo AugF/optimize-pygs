@@ -14,23 +14,25 @@ plt.rcParams["font.size"] = base_size
 
 
 headers = ['Name', 'Baseline', 'Batch Opt', 'Epoch Opt', 'Opt', 'Batch Ratio%', 'Epoch Raio%', 'Opt%']
-root_path = '/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec4_time'
-real_path = root_path + f'/exp_res/sampling_epoch.txt'
-df = []
-with open(real_path) as f:
-    for line in f.readlines():
-        df.append(line.strip()[1:-1].split(','))
-df = pd.DataFrame(df, columns=headers)
-df.index = [x[1:-1] for x in df['Name']]
+mode = 'graphsage'
+
+df_data = []
+for exp_data in ['amazon-computers', 'flickr', 'pubmed']:
+    for model in ['gcn', 'gaan', 'gat', 'ggnn']:
+        real_path = 'opt_total/' + model + '_' + exp_data + '_' + mode + '_None.csv'
+        res = open(real_path).read().split(',')
+        df_data.append(res)
+df = pd.DataFrame(df_data, columns=headers)
+df.index = [x for x in df['Name']]
 del df['Name']
 print(df)
 
 # models
 xs = ['gcn', 'ggnn', 'gat', 'gaan']
-for data in ['flickr', 'amazon-computers']:
+for data in ['amazon-computers', 'flickr', 'pubmed']:
     tab_data = defaultdict(list)
     for model in xs:
-        index = f'{model}_{data}'
+        index = f'{model}_{data}_{mode}_None'
         tmp_data = df.loc[index]
         tab_data['Baseline'].append(float(tmp_data['Baseline']))
         tab_data['Batch Opt'].append(float(tmp_data['Batch Opt']))
@@ -40,7 +42,7 @@ for data in ['flickr', 'amazon-computers']:
     x = np.arange(len(xs))
     width = 0.2
     fig, ax = plt.subplots(figsize=(7/1.5, 5/1.5), tight_layout=True)
-    ax.set_title(data, fontsize=base_size+2)
+    ax.set_title(data.capitalize(), fontsize=base_size+2)
     ax.set_ylabel('30轮训练时间 (秒)', fontsize=base_size+2)
     ax.set_xlabel('算法', fontsize=base_size+2)
     ax.set_xticks(x)
@@ -54,7 +56,7 @@ for data in ['flickr', 'amazon-computers']:
         ax.legend(fontsize='x-small', ncol=1)
     else:
         ax.legend(fontsize='x-small', loc='lower center', ncol=2)
-    fig.savefig(root_path + f'/exp_figs_total/exp_epoch_sampling_models_{data}.png')
+    fig.savefig(f'exp_thesis_figs/exp_epoch_sampling_models_{mode}_{data}.png')
 
 
 

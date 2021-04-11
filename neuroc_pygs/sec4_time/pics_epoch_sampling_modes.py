@@ -13,10 +13,10 @@ plt.rcParams['axes.unicode_minus']=False #用来正常显示负号
 plt.rcParams["font.size"] = base_size
 
 sampling_maps = {
-    'cluster': 'Cluster Sampler',
-    'graphsage': 'Neighbor Sampler',
-    'gcn_amazon-computers': 'GCN Amazon-computers',
-    'gat_flickr': 'GAT Flickr'
+    'cluster': '聚类采样',
+    'graphsage': '邻居采样',
+    'gcn_amazon-computers': 'GCN amazon-computers',
+    'gat_flickr': 'GAT flickr'
 }
 
 headers = ['Name', 'Baseline', 'Batch Opt', 'Epoch Opt', 'Opt', 'Batch Ratio%', 'Epoch Raio%', 'Opt%']
@@ -32,7 +32,7 @@ del df['Name']
 print(df)
 
 # models
-xs = ['cluster', 'graphsage']
+xs = ['graphsage', 'cluster']
 for data in ['gcn_amazon-computers', 'gat_flickr']:
     tab_data = defaultdict(list)
     for mode in xs:
@@ -60,7 +60,7 @@ for data in ['gcn_amazon-computers', 'gat_flickr']:
         ax.legend(fontsize='small', loc='lower center', ncol=2)
     else:
         ax.legend(fontsize='small')
-    fig.savefig(root_path + f'/exp_figs_final/exp_epoch_sampling_modes_{data}.png')
+    fig.savefig(root_path + f'/exp_figs_total/exp_epoch_sampling_modes_{data}.png')
 
 
 

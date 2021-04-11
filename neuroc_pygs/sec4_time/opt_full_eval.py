@@ -22,8 +22,8 @@ def evaluate(model_path, model, data, eval_per=None):
     else:
         test_full(model, data)
     ed_time = time.time()
-    use_time = ed_time - st_time
-    overhead_time = t1 - ed_train_time
+    # use_time = ed_time - st_time
+    # overhead_time = t1 - ed_train_time
     print(f'Epoch: {epoch:03d}, opt_train: {t0-st_time}, opt_eval: {ed_time - t0}, opt_train_overhead: {t0-ed_train_time}, opt_eval_overhead: {t1 - t0}, train_time: {ed_train_time-st_time}, eval_time: {ed_time-t1}')
 
     return

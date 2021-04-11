@@ -56,7 +56,7 @@ def run():
     train_times, eval_times = [], []
     for _ in range(args.epochs):
         st_time = time.time()
-        train(model, optimizer, data, train_loader, args.device, args.mode, non_blocking=False)
+        train(model, optimizer, data, train_loader, args.device, args.mode, non_blocking=False, opt_flag=args.opt_flag)
         t0 = time.time()
         accs, losses = infer(model, data, subgraph_loader)
         ed_time = time.time()

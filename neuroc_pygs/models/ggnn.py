@@ -46,13 +46,13 @@ class GGNN(Module):
         log_memory(self.flag, device, "output-transform")
         return x
 
-    def inference(self, x_all, subgraph_loader, log_batch=False):
+    def inference(self, x_all, subgraph_loader, log_batch=False, df_time=None):
         device = torch.device(self.device)
 
         x_all = torch.matmul(x_all.to(device), self.weight_in) # 尽最大可能第键槽内存
         log_memory(self.infer_flag, device, "input-transform")
         
-        x_all = self.convs[0].inference(x_all.cpu(), subgraph_loader, log_batch)
+        x_all = self.convs[0].inference(x_all.cpu(), subgraph_loader, log_batch, df_time=df_time)
         
         x_all = torch.matmul(x_all.to(device), self.weight_out)
         log_memory(self.infer_flag, device, "output-transform")
@@ -62,7 +62,7 @@ class GGNN(Module):
         device = torch.device(self.device)
 
         x_all = torch.matmul(x_all.to(device), self.weight_in) # 尽最大可能第键槽内存        
-        x_all = self.convs[0].inference_base(x_all.cpu(), subgraph_loader, df)
+        x_all = self.convs[0].inference_base(x_all.cpu(), subgraph_loader)
         
         x_all = torch.matmul(x_all.to(device), self.weight_out)
         return x_all.cpu()
