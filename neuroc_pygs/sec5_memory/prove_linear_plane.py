@@ -82,7 +82,7 @@ def pics_linear_plane(model='gat'):
     ax.set_ylabel('边数', fontsize=14)
     ax.set_zlabel('膨胀内存', fontsize=14)
     ax.scatter3D(nodes, edges, memory, cmap='Blues')
-    fig.savefig(os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_figs', f'exp_memory_{model}_linear_plane.png'))
+    fig.savefig(os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_figs', f'exp_memory_{model}_linear_plane.png', dpi=400))
 
 
 if __name__ == '__main__':

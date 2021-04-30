@@ -4,17 +4,18 @@ import matplotlib.pyplot as plt
 from collections import defaultdict
 from neuroc_pygs.sec4_time.utils import datasets_maps, algorithms, sampling_modes
 from matplotlib.font_manager import _rebuild
-_rebuild() 
+_rebuild()
 
 base_size = 16
 plt.style.use("grayscale")
-plt.rcParams['font.sans-serif']=['SimHei'] #用来正常显示中文标签
-plt.rcParams['axes.unicode_minus']=False #用来正常显示负号
+plt.rcParams['font.sans-serif'] = ['SimHei']  # 用来正常显示中文标签
+plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
 plt.rcParams["font.size"] = base_size
 
 
-headers = ['Name', 'Baseline', 'Batch Opt', 'Epoch Opt', 'Opt', 'Batch Ratio%', 'Epoch Raio%', 'Opt%']
-mode = 'graphsage'
+headers = ['Name', 'Baseline', 'Batch Opt', 'Epoch Opt',
+           'Opt', 'Batch Ratio%', 'Epoch Raio%', 'Opt%']
+mode = 'cluster'
 
 df_data = []
 for exp_data in ['amazon-computers', 'flickr', 'pubmed']:
@@ -43,20 +44,18 @@ for data in ['amazon-computers', 'flickr', 'pubmed']:
     width = 0.2
     fig, ax = plt.subplots(figsize=(7/1.5, 5/1.5), tight_layout=True)
     ax.set_title(data, fontsize=base_size+2)
-    ax.set_ylabel('30轮训练时间 (秒)', fontsize=base_size+2)
+    ax.set_ylabel('30轮训练时间 (s)', fontsize=base_size+2)
     ax.set_xlabel('算法', fontsize=base_size+2)
     ax.set_xticks(x)
     ax.set_xticklabels([algorithms[i] for i in xs], fontsize=18)
 
     ax.bar(x - 1.5 * width, tab_data['Baseline'], width, label='未优化')
-    ax.bar(x - 0.5 * width, tab_data['Epoch Opt'], width, label='优化1')
-    ax.bar(x + 0.5 * width, tab_data['Batch Opt'], width, label='优化2')
+    ax.bar(x - 0.5 * width, tab_data['Batch Opt'], width, label='优化1')
+    ax.bar(x + 0.5 * width, tab_data['Epoch Opt'], width, label='优化2')
     ax.bar(x + 1.5 * width, tab_data['Opt'], width, label='优化1+优化2')
     if data == 'flickr':
         ax.legend(fontsize='x-small', ncol=1)
     else:
         ax.legend(fontsize='x-small', loc='lower center', ncol=2)
-    fig.savefig(f'exp_thesis_figs/total_figs/exp_epoch_sampling_models_{mode}_{data}.png')
-
-
-
+    fig.savefig(
+        f'exp4_thesis_figs/total_figs/exp_epoch_sampling_models_{mode}_{data}.png', dpi=400)

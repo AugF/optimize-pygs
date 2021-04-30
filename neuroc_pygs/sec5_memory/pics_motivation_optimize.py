@@ -18,10 +18,10 @@ root_path = os.path.join(PROJECT_PATH, 'sec5_memory/exp_automl_datasets_diff')
 ratio_dict = pd.read_csv(root_path + '/regression_mape_res.csv', index_col=0)
 linear_ratio_dict = pd.read_csv(root_path + '/regression_linear_mape_res.csv', index_col=0)
 dir_path = os.path.join(PROJECT_PATH, 'sec5_memory/exp_motivation_diff')
-dir_out = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_figs')
+dir_out = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp5_thesis_figs')
 
-colors = plt.get_cmap('Greys')(np.linspace(0.15, 0.85, 2))
-colors = [colors[-1], colors[0]]
+# colors = [colors[-1], colors[0]]
+colors = ['black', 'white']
       
 def run(predict_model='linear_model', bias=0.001):
     for model in ['gat', 'gcn']:
@@ -34,7 +34,7 @@ def run(predict_model='linear_model', bias=0.001):
             
             ax = axes[i]
         
-            ax.set_title(data.capitalize(), fontsize=14)
+            ax.set_title(data, fontsize=14)
             ax.set_ylabel('峰值内存 (GB)', fontsize=14)
             ax.set_xlabel('批规模', fontsize=14)
 
@@ -60,7 +60,7 @@ def run(predict_model='linear_model', bias=0.001):
                     else:
                         res = []
                     box_data.append(list(map(lambda x: x/(1024*1024*1024), res)))
-            bp = ax.boxplot(box_data)
+            bp = ax.boxplot(box_data, patch_artist=True)
 
             # for key in ['medians', 'boxes', 'caps', 'fliers']:
             #     print(bp[key])
@@ -71,23 +71,25 @@ def run(predict_model='linear_model', bias=0.001):
                 if i % 2 == 1:
                     plt.setp(bp['medians'][i], color='red')
                     plt.setp(bp['boxes'][i], color='red')
-                    # plt.setp(bp['caps'][i], color='red')
+                    plt.setp(bp['boxes'][i], facecolor=colors[1])
                     plt.setp(bp['fliers'][i], markeredgecolor='red')
                     # https://matplotlib.org/stable/gallery/statistics/boxplot.html#sphx-glr-gallery-statistics-boxplot-py
+                else:
+                    plt.setp(bp['boxes'][i], facecolor=colors[0])
 
-            medians = list(range(numBoxes))
-            for i in range(numBoxes):
-                box = bp['boxes'][i]
-                boxX = []
-                boxY = []
-                for j in range(len(batch_sizes)):
-                    boxX.append(box.get_xdata()[j])
-                    boxY.append(box.get_ydata()[j])
-                boxCoords = list(zip(boxX, boxY))
-                # Alternate between Dark Khaki and Royal Blue
-                k = i % 2
-                boxPolygon = Polygon(boxCoords, facecolor=colors[k])
-                ax.add_patch(boxPolygon)
+            # medians = list(range(numBoxes))
+            # for i in range(numBoxes):
+            #     box = bp['boxes'][i]
+            #     boxX = []
+            #     boxY = []
+            #     for j in range(len(batch_sizes)):
+            #         boxX.append(box.get_xdata()[j])
+            #         boxY.append(box.get_ydata()[j])
+            #     boxCoords = list(zip(boxX, boxY))
+            #     # Alternate between Dark Khaki and Royal Blue
+            #     k = i % 2
+            #     boxPolygon = Polygon(boxCoords, facecolor=colors[k])
+            #     ax.add_patch(boxPolygon)
             
             ax.set_xticks([1.5, 3.5, 5.5])
             ax.set_xticklabels(batch_sizes, fontsize=14)
@@ -106,7 +108,7 @@ def run(predict_model='linear_model', bias=0.001):
             legend_colors = [Patch(facecolor=colors[0], edgecolor='black'), Patch(facecolor=colors[1], edgecolor='red')]
             ax.legend(legend_colors + [line], ['优化前', '优化后', 'GPU内存限制'], fontsize=10)
 
-        fig.savefig(dir_out + f'/exp_memory_training_{model}_cluster_motivation_{predict_model}_mape_diff_v3.png')
+        fig.savefig(dir_out + f'/exp_memory_training_{model}_cluster_motivation_{predict_model}_mape_diff_v3.png', dpi=400)
 
 
 if __name__ == '__main__':

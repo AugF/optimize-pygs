@@ -63,7 +63,7 @@ for model in ['gcn', 'gat', 'ggnn', 'gaan']:
             ax.plot(df_data.index, df_data[c], label=c, marker=markers[j], linestyle=linestyles[j])
         ax.plot(xs, len(df_data.index) * [full_acc], label='基准线', linestyle=(0, (5, 1)), linewidth=2, color='blue')
         ax.legend(ncol=2)
-        fig.savefig(root_path + f'/exp_cutting_acc_figs/exp_memory_inference_cutting_methods_{cur_name}_acc.png')
+        fig.savefig(root_path + f'/exp_cutting_acc_figs/exp_memory_inference_cutting_methods_{cur_name}_acc.png', dpi=400)
 
 
 # 数据集
@@ -94,7 +94,7 @@ for model in ['gcn', 'gat', 'ggnn', 'gaan']:
         ax.plot(df_data.index, df_data[c], label=c, marker=markers[j], linestyle=linestyles[j])
     # ax.plot(xs, len(df_data.index) * [full_acc], label='基准线', linestyle=(0, (5, 1)), linewidth=2, color='blue')
     ax.legend(ncol=2)
-    fig.savefig(root_path + f'/exp_cutting_acc_figs/exp_memory_inference_cutting_methods_{model}_acc.png')
+    fig.savefig(root_path + f'/exp_cutting_acc_figs/exp_memory_inference_cutting_methods_{model}_acc.png', dpi=400)
 
 
 # 模型
@@ -128,4 +128,4 @@ for data in datasets:
         ax.plot(df_data.index, df_data[c], label=c, marker=markers[j], linestyle=linestyles[j])
     # ax.plot(xs, len(df_data.index) * [full_acc], label='基准线', linestyle=(0, (5, 1)), linewidth=2, color='blue')
     ax.legend(ncol=2)
-    fig.savefig(root_path + f'/exp_cutting_acc_figs/exp_memory_inference_cutting_methods_{data}_acc.png')
+    fig.savefig(root_path + f'/exp_cutting_acc_figs/exp_memory_inference_cutting_methods_{data}_acc.png', dpi=400)

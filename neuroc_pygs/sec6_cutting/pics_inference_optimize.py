@@ -15,12 +15,11 @@ plt.rcParams['font.sans-serif']=['SimHei'] #用来正常显示中文标签
 plt.rcParams['axes.unicode_minus']=False #用来正常显示负号
 plt.rcParams["font.size"] = 14
 
-colors = plt.get_cmap('Greys')(np.linspace(0.15, 0.85, 2))
-colors = [colors[-1], colors[0]]
+colors = ['black', 'white']
 mode = 'cluster'
 
-titles = {'reddit_sage': 'SAGE Reddit', 
-          'cluster_gcn': 'ClusterGCN Ogbn-Products'}
+titles = {'reddit_sage': 'SAGE reddit', 
+          'cluster_gcn': 'ClusterGCN ogbn-products'}
 
 fig, axes = plt.subplots(
     nrows=1, ncols=2, figsize=(7, 7/2), tight_layout=True)
@@ -55,29 +54,18 @@ for i, model in enumerate(['reddit_sage', 'cluster_gcn']):
             else:
                 res = []
             box_data.append(list(map(lambda x: x/(1024*1024*1024), res)))
-    bp = ax.boxplot(box_data)
+    bp = ax.boxplot(box_data, patch_artist=True)
 
     numBoxes = len(batch_sizes) * 2
     for i in range(numBoxes):
         if i % 2 == 1:
             plt.setp(bp['medians'][i], color='red')
             plt.setp(bp['boxes'][i], color='red')
-            # plt.setp(bp['caps'][i], color='red')
+            plt.setp(bp['boxes'][i], facecolor=colors[1])
             plt.setp(bp['fliers'][i], markeredgecolor='red')
             # https://matplotlib.org/stable/gallery/statistics/boxplot.html#sphx-glr-gallery-statistics-boxplot-py
-    medians = list(range(numBoxes))
-    for i in range(numBoxes):
-        box = bp['boxes'][i]
-        boxX = []
-        boxY = []
-        for j in range(len(batch_sizes)):
-            boxX.append(box.get_xdata()[j])
-            boxY.append(box.get_ydata()[j])
-        boxCoords = list(zip(boxX, boxY))
-        # Alternate between Dark Khaki and Royal Blue
-        k = i % 2
-        boxPolygon = Polygon(boxCoords, facecolor=colors[k])
-        ax.add_patch(boxPolygon)
+        else:
+            plt.setp(bp['boxes'][i], facecolor=colors[0])
 
     ax.set_xticks([1.5, 3.5, 5.5])
     ax.set_xticklabels(batch_sizes, fontsize=14)
@@ -89,5 +77,5 @@ for i, model in enumerate(['reddit_sage', 'cluster_gcn']):
     legend_colors = [Patch(facecolor=colors[0], edgecolor='black'), Patch(facecolor=colors[1], edgecolor='red')]
     ax.legend(legend_colors + [line], ['优化前', '优化后', 'GPU内存限制'], fontsize=10)
 
-fig.savefig(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_figs', f'exp_memory_inference_motivation_optimize.png'))
+fig.savefig(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp6_thesis_figs', f'exp_memory_inference_motivation_optimize.png', dpi=400))
 

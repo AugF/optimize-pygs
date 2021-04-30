@@ -88,7 +88,8 @@ def test_epochs():
         print(f'model: {model}, dataset: {data}, baseline: {baseline}, opt:{opt}, ratio: {ratio}')
 
 
-if __name__ == '__main__':
+
+def test_x():
     data = 'pubmed'
     model = 'gcn'
     for bs in [0.1, 0.2, 0.4, 0.5, 0.6, 0.8, 0.9]:
@@ -102,3 +103,30 @@ if __name__ == '__main__':
         ratio = opt / baseline
         print(f'model: {model}, dataset: {data}, baseline: {baseline}, opt:{opt}, ratio: {ratio}')
 
+
+if __name__ == '__main__':
+    bs = 200
+    for data in ['pubmed', 'amazon-computers']:
+        for model in ['gcn', 'ggnn', 'gat', 'gaan']:
+            args = f'--epochs {bs} --model {model} --dataset {data}'
+            t1 = time.time()
+            opt_epoch(args)
+            t2 = time.time()
+            epoch(args)
+            t3 = time.time()
+            baseline, opt = t3 - t2, t2 - t1
+            ratio = opt / baseline
+            print(f'model: {model}, dataset: {data}, baseline: {baseline}, opt:{opt}, ratio: {ratio}')
+
+
+    for model in ['gcn', 'gaan']:
+        for data in ['pubmed', 'amazon-computers', 'flickr', 'com-amazon']:
+            args = f'--epochs {bs} --model {model} --dataset {data}'
+            t1 = time.time()
+            opt_epoch(args)
+            t2 = time.time()
+            epoch(args)
+            t3 = time.time()
+            baseline, opt = t3 - t2, t2 - t1
+            ratio = opt / baseline
+            print(f'model: {model}, dataset: {data}, baseline: {baseline}, opt:{opt}, ratio: {ratio}')

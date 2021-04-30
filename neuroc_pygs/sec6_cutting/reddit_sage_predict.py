@@ -202,7 +202,7 @@ def run_test(file_suffix):
 
 if __name__ == '__main__':
     file_suffix = 'my_thesis_v1' # xx
-    for bs in [8700, 8800, 8900]:
+    for bs in [8500, 9000, 9500]:
         tab_data = []
         for cutting in ['random_2', 'degree_way3', 'pr_way4']:
             method, way = cutting.split('_')

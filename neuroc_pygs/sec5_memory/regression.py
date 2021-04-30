@@ -111,7 +111,7 @@ def run_automl(files, model='gcn', file_type='automl'):
             ax.plot(x_smooth, y_smooth, label=c, color=colors[j], linestyle=linestyles[j], linewidth=2)
 
         ax.legend(fontsize='small')
-        fig.savefig(os.path.join(PROJECT_PATH, 'sec5_memory') + f'/exp_figs/exp_memory_training_{model}_{file_type}_{names[i]}_diff.png')
+        fig.savefig(os.path.join(PROJECT_PATH, 'sec5_memory') + f'/exp_figs/exp_memory_training_{model}_{file_type}_{names[i]}_diff.png', dpi=400)
 
 
 def run_linear_model(model='gcn', data='reddit'):

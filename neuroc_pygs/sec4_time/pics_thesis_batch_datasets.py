@@ -5,15 +5,17 @@ import matplotlib.pyplot as plt
 from neuroc_pygs.sec4_time.utils import datasets_maps, algorithms, sampling_modes
 from matplotlib.font_manager import _rebuild
 # print(_rebuild())
-_rebuild() 
+_rebuild()
+
 
 def float_x(x):
     return [float(i) for i in x]
 
+
 base_size = 12
 plt.style.use("grayscale")
-plt.rcParams['font.sans-serif']=['SimHei'] #用来正常显示中文标签
-plt.rcParams['axes.unicode_minus']=False #用来正常显示负号
+plt.rcParams['font.sans-serif'] = ['SimHei']  # 用来正常显示中文标签
+plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
 plt.rcParams["font.size"] = base_size
 
 
@@ -39,14 +41,18 @@ algs = ['gcn', 'gaan']
 for i, mode in enumerate(['cluster']):
     df = {}
     for alg in algs:
-        df[alg] = {'base_times': [], 'opt_times': [], 'baseline': [], 'opt': []}
+        df[alg] = {'base_times': [], 'opt_times': [],
+                   'baseline': [], 'opt': []}
 
     for data in datasets:
-        df_data = pd.read_csv(f'out_batch_csv/models_{mode}_{data}.csv', index_col=0)
+        df_data = pd.read_csv(
+            f'out_batch_csv/models_{mode}_{data}.csv', index_col=0)
         for alg in algs:
             tmp_data = df_data.loc[alg]
-            df[alg]['base_times'].append(float_x([tmp_data['base_sample'], tmp_data['base_move'], tmp_data['base_cal']]))
-            df[alg]['opt_times'].append(float_x([tmp_data['opt_sample'], tmp_data['opt_move'], tmp_data['opt_cal']]))
+            df[alg]['base_times'].append(
+                float_x([tmp_data['base_sample'], tmp_data['base_move'], tmp_data['base_cal']]))
+            df[alg]['opt_times'].append(
+                float_x([tmp_data['opt_sample'], tmp_data['opt_move'], tmp_data['opt_cal']]))
     base_size = 12
     for alg in algs:
         fig, ax = plt.subplots(figsize=(7/2, 5/2), tight_layout=True)
@@ -58,11 +64,15 @@ for i, mode in enumerate(['cluster']):
         colors = [colors[-1], colors[0]]
         # colors = ['blue', 'cyan']
         width = 0.35
-        base_times, opt_times = np.cumsum(np.array(df[alg]['base_times']).T, axis=0) * 1000, np.cumsum(np.array(df[alg]['opt_times']).T, axis=0)*1000
+        base_times, opt_times = np.cumsum(np.array(
+            df[alg]['base_times']).T, axis=0) * 1000, np.cumsum(np.array(df[alg]['opt_times']).T, axis=0)*1000
         for i, times in enumerate([base_times, opt_times]):
-            ax.bar(x + locations[i] * width / 2, times[0], width, color=colors[i], edgecolor='black', hatch="///")
-            ax.bar(x + locations[i] * width / 2, times[1] - times[0], width, color=colors[i], edgecolor='black', bottom=times[0], hatch='...')
-            ax.bar(x + locations[i] * width / 2, times[2] - times[1], width, color=colors[i], edgecolor='black', bottom=times[1], hatch='xxx')
+            ax.bar(x + locations[i] * width / 2, times[0], width,
+                   color=colors[i], edgecolor='black', hatch="///")
+            ax.bar(x + locations[i] * width / 2, times[1] - times[0], width,
+                   color=colors[i], edgecolor='black', bottom=times[0], hatch='...')
+            ax.bar(x + locations[i] * width / 2, times[2] - times[1], width,
+                   color=colors[i], edgecolor='black', bottom=times[1], hatch='xxx')
             # 待做: error bar
 
         ax.set_title(titles[alg], fontsize=base_size+2)
@@ -70,26 +80,30 @@ for i, mode in enumerate(['cluster']):
         ax.set_xticklabels(xticklabels, fontsize=base_size+2)
 
         legend_colors = [Patch(facecolor=c, edgecolor='black') for c in colors]
-        legend_hatchs = [Patch(facecolor='white', edgecolor='black', hatch='xxxx'), Patch(facecolor='white',edgecolor='black', hatch='....'), Patch(facecolor='white', edgecolor='black', hatch='////')]
-        ax.legend(legend_hatchs + legend_colors, ['GPU计算', '数据传输', '采样'] + ['优化前', '优化后'], ncol=2, loc='upper left', fontsize='x-small')
+        legend_hatchs = [Patch(facecolor='white', edgecolor='black', hatch='xxxx'), Patch(
+            facecolor='white', edgecolor='black', hatch='....'), Patch(facecolor='white', edgecolor='black', hatch='////')]
+        ax.legend(legend_hatchs + legend_colors, ['GPU计算', '数据传输', '采样'] + [
+                  '优化前', '优化后'], ncol=2, loc='upper left', fontsize='x-small')
         # if mode == 'cluster':
         #     ax.set_ylim(0, 100)
         # else:
         #     ax.set_ylim(0, 2000)
-        ax.set_ylabel('每批次训练时间 (毫秒)', fontsize=base_size+2)
+        ax.set_ylabel('每批次训练时间 (ms)', fontsize=base_size+2)
         ax.set_xlabel('数据集', fontsize=base_size+2)
-        fig.savefig(f'exp_thesis_figs/batch_figs/exp_batch_datasets_{mode}_batch_{alg}.png')
+        fig.savefig(
+            f'exp4_thesis_figs/batch_figs/exp_batch_datasets_{mode}_batch_{alg}.png', dpi=400)
         plt.close()
-
 
 
 for i, mode in enumerate(['cluster']):
     df = {}
     for alg in algs:
-        df[alg] = {'Baseline': [], 'Optimize': [], 'real_ratio': [], 'exp_ratio': [], 'r1': [], 'y': [], 'z': []}
+        df[alg] = {'Baseline': [], 'Optimize': [], 'real_ratio': [],
+                   'exp_ratio': [], 'r1': [], 'y': [], 'z': []}
 
     for data in datasets:
-        df_data = pd.read_csv(f'out_batch_csv/models_{mode}_{data}.csv', index_col=0)
+        df_data = pd.read_csv(
+            f'out_batch_csv/models_{mode}_{data}.csv', index_col=0)
         for alg in algs:
             df[alg]['Baseline'].append(float(df_data['baseline'][alg]))
             df[alg]['Optimize'].append(float(df_data['opt'][alg]))
@@ -104,20 +118,23 @@ for i, mode in enumerate(['cluster']):
         tab_data = df[alg]
 
         xs = datasets
-        
+
         x = np.arange(len(xs))  # the label locations
         width = 0.35  # the width of the bars
 
         fig, ax = plt.subplots(figsize=(7/2, 5/2), tight_layout=True)
         ax.set_title(titles[alg], fontsize=base_size+2)
-        ax.set_ylabel('50批次训练时间 (秒)', fontsize=base_size+2)
+        ax.set_ylabel('50批次训练时间 (s)', fontsize=base_size+2)
         ax.set_xlabel('数据集', fontsize=base_size+2)
         ax.set_xticks(x)
         ax.set_xticklabels(xs, fontsize=base_size+2)
-        ax.bar(x - width/2, tab_data['Baseline'], width, color=colors[0], edgecolor='black', label='优化前')
-        ax.bar(x + width/2, tab_data['Optimize'], width, color=colors[1], edgecolor='black', label='优化后')
+        ax.bar(x - width/2, tab_data['Baseline'], width,
+               color=colors[0], edgecolor='black', label='优化前')
+        ax.bar(x + width/2, tab_data['Optimize'], width,
+               color=colors[1], edgecolor='black', label='优化后')
         ax.legend()
-        fig.savefig(f'exp_thesis_figs/batch_figs/exp_batch_datasets_{mode}_total_{alg}.png')
+        fig.savefig(
+            f'exp4_thesis_figs/batch_figs/exp_batch_datasets_{mode}_total_{alg}.png', dpi=400)
 
     base_size = 14
     for alg in algs:
@@ -131,17 +148,23 @@ for i, mode in enumerate(['cluster']):
         ax.set_title(titles[alg], fontsize=base_size+2)
         ax.set_ylabel('比值', fontsize=base_size+2)
         ax.set_xlabel('数据集', fontsize=base_size+2)
-        line1, = ax.plot(x, tab_data['exp_ratio'], 'ob', label='理想加速比', linestyle='-')
-        line2, = ax.plot(x, tab_data['real_ratio'], 'Dg', label='实际加速比', linestyle='-')
+        line1, = ax.plot(x, tab_data['exp_ratio'],
+                         'ob', label='理论加速比', linestyle='-')
+        line2, = ax.plot(x, tab_data['real_ratio'],
+                         'Dg', label='实际加速比', linestyle='-')
         line3, = ax.plot(x, tab_data['r1'], '^r', label='优化效果', linestyle='-')
-        
+
         ax2 = ax.twinx()
-        ax2.set_ylabel("耗时比例 (百分比)", fontsize=base_size + 2)
-        line4, = ax2.plot(x, tab_data['y'], 's--', color='black', label='采样耗时占比' + r"$Y$" )
-        line5, = ax2.plot(x, tab_data['z'], 'd--', color='black', label='数据传输耗时占比' + r"$Z$" )
-        plt.legend(handles=[line1, line2, line3, line4, line5], fontsize='xx-small')
+        ax2.set_ylabel("耗时比例 (%)", fontsize=base_size + 2)
+        line4, = ax2.plot(x, tab_data['y'], 's--',
+                          color='black', label='采样耗时占比' + r"$Y$")
+        line5, = ax2.plot(x, tab_data['z'], 'd--',
+                          color='black', label='数据传输耗时占比' + r"$Z$")
+        plt.legend(handles=[line1, line2, line3,
+                            line4, line5], fontsize='xx-small')
         plt.xticks(ticks=x, labels=xs, fontsize=base_size)
         plt.yticks(fontsize=base_size)
-        fig.tight_layout() # 防止重叠
+        fig.tight_layout()  # 防止重叠
 
-        fig.savefig(f'exp_thesis_figs/batch_figs/exp_batch_datasets_{mode}_else_{alg}.png')
+        fig.savefig(
+            f'exp4_thesis_figs/batch_figs/exp_batch_datasets_{mode}_else_{alg}.png', dpi=400)

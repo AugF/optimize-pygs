@@ -78,19 +78,20 @@ def run_model(model='gcn', data='amazon-computers', re_bs=None, mode='cluster'):
 def test():
     dir_path = '/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec4_time/exp_res'
     # for files in ['gaan_amazon-computers']:
-    # exp_model = 'gcn'
-    # for m in [10, 20, 50, 100, 150, 500]:
-    for exp_data in ['reddit']:
-        # exp_data = f'random_100k_{m}k'
-        for exp_model in ['gcn']:
-        # for exp_mode in ['graphsage']:
-            exp_mode = 'cluster'
+    exp_model = 'gcn'
+    for m in [10, 20, 50, 100, 150, 500, 1000, 2000]:
+    # for exp_data in ['reddit']:
+    # if True:
+        exp_data = f'random_50k_{m}k'
+        # for exp_model in ['gcn']:
+        for exp_mode in ['graphsage']:
+            # exp_mode = 'cluster'
             # for exp_pr in [0.01, 0.03, 0.06, 0.1, 0.25, 0.5]:
             # for bs in [64, 128, 256, 512, 1024, 2048]:
             # for N in [10, 20, 50, 80, 100, 200]:
             if True:
                 # args = f'--epochs 30 --num_workers 0 --model {exp_model} --dataset {exp_data} --mode {exp_mode} --relative_batch_size {exp_pr}'
-                args = f'--epochs 50 --num_workers 0 --model {exp_model} --dataset {exp_data} --mode {exp_mode}'
+                args = f'--epochs 30 --num_workers 0 --model {exp_model} --dataset {exp_data} --mode {exp_mode}'
                 # if exp_model == 'gcn':
                 #     args = args + f' --hidden_dims {bs}'
                 # elif exp_model == 'gaan':
@@ -108,7 +109,7 @@ def test():
 
 if __name__ == '__main__':
     # run_model(model=['gcn', 'ggnn', 'gat', 'gaan'], data=['amazon-computers', 'flickr'], re_bs=None, mode=['cluster', 'graphsage'])
-    run_model(model=['gat', 'ggnn'], data=['pubmed', 'amazon-computers', 'coauthor-physics', 'flickr'], re_bs=None, mode=['cluster'])
+    # run_model(model=['gat', 'ggnn'], data=['pubmed', 'amazon-computers', 'coauthor-physics', 'flickr'], re_bs=None, mode=['cluster'])
     # run_model(model=['gcn'], data=['pubmed'], re_bs=[0.01, 0.03, 0.06, 0.1, 0.25, 0.5], mode=['cluster', 'graphsage'])
     # run_model(model=['gaan'], data=['amazon-computers'], re_bs=[0.01, 0.03, 0.06, 0.1, 0.25, 0.5], mode=['cluster', 'graphsage'])
     # run_model(model=['gcn', 'ggnn', 'gat', 'gaan'], data=['com-amazon'], re_bs=None, mode=['graphsage'])
@@ -116,3 +117,4 @@ if __name__ == '__main__':
     # run_model(model=['gcn'], data=['amazon-computers'], re_bs=[0.01, 0.03, 0.06, 0.1, 0.25, 0.5], mode=['cluster', 'graphsage'])
     # run_model(model=['gat'], data=['flickr'], re_bs=[0.01, 0.03, 0.06, 0.1, 0.25, 0.5], mode=['cluster', 'graphsage'])
     # run_model(model=['gcn', 'ggnn', 'gat', 'gaan'], data=['reddit'], re_bs=None, mode=['cluster', 'graphsage'])
+    test()

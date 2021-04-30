@@ -28,7 +28,7 @@ labels = ['随机剪枝', '度数剪枝', 'PageRank剪枝']
 markers = 'oD^sdp'
 linestyles = ['solid', 'dotted', 'dashed', 'dashdot', (0, (5, 5))]
 
-for file in filenames:
+def fun(file, title):
     dd = defaultdict(list)
     xs = batch_sizes[file]
     baselines = []
@@ -46,7 +46,7 @@ for file in filenames:
     for j, c in enumerate(dd.columns):
         ax.plot(dd.index, dd[c], label=labels[j], marker=markers[j], markersize=8, linestyle=linestyles[j])
     ax.plot(dd.index, baselines, label='基准线', linestyle=(0, (5, 1)), linewidth=2, color='blue')
-    ax.set_title(file, fontsize=base_size + 2)
+    ax.set_title(title, fontsize=base_size + 2)
     ax.set_xticks(x)
     ax.set_xticklabels(xs, fontsize=base_size + 2)
     ax.set_ylabel('精度', fontsize=base_size+2)
@@ -55,5 +55,8 @@ for file in filenames:
         ax.legend(fontsize='x-small', ncol=2)
     else:
         ax.legend(fontsize='x-small', ncol=2)
-    fig.savefig(dir_path + f'/exp_figs/exp_memory_inference_motivation_{file.lower()}_acc.png')
+    fig.savefig(dir_path + f'/exp6_thesis_figs/exp_memory_inference_motivation_{file.lower()}_acc.png', dpi=400)
 
+
+fun('SAGE Reddit', 'SAGE reddit')
+fun('ClusterGCN Ogbn-Products', 'ClusterGCN ogbn-products')

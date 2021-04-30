@@ -24,14 +24,31 @@ def box_plot_outliers(data_ser, box_scale=3):
     return up_outlier
 
 
-file_suffix = 'v1'
+def cal_memory(memory):
+    cnt = 0
+    if data == 'reddit_sage':
+        for i in memory:
+            if i > 3 * 1024 * 1024 * 1024:
+                cnt += 1
+        return cnt
+    else:
+        for i in memory:
+            if i > 2 * 1024 * 1024 * 1024:
+                cnt += 1
+        return cnt
+
+file_suffix = 'v0'
 for data in ['reddit_sage', 'cluster_gcn']:
     xs = []
-    for bs in [1024, 2048, 4096, 8192, 16384]:
-        real_path = dir_out + f'/{data}_{bs}_{file_suffix}.csv'
+    if data == 'reddit_sage':
+        re_bs = [8700, 8800, 8900]
+    else:
+        re_bs = [9000, 9100, 9200]
+    for bs in re_bs:
+        real_path = f'exp_diff_res/{data}_{bs}_{file_suffix}.csv'
         df = pd.read_csv(real_path, index_col=0)
         nodes, edges = df['nodes'], df['edges']
         memory = df['memory']
-        up_outliers = box_plot_outliers(memory)
-        xs.append(100 * len(up_outliers) / len(memory))
+        up_outliers = cal_memory(memory)
+        xs.append(up_outliers / len(memory))
     print(data, xs)

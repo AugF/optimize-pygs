@@ -5,15 +5,17 @@ from collections import defaultdict
 from matplotlib.patches import Patch
 from neuroc_pygs.sec4_time.utils import datasets_maps, algorithms, sampling_modes
 from matplotlib.font_manager import _rebuild
-_rebuild() 
+_rebuild()
+
 
 def float_x(x):
     return [float(i) for i in x]
 
+
 base_size = 15
 # plt.style.use("grayscale")
-plt.rcParams['font.sans-serif']=['SimHei'] #用来正常显示中文标签
-plt.rcParams['axes.unicode_minus']=False #用来正常显示负号
+plt.rcParams['font.sans-serif'] = ['SimHei']  # 用来正常显示中文标签
+plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
 plt.rcParams["font.size"] = base_size
 
 root_path = '/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec6_cutting'
@@ -28,7 +30,8 @@ with open(real_path) as f:
             mydata.append([l.strip() for l in line.split('|')][1:])
 
 df = pd.DataFrame(mydata, columns=headers)
-df.index = [df['Model'][i] + '_' + df['Data'][i] + '_' + df['Method'][i] + '_' + df['Per'][i] for i in range(len(df.index))]
+df.index = [df['Model'][i] + '_' + df['Data'][i] + '_' +
+            df['Method'][i] + '_' + df['Per'][i] for i in range(len(df.index))]
 del df['Model'], df['Data'], df['Per'], df['Method']
 
 # 对所有gcn, gat都画一遍
@@ -62,15 +65,19 @@ for model in ['gcn', 'gat']:
         df_data.to_csv(root_path + f'/exp_cutting_res/{model}_{data}.csv')
         fig, ax = plt.subplots(figsize=(7/1.5, 5/1.5), tight_layout=True)
         ax.set_title(data, fontsize=base_size+2)
-        ax.set_xlabel('相对剪枝比例 (百分比)', fontsize=base_size+2)
+        ax.set_xlabel('相对剪枝比例 (%)', fontsize=base_size+2)
         ax.set_ylabel('精度', fontsize=base_size+2)
         ax.set_xticks(range(len(df_data.index)))
-        ax.set_xticklabels([str(int(100 * x)) + '%' for x in xs], fontsize=base_size+2)
+        ax.set_xticklabels(
+            [str(int(100 * x)) + '%' for x in xs], fontsize=base_size+2)
         for j, c in enumerate(df_data.columns):
-            ax.plot(df_data.index, df_data[c], label=labels[j], marker=markers[j], linestyle=linestyles[j], markersize=8)
-        ax.plot(df_data.index, len(df_data.index) * [full_acc], label='基准线', linestyle=(0, (5, 1)), linewidth=2, color='blue')
+            ax.plot(df_data.index, df_data[c], label=labels[j],
+                    marker=markers[j], linestyle=linestyles[j], markersize=8)
+        ax.plot(df_data.index, len(df_data.index) *
+                [full_acc], label='基准线', linestyle=(0, (5, 1)), linewidth=2, color='blue')
         if data in ['amazon-computers', 'amazon-photo']:
             ax.legend(fontsize='x-small', ncol=2)
         else:
             ax.legend(fontsize='small')
-        fig.savefig(root_path + f'/exp_cutting_figs/exp_memory_inference_cutting_methods_{cur_name}.png')
+        fig.savefig(
+            root_path + f'/exp_cutting_figs/exp_memory_inference_cutting_methods_{cur_name}.png', dpi=400)

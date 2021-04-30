@@ -63,4 +63,4 @@ for model in ['gcn', 'gat']:
         #     ax.plot(xlim, [8] * len(xlim), linestyle='dashed', color='b', linewidth=1.5, label='GPU内存上限')
         # ax.legend()
     fig.savefig(os.path.join(PROJECT_PATH, 'sec5_memory',
-                             'exp_figs', f'exp_memory_training_{model}_{mode}_motivation_edges_diff.png'))
+                             'exp_figs', f'exp_memory_training_{model}_{mode}_motivation_edges_diff.png', dpi=400))

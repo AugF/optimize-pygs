@@ -23,8 +23,8 @@ def build_subgraphloader(args, data, Neighbor_Loader=NeighborSampler):
     return subgraph_loader
 
 
-for exp_data in ['reddit']:
-    for exp_model in ['gcn', 'gaan']:
+for exp_data in ['flickr']:
+    for exp_model in ['gcn', 'ggnn', 'gat', 'gaan']:
         for var in [1024]:
             args = get_args()
             args.num_workers = 0

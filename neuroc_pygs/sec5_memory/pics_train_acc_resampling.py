@@ -42,5 +42,5 @@ for j, c in enumerate(df_data.columns):
 ax.set_xticks(np.arange(7))
 ax.set_xticklabels(['Zero', '1%', '3%', '6%', '10%', '20%', '50%'])
 ax.legend()
-fig.savefig(dir_out + f'/exp_memory_training_resampling_acc.png')
+fig.savefig(dir_out + f'/exp_memory_training_resampling_acc.png', dpi=400)
 
