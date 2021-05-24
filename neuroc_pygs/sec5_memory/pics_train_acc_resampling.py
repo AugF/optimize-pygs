@@ -8,14 +8,15 @@ from matplotlib.font_manager import _rebuild
 from neuroc_pygs.configs import PROJECT_PATH
 
 _rebuild()
-
-# plt.style.use("grayscale")
-plt.rcParams['font.sans-serif'] = ['SimHei']  # 用来正常显示中文标签
-plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
+config = {
+    "font.family":'serif',
+    "mathtext.fontset":'stix',
+    "font.serif": ['SimHei'],
+}
+plt.rcParams.update(config)
 plt.rcParams["font.size"] = 18
 
 dir_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_train_res')
-dir_out = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_figs')
 # df = pd.read_csv(dir_path + f'/prove_train_acc_all.csv', index_col=0)
 
 labels = ['GCN Pubmed', 'GCN Coauthor-Physics', 'GAT Pubmed', 'GAT Coauthor-Physics']
@@ -42,5 +43,5 @@ for j, c in enumerate(df_data.columns):
 ax.set_xticks(np.arange(7))
 ax.set_xticklabels(['Zero', '1%', '3%', '6%', '10%', '20%', '50%'])
 ax.legend()
-fig.savefig(dir_out + f'/exp_memory_training_resampling_acc.png', dpi=400)
+fig.savefig(f'exp5_thesis_figs/resampling/exp_memory_training_resampling_acc.png', dpi=400)
 

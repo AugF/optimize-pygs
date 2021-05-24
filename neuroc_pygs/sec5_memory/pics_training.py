@@ -8,9 +8,12 @@ from matplotlib.font_manager import _rebuild
 from neuroc_pygs.configs import PROJECT_PATH
 
 _rebuild()
-# plt.style.use("grayscale")
-plt.rcParams['font.sans-serif'] = ['SimHei']  # 用来正常显示中文标签
-plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
+config = {
+    "font.family":'serif',
+    "mathtext.fontset":'stix',
+    "font.serif": ['SimHei'],
+}
+plt.rcParams.update(config)
 plt.rcParams["font.size"] = 14
 
 dir_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_motivation_diff')
@@ -45,8 +48,8 @@ def fun(model, data, batch_size, predict_model='linear_model'):
                         y_smooth = make_interp_spline(df.index, df[var].values)(x_smooth)
                         ax.plot(x_smooth, y_smooth, label=labels[k], linestyle=linestyles[k])
                         ax.legend(fontsize='x-small')
-                    fig.savefig(f'exp5_thesis_figs/exp_memory_training_{exp_model}_{predict_model}_{exp_data}_{bs}_{var}.png', dpi=400)
+                    fig.savefig(f'exp5_thesis_figs/resampling/exp_memory_training_{exp_model}_{predict_model}_{exp_data}_{bs}_{var}.png', dpi=400)
         
 fun('gat', 'yelp', '180', 'linear_model')
-fun('gat', 'reddit', '180', 'linear_model')
+# fun('gat', 'reddit', '180', 'linear_model')
 

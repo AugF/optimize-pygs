@@ -4,14 +4,17 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 from matplotlib.font_manager import _rebuild
 _rebuild()
+config = {
+    "font.family":'serif',
+    "mathtext.fontset":'stix',
+    "font.serif": ['SimHei'],
+}
 
 base_size = 14
 # plt.style.use("grayscale")
-plt.rcParams['font.sans-serif'] = ['SimHei']  # 用来正常显示中文标签
-plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
+
 plt.rcParams["font.size"] = base_size
 
-dir_out = '/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec6_cutting/exp_cutting_figs'
 names = ['随机剪枝', '度数剪枝', 'PageRank剪枝']
 
 fix_edges = {
@@ -45,13 +48,13 @@ labels = [0.01, 0.1, 0.2, 0.5]
 for i in range(3):
     ax.plot(x, arr1[i], marker=markers[i],
             linestyle=linestyles[i], label=names[i])
-ax.set_xlabel('相对剪枝比例 (%)', fontsize=base_size + 2)
+ax.set_xlabel('相对剪枝比例', fontsize=base_size + 2)
 ax.set_ylabel('耗时 (s)', fontsize=base_size + 2)
 ax.legend(fontsize='small', loc='center')
 ax.set_xticks(labels)
 ax.set_xticklabels([f'{int(100*i)}%' for i in labels])
 fig.savefig(
-    dir_out + f'/exp_memory_inference_cutting_overhead_fix_edges.png', dpi=400)
+    f'exp6_thesis_figs/cutting_overhead/exp_memory_inference_cutting_overhead_fix_edges.png', dpi=400)
 
 # pics fix cutting nums
 fig, ax = plt.subplots(figsize=(7/2, 5/2), tight_layout=True)
@@ -67,5 +70,4 @@ ax.set_ylabel('耗时 (s)', fontsize=base_size + 2)
 ax.legend(fontsize='small')
 ax.set_xticks(labels)
 ax.set_xticklabels([f'{i}k' for i in labels])
-fig.savefig(
-    dir_out + f'/exp_memory_inference_cutting_overhead_fix_cutting_nums.png', dpi=400)
+fig.savefig(f'exp6_thesis_figs/cutting_overhead/exp_memory_inference_cutting_overhead_fix_cutting_nums.png', dpi=400)

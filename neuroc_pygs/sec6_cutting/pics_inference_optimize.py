@@ -8,11 +8,14 @@ from matplotlib.patches import Polygon, Patch
 from neuroc_pygs.configs import PROJECT_PATH
 from neuroc_pygs.options import get_args
 from matplotlib.font_manager import _rebuild
-_rebuild() 
+_rebuild()
+config = {
+    "font.family":'serif',
+    "mathtext.fontset":'stix',
+    "font.serif": ['SimHei'],
+}
 
 plt.style.use("grayscale")
-plt.rcParams['font.sans-serif']=['SimHei'] #用来正常显示中文标签
-plt.rcParams['axes.unicode_minus']=False #用来正常显示负号
 plt.rcParams["font.size"] = 14
 
 colors = ['black', 'white']
@@ -77,5 +80,5 @@ for i, model in enumerate(['reddit_sage', 'cluster_gcn']):
     legend_colors = [Patch(facecolor=colors[0], edgecolor='black'), Patch(facecolor=colors[1], edgecolor='red')]
     ax.legend(legend_colors + [line], ['优化前', '优化后', 'GPU内存限制'], fontsize=10)
 
-fig.savefig(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp6_thesis_figs', f'exp_memory_inference_motivation_optimize.png', dpi=400))
+fig.savefig(f'exp6_thesis_figs/inference/exp_memory_inference_motivation_optimize.png', dpi=400)
 

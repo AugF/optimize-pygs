@@ -8,17 +8,20 @@ from neuroc_pygs.configs import PROJECT_PATH
 from neuroc_pygs.options import get_args
 from matplotlib.font_manager import _rebuild
 _rebuild() 
+config = {
+    "font.family":'serif',
+    "mathtext.fontset":'stix',
+    "font.serif": ['SimHei'],
+}
+plt.rcParams.update(config)
 
 plt.style.use("grayscale")
-plt.rcParams['font.sans-serif']=['SimHei'] #用来正常显示中文标签
-plt.rcParams['axes.unicode_minus']=False #用来正常显示负号
 plt.rcParams["font.size"] = 12
 
 root_path = os.path.join(PROJECT_PATH, 'sec5_memory/exp_automl_datasets_diff')
 ratio_dict = pd.read_csv(root_path + '/regression_mape_res.csv', index_col=0)
 linear_ratio_dict = pd.read_csv(root_path + '/regression_linear_mape_res.csv', index_col=0)
 dir_path = os.path.join(PROJECT_PATH, 'sec5_memory/exp_motivation_diff')
-dir_out = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp5_thesis_figs')
 
 # colors = [colors[-1], colors[0]]
 colors = ['black', 'white']
@@ -62,10 +65,6 @@ def run(predict_model='linear_model', bias=0.001):
                     box_data.append(list(map(lambda x: x/(1024*1024*1024), res)))
             bp = ax.boxplot(box_data, patch_artist=True)
 
-            # for key in ['medians', 'boxes', 'caps', 'fliers']:
-            #     print(bp[key])
-            #     print(len(bp[key]))
-            # color
             numBoxes = len(batch_sizes) * 2
             for i in range(numBoxes):
                 if i % 2 == 1:
@@ -76,20 +75,6 @@ def run(predict_model='linear_model', bias=0.001):
                     # https://matplotlib.org/stable/gallery/statistics/boxplot.html#sphx-glr-gallery-statistics-boxplot-py
                 else:
                     plt.setp(bp['boxes'][i], facecolor=colors[0])
-
-            # medians = list(range(numBoxes))
-            # for i in range(numBoxes):
-            #     box = bp['boxes'][i]
-            #     boxX = []
-            #     boxY = []
-            #     for j in range(len(batch_sizes)):
-            #         boxX.append(box.get_xdata()[j])
-            #         boxY.append(box.get_ydata()[j])
-            #     boxCoords = list(zip(boxX, boxY))
-            #     # Alternate between Dark Khaki and Royal Blue
-            #     k = i % 2
-            #     boxPolygon = Polygon(boxCoords, facecolor=colors[k])
-            #     ax.add_patch(boxPolygon)
             
             ax.set_xticks([1.5, 3.5, 5.5])
             ax.set_xticklabels(batch_sizes, fontsize=14)
@@ -108,7 +93,7 @@ def run(predict_model='linear_model', bias=0.001):
             legend_colors = [Patch(facecolor=colors[0], edgecolor='black'), Patch(facecolor=colors[1], edgecolor='red')]
             ax.legend(legend_colors + [line], ['优化前', '优化后', 'GPU内存限制'], fontsize=10)
 
-        fig.savefig(dir_out + f'/exp_memory_training_{model}_cluster_motivation_{predict_model}_mape_diff_v3.png', dpi=400)
+        fig.savefig(f'exp5_thesis_figs/motivation_opt/exp_memory_training_{model}_cluster_motivation_{predict_model}_mape_diff_v3.png', dpi=400)
 
 
 if __name__ == '__main__':

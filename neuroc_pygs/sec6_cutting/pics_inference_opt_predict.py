@@ -4,12 +4,14 @@ import matplotlib.pyplot as plt
 from collections import defaultdict
 from matplotlib.patches import Patch
 from matplotlib.font_manager import _rebuild
-_rebuild() 
+_rebuild()
+config = {
+    "font.family":'serif',
+    "mathtext.fontset":'stix',
+    "font.serif": ['SimHei'],
+}
 
 base_size = 14
-# plt.style.use("grayscale")
-plt.rcParams['font.sans-serif']=['SimHei'] #用来正常显示中文标签
-plt.rcParams['axes.unicode_minus']=False #用来正常显示负号
 plt.rcParams["font.size"] = base_size
 
 dir_path = '/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec6_cutting'
@@ -55,7 +57,7 @@ def fun(file, title):
         ax.legend(fontsize='x-small', ncol=2)
     else:
         ax.legend(fontsize='x-small', ncol=2)
-    fig.savefig(dir_path + f'/exp6_thesis_figs/exp_memory_inference_motivation_{file.lower()}_acc.png', dpi=400)
+    fig.savefig(f'exp6_thesis_figs/inference/exp_memory_inference_motivation_{file.lower()}_acc.png', dpi=400)
 
 
 fun('SAGE Reddit', 'SAGE reddit')

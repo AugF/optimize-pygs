@@ -8,12 +8,15 @@ import matplotlib.pyplot as plt
 from neuroc_pygs.configs import PROJECT_PATH
 from neuroc_pygs.options import get_args
 from matplotlib.font_manager import _rebuild
-_rebuild() 
+_rebuild()
+config = {
+    "font.family":'serif',
+    "mathtext.fontset":'stix',
+    "font.serif": ['SimHei'],
+}
 
 base_size = 16
 plt.style.use("grayscale")
-plt.rcParams['font.sans-serif']=['SimHei'] #用来正常显示中文标签
-plt.rcParams['axes.unicode_minus']=False #用来正常显示负号
 plt.rcParams["font.size"] = base_size
 
 colors = plt.get_cmap('Greys')(np.linspace(0.15, 0.85, 2))
@@ -57,7 +60,7 @@ for i, model in enumerate(['reddit_sage', 'cluster_gcn']):
     ax.plot(xlim, [line] * len(xlim), linestyle='dashed', color='b', linewidth=1.5, label='GPU内存上限')
     ax.legend()
 
-fig.savefig(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_figs', f'exp_memory_inference_motivation.png', dpi=400))
+fig.savefig(f'exp6_thesis_figs/inference/exp_memory_inference_motivation.png', dpi=400)
 
 
 

@@ -2,13 +2,17 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.font_manager import _rebuild
-# print(_rebuild())
 _rebuild()
+config = {
+    "font.family": 'serif',
+    "mathtext.fontset": 'stix',
+    "font.serif": ['SimHei'],
+}
+plt.rcParams.update(config)
 
 base_size = 12
 plt.style.use("grayscale")
-plt.rcParams['font.sans-serif'] = ['SimHei']  # 用来正常显示中文标签
-plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
+
 plt.rcParams["font.size"] = base_size
 
 titles = {'gcn': 'GCN', 'ggnn': 'GGNN', 'gat': 'GAT', 'gaan': 'GaAN'}
