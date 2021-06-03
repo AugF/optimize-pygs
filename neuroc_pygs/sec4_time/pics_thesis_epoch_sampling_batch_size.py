@@ -25,7 +25,7 @@ titles = {
 
 df = {}
 for mode in ['cluster', 'graphsage']:
-    df_data = pd.read_csv('out_csv/' + mode + '_' +
+    df_data = pd.read_csv('out_epoch_csv/' + mode + '_' +
                           file + '_batch_size.csv', index_col=0)
     df[mode] = {'Baseline': [], 'Optimize': [], 'x': [],
                 'real_ratio': [], 'exp_ratio': [], 'r1': []}

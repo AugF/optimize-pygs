@@ -24,7 +24,7 @@ index = {
 }
 names = ['gaan', 'gcn']
 for i, file in enumerate(['amazon-computers_graph_gaan_100k_1024', 'amazon-computers_graph_gcn_2048_100k']):  # gcn, gaan
-    df_data = pd.read_csv('out_csv/' + file + '.csv', index_col=0)
+    df_data = pd.read_csv('out_epoch_csv/' + file + '.csv', index_col=0)
     df[names[i]] = {'Baseline': [], 'Optimize': [], 'x': [],
                     'real_ratio': [], 'exp_ratio': [], 'r1': []}
     for var in df_data.index:

@@ -21,7 +21,7 @@ files = ['pubmed', 'amazon-computers', 'flickr', 'com-amazon']
 
 df = {}
 for file in files:
-    df_data = pd.read_csv('out_csv/' + file + '.csv', index_col=0)
+    df_data = pd.read_csv('out_epoch_csv/' + file + '.csv', index_col=0)
     df[file] = {'Baseline': [], 'Optimize': [], 'x': [],
                 'real_ratio': [], 'exp_ratio': [], 'r1': []}
     for data in ['gcn', 'ggnn', 'gat', 'gaan']:

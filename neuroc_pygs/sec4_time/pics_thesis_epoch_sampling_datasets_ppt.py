@@ -18,7 +18,7 @@ plt.rcParams["font.size"] = base_size
 
 mode = 'cluster'
 df_data = pd.read_csv(
-    f'out_csv/sampling_model_{mode}_datasets.csv', index_col=0)
+    f'out_epoch_csv/sampling_model_{mode}_datasets.csv', index_col=0)
 alg = 'gcn'
 
 # model

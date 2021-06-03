@@ -17,7 +17,7 @@ plt.style.use("grayscale")
 plt.rcParams["font.size"] = base_size
 
 mode = 'graphsage'
-df_data = pd.read_csv(f'out_csv/sampling_{mode}_models.csv', index_col=0)
+df_data = pd.read_csv(f'out_epoch_csv/sampling_{mode}_models.csv', index_col=0)
 
 data = 'amazon-computers'
 # model

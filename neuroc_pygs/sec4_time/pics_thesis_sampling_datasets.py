@@ -20,7 +20,7 @@ datasets_maps = ['pub', 'amp', 'amc', 'cph', 'fli']
 df_data = []
 for model in ['gcn', 'gaan']:
     for exp_data in datasets:
-        real_path = 'opt_total/' + model + '_' + exp_data + '_' + mode + '_None.csv'
+        real_path = 'out_total_csv/' + model + '_' + exp_data + '_' + mode + '_None.csv'
         res = open(real_path).read().split(',')
         df_data.append(res)
 df = pd.DataFrame(df_data, columns=headers)

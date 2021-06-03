@@ -23,7 +23,7 @@ mode = 'graphsage'
 df_data = []
 for file in ['gcn_pubmed', 'gaan_amazon-computers']:
     for var in [0.01, 0.03, 0.06, 0.1, 0.25, 0.5]:
-        real_path = 'opt_total/' + file + '_' + \
+        real_path = 'out_total_csv/' + file + '_' + \
             mode + '_' + str(var) + '_final.csv'
         res = open(real_path).read().split(',')
         df_data.append(res)

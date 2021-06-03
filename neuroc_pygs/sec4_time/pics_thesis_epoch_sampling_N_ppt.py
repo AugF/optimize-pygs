@@ -29,7 +29,7 @@ linestyles = ['solid', 'dotted', 'dashed', 'dashdot', (0, (5, 5)), (0, (3, 10, 1
 
 df = {}
 for file in ['gcn_pubmed', 'gaan_amazon-computers']:
-    df_data = pd.read_csv('out_csv/sampling_' + file + '_N.csv', index_col=0)
+    df_data = pd.read_csv('out_epoch_csv/sampling_' + file + '_N.csv', index_col=0)
     df[file] = {'Baseline': [], 'Optimize': [], 'x': [],
                 'real_ratio': [], 'exp_ratio': [], 'r1': []}
     print(df_data.index)

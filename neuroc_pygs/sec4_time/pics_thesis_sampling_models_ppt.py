@@ -18,7 +18,7 @@ mode = 'cluster'
 df_data = []
 for exp_data in ['amazon-computers', 'flickr', 'pubmed']:
     for model in ['gcn', 'gaan', 'gat', 'ggnn']:
-        real_path = 'opt_total/' + model + '_' + exp_data + '_' + mode + '_None.csv'
+        real_path = 'out_total_csv/' + model + '_' + exp_data + '_' + mode + '_None.csv'
         res = open(real_path).read().split(',')
         df_data.append(res)
 df = pd.DataFrame(df_data, columns=headers)

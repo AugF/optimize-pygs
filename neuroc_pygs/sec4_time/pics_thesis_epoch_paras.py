@@ -25,7 +25,7 @@ titles = {'gcn': 'GCN', 'ggnn': 'GGNN', 'gat': 'GAT', 'gaan': 'GaAN'}
 
 df = {}
 for file in ['gcn', 'gaan']:
-    df_data = pd.read_csv('out_csv/amazon-computers_' +
+    df_data = pd.read_csv('out_epoch_csv/amazon-computers_' +
                           file + '_batch_size.csv', index_col=0)
     df[file] = {'Baseline': [], 'Optimize': [], 'x': [],
                 'real_ratio': [], 'exp_ratio': [], 'r1': []}

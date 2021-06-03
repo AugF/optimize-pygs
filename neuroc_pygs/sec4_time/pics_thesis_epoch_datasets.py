@@ -22,7 +22,7 @@ for var in ['gcn', 'ggnn', 'gat', 'gaan']:
                'real_ratio': [], 'exp_ratio': [], 'r1': []}
 
 for file in ['pubmed', 'amazon-computers', 'flickr', 'com-amazon']:
-    df_data = pd.read_csv('out_csv/' + file + '.csv', index_col=0)
+    df_data = pd.read_csv('out_epoch_csv/' + file + '.csv', index_col=0)
     for var in ['gcn', 'ggnn', 'gat', 'gaan']:
         df[var]['Baseline'].append(float(df_data['baseline'][var]))
         df[var]['Optimize'].append(float(df_data['opt'][var]))

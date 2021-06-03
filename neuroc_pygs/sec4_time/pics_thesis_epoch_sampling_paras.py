@@ -19,7 +19,7 @@ plt.rcParams["font.size"] = base_size
 titles = {'gcn': 'GCN', 'ggnn': 'GGNN', 'gat': 'GAT', 'gaan': 'GaAN'}
 
 df = {}
-df_data = pd.read_csv('out_csv/model_hidden_size.csv', index_col=0)
+df_data = pd.read_csv('out_epoch_csv/model_hidden_size.csv', index_col=0)
 for file in ['gcn', 'gaan']:
     df[file] = {'Baseline': [], 'Optimize': [], 'x': [],
                 'real_ratio': [], 'exp_ratio': [], 'r1': []}

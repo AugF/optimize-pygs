@@ -46,7 +46,6 @@ def train(model, optimizer, data, loader, device, mode, df, non_blocking=False):
         all_loss.append(loss.item() * batch_size)
         t3 = time.time()
         df.append([t1 - t0, t2 - t1, t3 - t2])
-        # print(f'Batch {_}: sampling time: {t1-t0}, to_time: {t2-t1}, training_time: {t3-t2}')
     return np.sum(all_loss) / int(data.train_mask.sum())
 
 
@@ -114,7 +113,6 @@ def run_all(file_name='sampling_training_final_v2', dir_name='sampling_train', d
                                         print(traceback.format_exc())
                         tab_data.extend(tmp_data)
 
-    # pd.DataFrame(tab_data, columns=headers).to_csv(data_path)
     print(tabulate(tab_data, headers=headers, tablefmt='github'))
 
         
