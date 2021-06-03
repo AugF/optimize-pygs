@@ -1,7 +1,6 @@
 import time, os
 import subprocess
 from tabulate import tabulate
-from neuroc_pygs.samplers.cuda_prefetcher import CudaDataLoader
 from neuroc_pygs.configs import PROJECT_PATH
 
 headers = ['Name', 'Baseline', 'Batch Opt', 'Epoch Opt', 'Opt', 'Batch Ratio%', 'Epoch Raio%', 'Opt%']

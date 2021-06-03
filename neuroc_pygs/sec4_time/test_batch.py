@@ -1,128 +1,86 @@
-import os
-import copy
-import time 
+import time
 import traceback
+import copy
+import torch
 import numpy as np
-import pandas as pd
-
-from tabulate import tabulate
-from torch_geometric.data import Data
-from neuroc_pygs.options import get_args, build_dataset, build_model_optimizer, build_train_loader
-from neuroc_pygs.configs import ALL_MODELS, MODES, EXP_DATASET, PROJECT_PATH, EXP_RELATIVE_BATCH_SIZE
+from collections import defaultdict
+from neuroc_pygs.sec4_time.epoch_utils import train, infer
 from neuroc_pygs.samplers.cuda_prefetcher import CudaDataLoader
+from neuroc_pygs.options import get_args, build_dataset, build_subgraphloader, build_model_optimizer
+from torch_geometric.data import ClusterData, ClusterLoader, NeighborSampler
+
+def build_train_loader(args, data, Cluster_Loader=ClusterLoader, Neighbor_Loader=NeighborSampler):
+    if args.relative_batch_size:
+        args.batch_size = int(data.x.shape[0] * args.relative_batch_size)
+        args.batch_partitions = int(args.cluster_partitions * args.relative_batch_size)
+    if args.mode == 'cluster':
+        cluster_data = ClusterData(data, num_parts=args.cluster_partitions, recursive=False,
+                                   save_dir=args.cluster_save_dir)
+        train_loader = Cluster_Loader(cluster_data, batch_size=args.batch_partitions, shuffle=True,
+                                     num_workers=args.num_workers, pin_memory=args.pin_memory)
+    elif args.mode == 'graphsage': # sizes
+        train_loader = Neighbor_Loader(data.edge_index, node_idx=None,
+                                       sizes=args.sizes, batch_size=args.batch_size, shuffle=True,
+                                       num_workers=args.num_workers, pin_memory=args.pin_memory)
+    return train_loader
 
 
-def train(model, optimizer, data, loader, device, mode, df, non_blocking=False):
-    model.reset_parameters()
-    model.train()
-    all_loss = []
-    loader_num, loader_iter = len(loader), iter(loader)
-    for _ in range(loader_num):
-        t0 = time.time()
-        if mode == 'cluster':
-            batch = next(loader_iter)
-            t1 = time.time()
-            batch = batch.to(device, non_blocking=non_blocking)
-            t2 = time.time()
-            batch_size = batch.train_mask.sum().item()
-            optimizer.zero_grad()
-            logits = model(batch.x, batch.edge_index)
-            loss = model.loss_fn(logits[batch.train_mask], batch.y[batch.train_mask])
-            loss.backward()
-            optimizer.step()
-        elif mode == 'graphsage':
-            batch_size, n_id, adjs = next(loader_iter)
-            x, y = data.x[n_id], data.y[n_id[:batch_size]]
-            t1 = time.time()
-            x, y = x.to(device, non_blocking=non_blocking), y.to(device, non_blocking=non_blocking)
-            adjs = [adj.to(device, non_blocking=non_blocking) for adj in adjs]
-            t2 = time.time()
-            # task3
-            optimizer.zero_grad()
-            logits = model(x, adjs)
-            loss = model.loss_fn(logits, y)
-            loss.backward()
-            optimizer.step()
-        all_loss.append(loss.item() * batch_size)
-        t3 = time.time()
-        df.append([t1 - t0, t2 - t1, t3 - t2])
-    return np.sum(all_loss) / int(data.train_mask.sum())
+# for exp_data in ['amazon-computers']:
+exp_data = 'pubmed'
+max_cnt = 50
+for exp_model in ['gcn']:
+    for exp_mode in ['cluster', 'graphsage']:
+        # for rs in [0.01, 0.03, 0.06, 0.1, 0.25, 0.5]:
+        # for e in [5, 10, 20, 50, 100, 150, 200]:
+        for var in [16, 64, 256, 1024, 10240, 25600]:
+            try:
+                # exp_data = f'random_100k_{e}k'
+                args = get_args()
+                args.num_workers = 0
+                args.dataset, args.model, args.mode = exp_data, exp_model, exp_mode
+                args.gaan_hidden_dims, args.hidden_dims = var, var
+                # args.relative_batch_size = rs
+                print(args)
+                data = build_dataset(args)
+                train_loader = build_train_loader(args, data)
+                subgraph_loader = build_subgraphloader(args, data)
+                if args.mode == 'graphsage':
+                    opt_train_loader = CudaDataLoader(copy.deepcopy(train_loader), device=args.device, sampler='graphsage', data=data)
+                else:
+                # if True:
+                    opt_train_loader = CudaDataLoader(copy.deepcopy(train_loader), device=args.device)
 
+                model, optimizer = build_model_optimizer(args, data)
+                model = model.to(args.device)
+                model.reset_parameters()
 
-def run_batch(file_name='sampling_training_final_v2', dir_name='sampling_train', datasets=EXP_DATASET, models=ALL_MODELS, rses=[None]+EXP_RELATIVE_BATCH_SIZE,
-         modes=MODES, pin_memorys=[True, False], workers=list(range(0, 41, 10)), non_blockings=[True, False]):
-    args = get_args()
-    print(args)
-
-    tab_data = []
-    headers = ['Name', 'Base Sampling', 'Base Transfer', 'Base Training', 'Opt Sampling', 'Opt Transfer', 'Opt Training', 'Base max', 'Base min', 'Opt max', 'Opt min', 'Ratio(%)']
-    for exp_data in datasets:
-        args.dataset = exp_data
-        data = build_dataset(args)
-        print(f'begin {args.dataset} dataset ...')
-        data_path = os.path.join(PROJECT_PATH, 'sec4_time', 'exp_res', file_name + f'_{args.dataset}.csv')
-        print(data_path)
-        if os.path.exists(data_path):
-            continue
-        for exp_model in models: # 4
-            args.model = exp_model
-            model, optimizer = build_model_optimizer(args, data)
-            for exp_rs in rses: # 6
-                if exp_rs != None:
-                    exp_rs = float(exp_rs)
-                args.relative_batch_size = exp_rs
-                for exp_mode in modes: # 2
-                    args.mode = exp_mode
-
-                    model = model.to(args.device) 
-                    for pin_memory in pin_memorys: # 2
-                        args.pin_memory = pin_memory
-                        file_name = f'{args.dataset}_{args.model}_{args.relative_batch_size}_{args.mode}_pin_memory_{args.pin_memory}'
-                        real_path = os.path.join(PROJECT_PATH, 'sec4_time', 'exp_res', dir_name, file_name + '.csv')
-                        if True:
-                            tmp_data = []
-                            for num_workers in workers: # 4
-                                args.num_workers = num_workers
-                                for non_blocking in non_blockings: # 2
-                                    cur_name = file_name + f'_num_workers_{args.num_workers}_non_blocking_{non_blocking}'
-                                    print(cur_name)
-                                    try:
-                                        loader = build_train_loader(args, data)
-                                        opt_loader = CudaDataLoader(copy.deepcopy(loader), device=args.device)
-                                        loader_num = len(loader)
-                                        base_times, opt_times = [], []
-                                        for _ in range(50):
-                                            if _ * loader_num >= 50: break
-                                            train(model, optimizer, data, loader, args.device, args.mode, base_times, non_blocking=non_blocking)
-                                            train(model, optimizer, data, opt_loader, args.device, args.mode, opt_times, non_blocking=non_blocking)
-                                        
-                                        base_times, opt_times = np.array(base_times), np.array(opt_times)
-                                        avg_base_times, avg_opt_times, base_all_times, opt_all_times = np.mean(base_times, axis=0), np.mean(opt_times, axis=0), np.sum(base_times, axis=1), np.sum(opt_times, axis=1)
-                                        base_max_time, base_min_time = np.max(base_all_times), np.min(base_all_times)
-                                        base_time, opt_time, opt_max_time, opt_min_time = np.sum(avg_base_times), np.sum(avg_opt_times), np.max(opt_all_times), np.min(opt_all_times)
-                                        print(avg_base_times, avg_opt_times)
-                                        ratio = 100 * (base_time - opt_time) / base_time
-                                        print(f'base time: {base_time}, opt_time: {opt_time}, ratio: {ratio}')
-                                        res = [cur_name, avg_base_times[0], avg_base_times[1], avg_base_times[2], avg_opt_times[0], avg_opt_times[1], avg_opt_times[2], base_max_time, base_min_time, opt_max_time, opt_min_time, ratio]
-                                        print(','.join([str(r) for r in res]))
-                                        tmp_data.append(res)
-                                        
-                                    except Exception as e:
-                                        print(e.args)
-                                        print("======")
-                                        print(traceback.format_exc())
-                        tab_data.extend(tmp_data)
-
-    print(tabulate(tab_data, headers=headers, tablefmt='github'))
-
-        
-if __name__ == '__main__': # todo: 搞清楚这些数据是否加入默认参数
-    # import sys
-    # default_args = '--hidden_dims 1024 --gaan_hidden_dims 256 --head_dims 128 --heads 4 --d_a 32 --d_v 32 --d_m 32'
-    # sys.argv = [sys.argv[0], '--device', 'cuda:1'] + default_args.split(' ')
-    sys.argv = [sys.argv[0], '--device', 'cuda:1']
-    small_datasets = ['pubmed', 'amazon-photo', 'amazon-computers', 'coauthor-physics', 'flickr', 'com-amazon']
-    run_batch(file_name='sampling_training_tmp', dir_name='sampling_training_final_v3', datasets=small_datasets, models=['gcn', 'gat'], rses=[None],
-         modes=['cluster', 'graphsage'], pin_memorys=[False], workers=[0], non_blockings=[False])
-
-
+                df1, df2 = defaultdict(list), defaultdict(list)
+                df1['cnt'], df2['cnt'] = [0], [0]
+                df1['max_cnt'], df2['max_cnt'] = [max_cnt], [max_cnt]
+                # warm up
+                train(model, optimizer, data, copy.deepcopy(train_loader), args.device, args.mode)
+                #
+                t1 = time.time()
+                for _ in range(100):
+                    train(model, optimizer, data, train_loader, args.device, args.mode, non_blocking=False, df=df1)
+                    if df1['cnt'][0] >= var:
+                        break
+                t2 = time.time()
+                for _ in range(100):
+                    train(model, optimizer, data, opt_train_loader, args.device, args.mode, non_blocking=False, df=df2, opt_flag=True)
+                    # train(model, optimizer, data, opt_train_loader, args.device, args.mode, non_blocking=False, df=df2)
+                    if df2['cnt'][0] >= max_cnt:
+                        break
+                t3 = time.time()
+                baseline, opt = t2 - t1, t3 - t2
+                print(f'model: {exp_model}, data: {exp_data}, baseline: {baseline}, opt: {opt}, ratio: {opt/baseline}')
+                avg_sample, avg_move, avg_cal = np.mean(df1['sample']), np.mean(df1['move']), np.mean(df1['cal'])
+                y, z = avg_sample / (avg_sample + avg_move + avg_cal), avg_move / (avg_sample + avg_move + avg_cal)
+                exp_ratio = 1 / var + (var - 1) * max(y, z, 1 - y - z) / var
+                print(f'Baseline: sample: {avg_sample}, move: {avg_move}, cal: {avg_cal}')
+                print(f"Opt: sample: {np.mean(df2['sample'])}, move: {np.mean(df2['move'])}, cal: {np.mean(df2['cal'])}")
+                print(f'y: {y}, z: {z}, exp_ratio: {exp_ratio}')
+            except Exception as e:
+                print(e.args)
+                print(traceback.format_exc())
+                continue

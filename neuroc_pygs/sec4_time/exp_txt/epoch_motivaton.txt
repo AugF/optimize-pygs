@@ -1,0 +1,6 @@
+GCN amazon-computers
+full-batch
+[0.12717956 0.05978919]
+
+sampling
+[3.53070061 6.20208459]
