@@ -49,7 +49,7 @@ def train(model, optimizer, data, loader, device, mode, df, non_blocking=False):
     return np.sum(all_loss) / int(data.train_mask.sum())
 
 
-def run_all(file_name='sampling_training_final_v2', dir_name='sampling_train', datasets=EXP_DATASET, models=ALL_MODELS, rses=[None]+EXP_RELATIVE_BATCH_SIZE,
+def run_batch(file_name='sampling_training_final_v2', dir_name='sampling_train', datasets=EXP_DATASET, models=ALL_MODELS, rses=[None]+EXP_RELATIVE_BATCH_SIZE,
          modes=MODES, pin_memorys=[True, False], workers=list(range(0, 41, 10)), non_blockings=[True, False]):
     args = get_args()
     print(args)
@@ -117,11 +117,12 @@ def run_all(file_name='sampling_training_final_v2', dir_name='sampling_train', d
 
         
 if __name__ == '__main__':
-    import sys
-    default_args = '--hidden_dims 1024 --gaan_hidden_dims 256 --head_dims 128 --heads 4 --d_a 32 --d_v 32 --d_m 32'
-    sys.argv = [sys.argv[0], '--device', 'cuda:1'] + default_args.split(' ')
+    # import sys
+    # default_args = '--hidden_dims 1024 --gaan_hidden_dims 256 --head_dims 128 --heads 4 --d_a 32 --d_v 32 --d_m 32'
+    # sys.argv = [sys.argv[0], '--device', 'cuda:1'] + default_args.split(' ')
+    sys.argv = [sys.argv[0], '--device', 'cuda:1']
     small_datasets = ['pubmed', 'amazon-photo', 'amazon-computers', 'coauthor-physics', 'flickr', 'com-amazon']
-    run_all(file_name='sampling_training_tmp', dir_name='sampling_training_final_v3', datasets=small_datasets, models=['gcn', 'gat'], rses=[None],
+    run_batch(file_name='sampling_training_tmp', dir_name='sampling_training_final_v3', datasets=small_datasets, models=['gcn', 'gat'], rses=[None],
          modes=['cluster', 'graphsage'], pin_memorys=[False], workers=[0], non_blockings=[False])
 
 
