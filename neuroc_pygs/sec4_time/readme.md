@@ -23,11 +23,11 @@ pics_thesis_batch_xxx(inferxxx).py: 绘图文件
 
 ### 核心文件
 
-opt_full_eval.py: 全数据方式评估进程程序
-opt_full_train.py: 全数据方式训练进程程序
+epoch_opt_full_eval.py: 全数据方式评估进程程序
+epoch_opt_full_train.py: 全数据方式训练进程程序
 
-opt_eval.py: 采样的评估程序
-opt_train.py: 采样的训练程序
+epoch_opt_sampling_eval.py: 采样的评估程序
+epoch_opt_sampling_train.py: 采样的训练程序
 
 本地文件共享：
 exp_chekpoints
@@ -41,8 +41,8 @@ epochs.py: 分批训练方式，优化效果运行文件
 full_epochs.py: 全数据训练方式，优化效果运行文件。
 
 
-base_epoch.py: 分批训练方式，"优化前"训练方式
-base_full_epoch.py: 全数据方式，"优化前"训练方式
+epoch_base_sampling.py: 分批训练方式，"优化前"训练方式
+epoch_base_full.py: 全数据方式，"优化前"训练方式
 
 epochs_utils: 分批训练方式和全数据训练方式的train, test, infer函数文件
 
@@ -61,15 +61,14 @@ utils.py: 绘图的基本函数文件
 
 ### 核心文件
 
-opt_full_eval.py: 全数据方式评估进程程序
-opt_full_train.py: 全数据方式训练进程程序
+epoch_opt_full_eval.py: 全数据方式评估进程程序
+epoch_opt_full_train.py: 全数据方式训练进程程序
 
-opt_eval.py: 采样的评估程序
-opt_train.py: 采样的训练程序
+epoch_opt_sampling_eval.py: 采样的评估程序
+epoch_opt_sampling_train.py: 采样的训练程序
 
 
 ## 总目录结构
 
-out_batch_csv:
-out_epoch_csv:
-out_total_csv:
+- 
+- test_xx: 运行文件
