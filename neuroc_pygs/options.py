@@ -29,10 +29,8 @@ def get_args():
                         default=64, help="hidden layer output dims")
     parser.add_argument('--heads', type=int, default=8,
                         help="gat or gaan model: heads")
-    # head_dims * heads = hidden_dims
     parser.add_argument('--head_dims', type=int, default=8,
                         help="gat model: head dims")
-    # d_v * heads = hidden_dims?
     parser.add_argument('--d_v', type=int, default=8,
                         help="gaan model: vertex's dim")
     parser.add_argument('--d_a', type=int, default=8,
@@ -44,7 +42,7 @@ def get_args():
 
     parser.add_argument('--seed', type=int, default=1, help="random seed")
     parser.add_argument('--device', type=str,
-                        default='cuda:1', help='[cpu, cuda:id]')
+                        default='cuda:0', help='[cpu, cuda:id]')
     parser.add_argument('--cpu', action='store_true',
                         default=False, help='use cpu, not use gpu')
     parser.add_argument('--lr', type=float, default=0.01,

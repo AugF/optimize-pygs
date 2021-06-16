@@ -21,7 +21,7 @@ dir_out = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_train_figs')
 ratio_dict = pd.read_csv(os.path.join(PROJECT_PATH, 'sec5_memory/exp_automl_datasets_diff', 'regression_mape_res.csv'), index_col=0)
 ratio_dict = pd.read_csv(os.path.join(PROJECT_PATH, 'sec5_memory/exp_automl_datasets_diff', 'regression_linear_mape_res.csv'), index_col=0)
 
-
+# 实际的展示前后的图
 def fun(model, data, batch_size, predict_model='linear_model'):
     linestyles = ['solid', 'dashed', 'dashdot', (0, (5, 5)), (0, (3, 10, 1, 10))]
     y_labels = ['训练损失', '测试集精度']

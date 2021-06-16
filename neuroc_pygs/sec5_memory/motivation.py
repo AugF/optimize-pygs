@@ -7,11 +7,14 @@ import pandas as pd
 from collections import defaultdict
 from torch_geometric.data import ClusterData, ClusterLoader, NeighborSampler
 from neuroc_pygs.configs import EXP_DATASET, ALL_MODELS, EXP_RELATIVE_BATCH_SIZE, MODES, PROJECT_PATH
-from neuroc_pygs.options import get_args, build_dataset, build_model_optimizer
+from neuroc_pygs.options import get_args, build_dataset, build_model_optimizer, build_train_loader
 
+# 文件保存目录
+# dir_path = os.path.join(PROJECT_PATH, 'sec5_memory/out_motivation_csv')
+dir_path = os.path.join(PROJECT_PATH, 'sec5_memory/out_linear_model_csv')
+max_cnt = 120
 
-dir_path = os.path.join(PROJECT_PATH, 'sec5_memory/exp_motivation_diff')
-
+# 训练
 def train(model, data, train_loader, optimizer, args, df, cnt):
     model = model.to(args.device) # special
     device = args.device
@@ -44,12 +47,12 @@ def train(model, data, train_loader, optimizer, args, df, cnt):
         print(f'batch {i}, train loss: {loss.item()}, train acc: {acc}')
         print(f'batch {i}, nodes:{node}, edges: {edge}, memory: {memory}, diff_memory: {memory-current_memory}')
         cnt += 1
-        if cnt >= 40:
+        if cnt >= max_cnt: 
             break
     return df, cnt
 
 
-
+# 推理
 @torch.no_grad()
 def infer(model, data, subgraphloader):
     model.eval()
@@ -64,22 +67,6 @@ def infer(model, data, subgraphloader):
         losses.append(loss.item())
         accs.append(acc)
     return accs, losses
-
-
-def build_train_loader(args, data, Cluster_Loader=ClusterLoader, Neighbor_Loader=NeighborSampler):
-    if args.relative_batch_size:
-        args.batch_size = int(data.x.shape[0] * args.relative_batch_size)
-        args.batch_partitions = int(args.cluster_partitions * args.relative_batch_size)
-    if args.mode == 'cluster':
-        cluster_data = ClusterData(data, num_parts=args.cluster_partitions, recursive=False,
-                                   save_dir=args.cluster_save_dir)
-        train_loader = Cluster_Loader(cluster_data, batch_size=args.batch_partitions, shuffle=True,
-                                     num_workers=args.num_workers, pin_memory=args.pin_memory)
-    elif args.mode == 'graphsage': # sizes
-        train_loader = Neighbor_Loader(data.edge_index, node_idx=None,
-                                       sizes=args.sizes, batch_size=args.batch_size, shuffle=True,
-                                       num_workers=args.num_workers, pin_memory=args.pin_memory)
-    return train_loader
 
 
 def run_one(file_name, args):
@@ -101,9 +88,9 @@ def run_one(file_name, args):
             print('start...')
             res = defaultdict(list)
             cnt = 0
-            for _ in range(40):
+            for _ in range(max_cnt):
                 res, cnt = train(model, data, train_loader, optimizer, args, res, cnt)
-                if cnt >= 40:
+                if cnt >= max_cnt:
                     break
             pd.DataFrame(res).to_csv(real_path)
         except Exception as e:
@@ -130,31 +117,11 @@ def run_all(exp_datasets=EXP_DATASET, exp_models=ALL_MODELS, exp_modes=MODES, ex
                 re_bs = [175, 180, 185]
             for rs in re_bs:
                 args.batch_partitions = rs
-                file_name = '_'.join([args.dataset, args.model, str(rs), args.mode, 'v2'])
+                file_name = '_'.join([args.dataset, args.model, str(rs), args.mode])
                 run_one(file_name, args)
                 gc.collect()           
     return
 
-
-def run_motivation(exp_datasets=EXP_DATASET, exp_models=ALL_MODELS, exp_modes=MODES, exp_relative_batch_sizes=EXP_RELATIVE_BATCH_SIZE):
-    args = get_args()
-    print(f"device: {args.device}")
-    for exp_data in ['yelp', 'reddit']:
-    # for exp_data in ['reddit']:
-        args.dataset = exp_data
-        print('build data success')
-        for exp_model in ['gcn', 'gat']:
-            args.model = exp_model
-            if exp_data == 'reddit' and exp_model == 'gat':
-                re_bs = [170, 175, 180]
-            else:
-                re_bs = [175, 180, 185]
-            for rs in re_bs:
-                args.batch_partitions = rs
-                file_name = '_'.join([args.dataset, args.model, str(rs), args.mode, 'v2'])
-                run_one(file_name, args)
-                gc.collect()           
-    return
 
 def test_run_one():
     args = get_args()
@@ -167,7 +134,6 @@ def test_run_one():
 
 if __name__ == '__main__':
     import sys
-    default_args = ''
-    # default_args = '--hidden_dims 1024 --gaan_hidden_dims 256 --head_dims 128 --heads 4 --d_a 32 --d_v 32 --d_m 32'
-    sys.argv = [sys.argv[0], '--device', 'cuda:2', '--num_workers', '0'] + default_args.split(' ')
+    default_args = '--hidden_dims 1024 --gaan_hidden_dims 256 --head_dims 128 --heads 4 --d_a 32 --d_v 32 --d_m 32'
+    sys.argv = [sys.argv[0], '--device', 'cuda:0', '--num_workers', '0'] + default_args.split(' ')
     run_all()

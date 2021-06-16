@@ -21,6 +21,7 @@ from neuroc_pygs.sec5_memory.configs import MODEL_PARAS
 
 dir_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_automl_datasets_diff')
 
+
 def train(model, batch, optimizer):
     model.train()
     optimizer.zero_grad()
@@ -28,6 +29,33 @@ def train(model, batch, optimizer):
     loss = model.loss_fn(logits[batch.train_mask], batch.y[batch.train_mask])
     loss.backward()
     optimizer.step()
+
+
+def run_linear():
+    args = get_args()
+    print(args)
+    data = build_dataset(args)
+    model, optimizer = build_model_optimizer(args, data)
+    model = model.to(args.device)
+    torch.cuda.reset_max_memory_allocated(args.device)
+    torch.cuda.empty_cache()
+    memory = torch.cuda.memory_stats(args.device)["allocated_bytes.all.current"]
+    print(f'device: {args.device}, model memory: {memory}, model: {args.model}')
+
+    data = data.to(args.device)
+    peak_memorys = []
+    for epoch in range(5): # 实验测试都一样
+        train(model, data, optimizer)
+        peak_memory = torch.cuda.memory_stats(args.device)["allocated_bytes.all.peak"]
+        torch.cuda.reset_max_memory_allocated(args.device)
+        torch.cuda.empty_cache()
+        print(f'Epoch: {epoch}, memory: {memory}, peak_memory: {peak_memory}, differ memory: {peak_memory - memory}')
+        memory = torch.cuda.memory_stats(args.device)["allocated_bytes.all.current"]
+        if epoch > 0:
+            peak_memorys.append(peak_memory)
+    res = [args.dataset, data.num_nodes, data.num_edges, np.mean(peak_memory), np.mean(peak_memory) - memory]
+    print(res)
+    return res
 
 
 def run_automl():
@@ -58,31 +86,24 @@ def run_automl():
     return res
 
 
-def run_linear():
-    args = get_args()
-    print(args)
-    data = build_dataset(args)
-    model, optimizer = build_model_optimizer(args, data)
-    model = model.to(args.device)
-    torch.cuda.reset_max_memory_allocated(args.device)
-    torch.cuda.empty_cache()
-    memory = torch.cuda.memory_stats(args.device)["allocated_bytes.all.current"]
-    print(f'device: {args.device}, model memory: {memory}, model: {args.model}')
-
-    data = data.to(args.device)
-    peak_memorys = []
-    for epoch in range(5): # 实验测试都一样
-        train(model, data, optimizer)
-        peak_memory = torch.cuda.memory_stats(args.device)["allocated_bytes.all.peak"]
-        torch.cuda.reset_max_memory_allocated(args.device)
-        torch.cuda.empty_cache()
-        print(f'Epoch: {epoch}, memory: {memory}, peak_memory: {peak_memory}, differ memory: {peak_memory - memory}')
-        memory = torch.cuda.memory_stats(args.device)["allocated_bytes.all.current"]
-        if epoch > 0:
-            peak_memorys.append(peak_memory)
-    res = [args.dataset, data.num_nodes, data.num_edges, np.mean(peak_memory), np.mean(peak_memory) - memory]
-    print(res)
-    return res
+def run_dataset(model): # linear model
+    headers = ['Name', 'Nodes', 'Edges', 'Peak Memory', 'Differ Memory']
+    default_args = '--hidden_dims 1024 --gaan_hidden_dims 256 --head_dims 128 --heads 4 --d_a 32 --d_v 32 --d_m 32'
+    tab_data = []
+    t1 = time.time()
+    vars_set = range(5000, 100001, 5000)
+    for nodes in vars_set:
+        for edges in vars_set:
+            exp_data = f'random_{int(nodes/1000)}k_{int(edges/1000)}k'
+            print(exp_data)
+            if not os.path.exists('/mnt/data/wangzhaokang/wangyunpan/data/' + exp_data):
+                continue
+            sys.argv = [sys.argv[0], '--dataset', exp_data, '--device', 'cuda:2', '--model', model] + default_args.split(' ')
+            tab_data.append(run_linear())
+            gc.collect()
+    t2 = time.time()
+    pd.DataFrame(tab_data, columns=headers).to_csv(os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_automl_datasets_final', f'{model}_linear_model_final_v2.csv'))
+    return t2 - t1
 
 
 def run_automl_dataset(model):
@@ -98,7 +119,7 @@ def run_automl_dataset(model):
             print(exp_data)
             if not os.path.exists('/mnt/data/wangzhaokang/wangyunpan/data/' + exp_data):
                 continue
-            sys.argv = [sys.argv[0], '--dataset', exp_data, '--device', 'cuda:2', '--model', model] + default_args.split(' ')
+            sys.argv = [sys.argv[0], '--dataset', exp_data, '--device', 'cuda:0', '--model', model] + default_args.split(' ')
             try:
                 tab_data.append(run_automl())
                 gc.collect()
@@ -143,7 +164,6 @@ def run_automl_dataset(model):
                     print(e.args)
                     print(traceback.format_exc())
     pd.DataFrame(tab_data).to_csv(dir_path + f'/{model}_classes_automl_model_diff_v2.csv')
-
     
     tab_data = []
     init_argv = [sys.argv[0], '--device', 'cuda:2', '--model', model]
@@ -163,32 +183,13 @@ def run_automl_dataset(model):
     return t2 - t1, t3 - t1
 
 
-def run_dataset(model):
-    headers = ['Name', 'Nodes', 'Edges', 'Peak Memory', 'Differ Memory']
-    default_args = '--hidden_dims 1024 --gaan_hidden_dims 256 --head_dims 128 --heads 4 --d_a 32 --d_v 32 --d_m 32'
-    tab_data = []
-    t1 = time.time()
-    vars_set = range(5000, 100001, 5000)
-    for nodes in vars_set:
-        for edges in vars_set:
-            exp_data = f'random_{int(nodes/1000)}k_{int(edges/1000)}k'
-            print(exp_data)
-            if not os.path.exists('/mnt/data/wangzhaokang/wangyunpan/data/' + exp_data):
-                continue
-            sys.argv = [sys.argv[0], '--dataset', exp_data, '--device', 'cuda:2', '--model', model] + default_args.split(' ')
-            tab_data.append(run_linear())
-            gc.collect()
-    t2 = time.time()
-    pd.DataFrame(tab_data, columns=headers).to_csv(os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_automl_datasets_final', f'{model}_linear_model_final_v2.csv'))
-    return t2 - t1
-
-def build_datasets():
+def build_datasets(): # linear model
     for model in ['gcn', 'gat']:
         use_time = run_dataset(model)
         print(f'{model} build datasets use time: {use_time}s')
 
 
-def build_automl_datasets():
+def build_automl_datasets(): # random regression
     for model in ['gcn', 'gat']:
         linear_model_use_time, automl_use_time = run_automl_dataset(model)
         print(f'{model} build datasets use time, line_model: {linear_model_use_time}, automl: {automl_use_time}s')

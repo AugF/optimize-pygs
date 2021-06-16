@@ -155,9 +155,9 @@ def test_run_one():
 
 if __name__ == '__main__':
     import sys
-    os.environ["CUDA_VISIBLE_DEVICES"] = '1,2'
+    os.environ["CUDA_VISIBLE_DEVICES"] = '0'
     default_args = '--hidden_dims 1024 --gaan_hidden_dims 256 --head_dims 128 --heads 4 --d_a 32 --d_v 32 --d_m 32'
-    sys.argv = [sys.argv[0], '--device', 'cuda:2', '--num_workers', '0'] + default_args.split(' ')
+    sys.argv = [sys.argv[0], '--device', 'cuda:0', '--num_workers', '0'] + default_args.split(' ')
     for model in ['gcn', 'gat']:
         for predict_model in ['automl']:
             run_all(predict_model, model)
