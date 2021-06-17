@@ -17,7 +17,7 @@ plt.rcParams.update(config)
 plt.rcParams["font.size"] = 14
 
 dir_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_motivation_diff')
-dir_out = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_train_figs')
+dir_out = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp5_thesis_figs')
 ratio_dict = pd.read_csv(os.path.join(PROJECT_PATH, 'sec5_memory/exp_automl_datasets_diff', 'regression_mape_res.csv'), index_col=0)
 ratio_dict = pd.read_csv(os.path.join(PROJECT_PATH, 'sec5_memory/exp_automl_datasets_diff', 'regression_linear_mape_res.csv'), index_col=0)
 

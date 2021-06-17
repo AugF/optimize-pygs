@@ -81,9 +81,9 @@ def epoch(discard_per=0.01, df=None):
     return final_test_acc
 
 
-headers = ['Model', 'Data', 'Per', 'Acc', 'Use time']
-small_datasets =  ['amazon-computers', 'amazon-photo', 'flickr', 'pubmed', 'coauthor-physics']
+headers = ['Model', 'Data', 'Per', 'Acc']
 config_paras = pd.read_csv("/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec5_memory/exp_res/max_res.csv", index_col=0)
+
 
 # 不同模型
 def run(models, datasets):
@@ -99,7 +99,7 @@ def run(models, datasets):
             
 
             for discard_per in [0, 0.01, 0.03, 0.06, 0.1, 0.2, 0.5]:
-                real_path = dir_out + f'/{model}_{data}_{str(int(100*discard_per))}_final_acc.csv'
+                real_path = dir_out + f'/{model}_{data}_{str(int(100*discard_per))}.csv'
                 if os.path.exists(real_path):
                     continue
                 dd = defaultdict(list)
@@ -107,9 +107,7 @@ def run(models, datasets):
                 try:
                     for run in range(20):
                         sys.argv = [sys.argv[0], '--model', model, '--dataset', data, '--epoch', '40', '--device', 'cuda:0', '--seed', str(run)] + config_str.split(' ')
-                        t1 = time.time()
                         final_test_acc = epoch(discard_per)
-                        t2 = time.time()
                         test_accs.append(final_test_acc)
                 except Exception as e:
                     print(e)
@@ -118,5 +116,4 @@ def run(models, datasets):
 
 
 if __name__ == '__main__':
-    run(models=['gcn', 'ggnn', 'gaan'], datasets=['pubmed'])
-    run(models=['gat'], datasets=small_datasets)
+    run(models=['gcn', 'gat'], datasets=['pubmed', 'coauthor-physics'])

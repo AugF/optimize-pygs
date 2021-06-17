@@ -16,8 +16,7 @@ config = {
 plt.rcParams.update(config)
 plt.rcParams["font.size"] = 18
 
-dir_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_train_res')
-# df = pd.read_csv(dir_path + f'/prove_train_acc_all.csv', index_col=0)
+dir_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'out_train_csv')
 
 labels = ['GCN Pubmed', 'GCN Coauthor-Physics', 'GAT Pubmed', 'GAT Coauthor-Physics']
 markers = 'oD^sdp'
@@ -26,7 +25,7 @@ linestyles = ['solid', 'dotted', 'dashed', 'dashdot', (0, (5, 5)), (0, (3, 10, 1
 fig, ax = plt.subplots(figsize=(7, 5), tight_layout=True)
 df_data = defaultdict(list)
 for model in ['gcn', 'gat']:
-    df = pd.read_csv(dir_path + f'/prove_train_acc_{model}_v3.csv', index_col=0)
+    df = pd.read_csv(dir_path + f'/prove_train_acc_{model}.csv', index_col=0)
     df.index = [f"{df['Model'][i]}_{df['Data'][i]}_{df['Per'][i]}" for i in range(len(df.index))]
     for data in ['pubmed', 'coauthor-physics']:
         cur_name = model + '_' + data
