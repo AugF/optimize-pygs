@@ -189,16 +189,11 @@ def build_datasets(): # linear model
         print(f'{model} build datasets use time: {use_time}s')
 
 
-def build_automl_datasets(): # random regression
+def build_random_forest_datasets(): # random regression
     for model in ['gcn', 'gat']:
         linear_model_use_time, automl_use_time = run_automl_dataset(model)
         print(f'{model} build datasets use time, line_model: {linear_model_use_time}, automl: {automl_use_time}s')
 
 
 if __name__ == '__main__':
-    build_automl_datasets()
-    # build_datasets()
-    # run_exp()
-    # reg = load(dir_path + f'/gcn_linear_model_v1.pth')
-    # res = reg.predict([[85000, 85000]])
-    # print(res)
+    build_random_forest_datasets()

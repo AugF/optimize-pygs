@@ -1,4 +1,4 @@
-import os
+import os, sys
 import gc
 import torch
 import traceback
@@ -9,10 +9,6 @@ from torch_geometric.data import ClusterData, ClusterLoader, NeighborSampler
 from neuroc_pygs.configs import EXP_DATASET, ALL_MODELS, EXP_RELATIVE_BATCH_SIZE, MODES, PROJECT_PATH
 from neuroc_pygs.options import get_args, build_dataset, build_model_optimizer, build_train_loader
 
-# 文件保存目录
-# dir_path = os.path.join(PROJECT_PATH, 'sec5_memory/out_motivation_csv')
-dir_path = os.path.join(PROJECT_PATH, 'sec5_memory/out_linear_model_csv')
-max_cnt = 120
 
 # 训练
 def train(model, data, train_loader, optimizer, args, df, cnt):
@@ -123,17 +119,29 @@ def run_all(exp_datasets=EXP_DATASET, exp_models=ALL_MODELS, exp_modes=MODES, ex
     return
 
 
-def test_run_one():
-    args = get_args()
-    data = build_dataset(args)
-    model, optimizer = build_model_optimizer(args, data)
-    model = model.to(args.device)
-    file_name = '_'.join([args.dataset, args.model, str(args.relative_batch_size), args.mode])
-    run_one(file_name, args, model, data, optimizer)
-
-
-if __name__ == '__main__':
-    import sys
+def collect_motivation_info():
+    dir_path = os.path.join(PROJECT_PATH, 'sec5_memory/out_motivation_csv')
+    max_cnt = 40
     default_args = '--hidden_dims 1024 --gaan_hidden_dims 256 --head_dims 128 --heads 4 --d_a 32 --d_v 32 --d_m 32'
     sys.argv = [sys.argv[0], '--device', 'cuda:0', '--num_workers', '0'] + default_args.split(' ')
     run_all()
+
+
+def build_linear_model_dataset():
+    dir_path = os.path.join(PROJECT_PATH, 'sec5_memory/out_linear_model_csv')
+    max_cnt = 120    
+    default_args = '--hidden_dims 1024 --gaan_hidden_dims 256 --head_dims 128 --heads 4 --d_a 32 --d_v 32 --d_m 32'
+    sys.argv = [sys.argv[0], '--device', 'cuda:0', '--num_workers', '0'] + default_args.split(' ')
+    run_all()
+    
+    # 185单独计算
+    default_args = '--hidden_dims 1024 --gaan_hidden_dims 256 --head_dims 128 --heads 4 --d_a 32 --d_v 32 --d_m 32 --model gat --data reddit --batch_partitions 185'
+    sys.argv = [sys.argv[0], '--device', 'cuda:0', '--num_workers', '0'] + default_args.split(' ')
+    args = get_args()
+    file_name = '_'.join([args.dataset, args.model, str(args.batch_partitions), args.mode])
+    run_one(file_name, args)
+
+
+if __name__ == '__main__':
+    collect_motivation_info()
+    # build_linear_model_dataset()

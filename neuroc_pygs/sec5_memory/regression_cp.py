@@ -33,7 +33,7 @@ def run_linear_model(model='gcn', data='reddit'):
     df = pd.read_csv(real_path, index_col=0).values
     X, y = np.array(df[:, :2], dtype=np.float32), np.array(df[:, -1], dtype=np.float32)
     reg = LinearRegression()
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=20, random_state=0)
     reg.fit(X_train, y_train)
     y_pred = reg.predict(X_test) 
     r2 = r2_score(y_test, y_pred)

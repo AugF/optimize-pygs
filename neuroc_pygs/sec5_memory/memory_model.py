@@ -26,9 +26,30 @@ base_size = 12
 plt.style.use("grayscale")
 plt.rcParams['axes.unicode_minus']=False
 
-dir_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'out_random_forest_csv')
+dir_path = os.path.join(PROJECT_PATH, 'sec5_memory')
+
+# linear model
+def get_linear_model(model='gcn', data='reddit', bs=180):
+    real_path = dir_path + f'/out_linear_model_csv/{data}_{model}_{bs}_cluster.csv'
+    df = pd.read_csv(real_path, index_col=0).values
+    X, y = np.array(df[:, :2], dtype=np.float32), np.array(df[:, -1], dtype=np.float32)
+    reg = LinearRegression()
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=20, random_state=0)
+    reg.fit(X_train, y_train)
+    y_pred = reg.predict(X_test) 
+    r2 = r2_score(y_test, y_pred)
+    mape = mean_absolute_percentage_error(y_test, y_pred)
+    return mape, r2
 
 
+def run_linear_model():
+    for model in ['gcn', 'gat']:
+        for data in ['reddit', 'yelp']:
+            for bs in [175, 180, 185]:
+                res = run_linear_model(model=model, data=data, bs=bs)
+                print(res)
+
+# random forest
 def make_contrast(X, y):
     filenames = ['Random Forest', 'GBDT', 'Linear Regreesion', 'AdaBoost', 'DecisionTree']
     reg1 = RandomForestRegressor(random_state=1) # Random Forest
@@ -49,26 +70,10 @@ def make_contrast(X, y):
             df_mape[filenames[i]].append(mape)
     return df_r2, df_mape
 
-
-def run_linear_model(model='gcn', data='reddit'):
-    real_path = dir_path + f'/{model}_{data}_automl_model.csv'
-    df = pd.read_csv(real_path, index_col=0).values
-    X, y = np.array(df[:, :2], dtype=np.float32), np.array(df[:, -1], dtype=np.float32)
-    reg = LinearRegression()
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
-    reg.fit(X_train, y_train)
-    y_pred = reg.predict(X_test) 
-    r2 = r2_score(y_test, y_pred)
-    mape = mean_absolute_percentage_error(y_test, y_pred)
-    print(f'r2={r2}, mape={mape}')
-    dump(reg, dir_path + f'/{model}_{data}_linear_model_diff_v2.pth')
-    return mape, r2
-
-
-def run_automl(files, model='gcn', file_type='automl'):
+def pics_random_forest(files, model='gcn', file_type='random_forest'):
     X, y = [], []
     for file in files:
-        real_path = dir_path + f'/{model}_{file}_automl_model.csv'
+        real_path = dir_path + f'/out_random_forest_csv/{model}_{file}_automl_model.csv'
         df = pd.read_csv(real_path, index_col=0).values
         X.append(df[:,:-2]);  y.append(df[:,-1])
 
@@ -103,15 +108,15 @@ def run_automl(files, model='gcn', file_type='automl'):
             ax.plot(x_smooth, y_smooth, label=c, color=colors[j], linestyle=linestyles[j], linewidth=2)
 
         ax.legend()
-        fig.savefig(f'exp5_thesis_figs/memory_model/exp_memory_training_{model}_{file_type}_{names[i]}_diff.png', dpi=400)
+        fig.savefig(f'exp5_thesis_figs/memory_model/exp_memory_training_{model}_{file_type}_{names[i]}.png', dpi=400)
         
 
-def get_automl():
+def run_random_forest():
     files = ['classes', 'nodes_edges', 'features', 'reddit', 'yelp',  'paras']
     for model in ['gcn', 'gat']:
-        run_automl(files, model)
+        pics_random_forest(files, model)
 
 
-# for model in ['gcn', 'gat']:
-#     for data in ['reddit', 'yelp']:
-#         for bs in [1]
+if __name__ == '__main__':
+    run_linear_model()
+    run_random_forest()

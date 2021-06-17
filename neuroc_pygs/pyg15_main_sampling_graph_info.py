@@ -102,7 +102,6 @@ elif args.mode == 'graphsage':
                                num_workers=args.num_workers) 
 loader_time = time.time() - loader_time
 
-#print("xx", train_loader[0])
 # train_loader must iter
 
 # 3. set model
