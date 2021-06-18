@@ -20,25 +20,26 @@ dir_out = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp5_thesis_motivation')
 ratio_dict = pd.read_csv(dir_path + '/regression_mape_res.csv', index_col=0)
 linear_ratio_dict = pd.read_csv(dir_path + '/regression_linear_mape_res.csv', index_col=0)
 
+
 def train(model, data, train_loader, optimizer, args, df, cnt):
-    model = model.to(args.device) # special
+    model = model.to(args.device) 
     device = args.device
     model.train()
 
     loader_iter, loader_num = iter(train_loader), len(train_loader)
     copy_loader = iter(train_loader)
     for i in range(loader_num):
-        # task1
         torch.cuda.reset_max_memory_allocated(device)
         torch.cuda.empty_cache()
         current_memory = torch.cuda.memory_stats(device)["allocated_bytes.all.current"]
         optimizer.zero_grad()
         batch = next(loader_iter)
-        # task2
         node, edge = batch.x.shape[0], batch.edge_index.shape[1]
-        t1 = time.time()
+
+        # 指定使用哪种内存开销预测模型
         if args.predict_model == 'linear_model':
             reg = load(dir_path + f'/{args.model}_{args.dataset}_{args.predict_model}_diff_v2.pth')
+            memory_pre = reg.predict([[node, edge]])[0]
         else:
             reg = load(dir_path + f'/{args.model}_automl_diff_v2.pth')
         if args.predict_model == 'linear_model':

@@ -18,18 +18,15 @@ def train(model, data, train_loader, optimizer, args, df, cnt):
 
     loader_iter, loader_num = iter(train_loader), len(train_loader)
     for i in range(loader_num):
-        # task1
         torch.cuda.reset_max_memory_allocated(device)
         torch.cuda.empty_cache()
         current_memory = torch.cuda.memory_stats(device)["allocated_bytes.all.current"]
         optimizer.zero_grad()
         batch = next(loader_iter)
-        # task2
         batch = batch.to(device)
         node, edge = batch.x.shape[0], batch.edge_index.shape[1]
         df['nodes'].append(node)
         df['edges'].append(edge)
-        # task3
         logits = model(batch.x, batch.edge_index)
         loss = model.loss_fn(logits[batch.train_mask], batch.y[batch.train_mask])
         loss.backward()

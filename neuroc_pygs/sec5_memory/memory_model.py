@@ -1,36 +1,23 @@
 import os, time
 import numpy as np 
 import pandas as pd
-from scipy.interpolate import make_interp_spline
 import matplotlib.pyplot as plt
+
+from scipy.interpolate import make_interp_spline
 from collections import defaultdict
-from neuroc_pygs.configs import PROJECT_PATH
+from joblib import dump
 from sklearn import svm
 from sklearn.datasets import make_regression
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.linear_model import LinearRegression
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor, AdaBoostRegressor
 from sklearn.metrics import r2_score, mean_absolute_percentage_error
-from matplotlib.font_manager import _rebuild
-_rebuild()
-config = {
-    "font.family":'serif',
-    "mathtext.fontset":'stix',
-    "font.serif": ['SimHei'],
-}
-plt.rcParams.update(config)
-
-base_size = 12
-plt.style.use("grayscale")
-plt.rcParams['axes.unicode_minus']=False
-
-dir_path = os.path.join(PROJECT_PATH, 'sec5_memory')
+from neuroc_pygs.configs import PROJECT_PATH
 
 # linear model
 def get_linear_model(model='gcn', data='reddit', bs=180):
-    real_path = dir_path + f'/out_linear_model_csv/{data}_{model}_{bs}_cluster.csv'
+    real_path = f'out_linear_model_csv/{data}_{model}_{bs}_cluster.csv'
     df = pd.read_csv(real_path, index_col=0).values
     X, y = np.array(df[:, :2], dtype=np.float32), np.array(df[:, -1], dtype=np.float32)
     reg = LinearRegression()
@@ -46,7 +33,7 @@ def run_linear_model():
     for model in ['gcn', 'gat']:
         for data in ['reddit', 'yelp']:
             for bs in [175, 180, 185]:
-                res = run_linear_model(model=model, data=data, bs=bs)
+                res = get_linear_model(model=model, data=data, bs=bs)
                 print(res)
 
 # random forest
@@ -59,6 +46,7 @@ def make_contrast(X, y):
     reg5 = DecisionTreeRegressor() # DecisionTree, max_depth=5
     
     df_r2, df_mape = defaultdict(list), defaultdict(list)
+    # 测试集大小为100条
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=100, random_state=0)
     for i, reg in enumerate([reg1, reg2, reg3, reg4, reg5]):
         for step in range(50, 651, 50):
@@ -70,21 +58,35 @@ def make_contrast(X, y):
             df_mape[filenames[i]].append(mape)
     return df_r2, df_mape
 
+
 def pics_random_forest(files, model='gcn', file_type='random_forest'):
+    # 设置图像中英文
+    from matplotlib.font_manager import _rebuild
+    _rebuild()
+    config = {
+        "font.family":'serif',
+        "mathtext.fontset":'stix',
+        "font.serif": ['SimHei'],
+    }
+    plt.rcParams.update(config)
+
+    base_size = 12
+    plt.style.use("grayscale")
+    plt.rcParams['axes.unicode_minus']=False
+    
+    # 收集训练数据
     X, y = [], []
     for file in files:
-        real_path = dir_path + f'/out_random_forest_csv/{model}_{file}_automl_model.csv'
+        real_path = f'out_random_forest_csv/{model}_{file}_automl_model.csv'
         df = pd.read_csv(real_path, index_col=0).values
         X.append(df[:,:-2]);  y.append(df[:,-1])
 
     X, y = np.concatenate(X, axis=0), np.concatenate(y, axis=0)
-    if file_type == 'linear_model':
-        X = X[:, :2]
 
-    df_r2, df_mape = train_model(X, y)
+    df_r2, df_mape = make_contrast(X, y)
     df_r2, df_mape = pd.DataFrame(df_r2), pd.DataFrame(df_mape)
     titles = ['决定系数 (R2)', '平均绝对百分比误差 (MAPE)']
-    names = ['r2', 'mape', 'mae', 'mpe']
+    names = ['r2', 'mape']
     markers = 'oD^sdp'
     colors = plt.get_cmap('Dark2')(np.linspace(0.15, 0.85, 5))
     # RdYlGn, Greys, Dark2
@@ -117,6 +119,52 @@ def run_random_forest():
         pics_random_forest(files, model)
 
 
+def save_linear_model(model, data, bs):  # save
+    real_path = f'out_linear_model_csv/{data}_{model}_{bs}_cluster.csv'
+    df = pd.read_csv(real_path, index_col=0).values
+    X, y = np.array(df[:, :2], dtype=np.float32), np.array(df[:, -1], dtype=np.float32)
+    reg = LinearRegression()
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=20, random_state=0)
+    reg.fit(X_train, y_train)
+    y_pred = reg.predict(X_test) 
+    mape = mean_absolute_percentage_error(y_test, y_pred)
+    dump(reg, f'out_linear_model_pth/{data}_{model}_{bs}_linear_model.pth')
+    with open(f'out_linear_model_pth/{data}_{model}_{bs}_linear_model.txt', 'w') as f:
+        f.write(str(mape))
+    print(f'model={model}, data={data}, bs={str(bs)}, mape={str(mape)}')
+
+
+def save_random_forest(model, files=['classes', 'nodes_edges', 'features', 'reddit', 'yelp',  'paras']):
+    X, y = [], []
+    for file in files:
+        real_path = f'out_random_forest_csv/{model}_{file}_random_forest.csv'
+        df = pd.read_csv(real_path, index_col=0).values
+        X.append(df[:,:-2]);  y.append(df[:,-1])
+
+    X, y = np.concatenate(X, axis=0), np.concatenate(y, axis=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=100, random_state=0)
+    reg = RandomForestRegressor(random_state=1)
+    reg.fit(X_train, y_train)
+    y_pred = reg.predict(X_test) 
+    mape = mean_absolute_percentage_error(y_test, y_pred)
+    dump(reg, f'out_random_forest_pth/{model}_random_forest.pth')
+    with open(f'out_random_forest_pth/{model}_random_forest.txt', 'w') as f:
+        f.write(str(mape))
+    print(f'model={model}, mape={str(mape)}')
+
+
 if __name__ == '__main__':
-    run_linear_model()
-    run_random_forest()
+    # 1. get metric
+    # run_linear_model()
+    # run_random_forest()
+
+    # 2. save model
+    # step1 save linear model
+    for model in ['gcn', 'gat']:
+        for data in ['reddit', 'yelp']:
+            for bs in [175, 180, 185]:
+                save_linear_model(model, data, bs)
+
+    # step2 save random forest
+    for model in ['gcn', 'gat']:
+        save_random_forest(model)

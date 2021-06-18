@@ -24,7 +24,7 @@ plt.rcParams['font.sans-serif']=['SimHei'] #用来正常显示中文标签
 plt.rcParams['axes.unicode_minus']=False #用来正常显示负号
 plt.rcParams["font.size"] = base_size
 
-# 构造数据集
+# 构造数据集 
 dir_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_automl_datasets_diff')
 
 
