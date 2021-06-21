@@ -1,5 +1,3 @@
-# stop: https://stackoverflow.com/questions/26414052/watch-for-a-file-with-asyncio
-# run: https://github.com/LianShuaiLong/CV_Applications/blob/master/classification/classification-pytorch-demo/train.py
 import os, sys
 import torch
 import time

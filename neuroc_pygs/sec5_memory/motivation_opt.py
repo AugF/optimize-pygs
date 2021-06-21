@@ -18,7 +18,6 @@ def train(model, data, train_loader, optimizer, args, df, cnt):
     loader_iter, loader_num = iter(train_loader), len(train_loader)
     copy_loader = iter(train_loader)
     for i in range(loader_num):
-        # ？
         torch.cuda.reset_max_memory_allocated(device)
         torch.cuda.empty_cache()
         current_memory = torch.cuda.memory_stats(device)["allocated_bytes.all.current"]
@@ -30,18 +29,24 @@ def train(model, data, train_loader, optimizer, args, df, cnt):
         # 重采样处理机制
         resampling_cnt = 0
         success = False
-        while resampling_cnt < args.resampling_cnt:
+        while success and resampling_cnt < args.resampling_cnt:
             # 这里应该是具体的配置
             paras_dict = model.get_hyper_paras()
             if args.predict_model == 'linear_model':
-                reg = load(f'out_{args.predict_model}_pth/{args.model}_{args.predict_model}.pth')
+                reg = load(f'out_linear_model_pth/{args.model}_{args.predict_model}.pth')
                 memory_pre = reg.predict([[node, edge]])[0]
             else:
-                memory_pre = reg.predict([[node, edge] + [v for v in paras_dict.values()]])[0]    
+                reg = load(f'out_random_forest_pth/{args.model}_random_forest.pth')
+                memory_pre = reg.predict([[node, edge] + [v for v in paras_dict.values()]])[0]
+            if memory_pre / (1 - args)
                     
         # 剪枝处理机制
         if not success:
-            pass
+            cutting_nums = bsearch.get_cutting_nums(node, edge, real_memory_ratio, current_memory)
+            if args.cutting_method == 'random':
+                edge_index = cut_by_random(edge_index, cutting_nums, seed=int(args.cutting_way))
+            else:
+                edge_index = cut_by_importance_reverse(edge_index, cutting_nums, method=args.cutting_method, name=args.cutting_way)
         
         batch = batch.to(device)
         node, edge = batch.x.shape[0], batch.edge_index.shape[1]

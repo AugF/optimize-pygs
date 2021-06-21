@@ -23,8 +23,7 @@ class CudaDataLoader(object):
         self.worker.start()
 
     def load_loop(self):
-        """ 不断的将cuda数据加载到队列里 """
-        # The loop that will load into the queue in the background
+        """ 不断的将cuda数据加载到队列里"""
         while True:
             for i, sample in enumerate(self.loader):
                 if self.to_flag:
@@ -40,7 +39,6 @@ class CudaDataLoader(object):
                 self.queue.put(data)
 
     def load_instance(self, sample):
-        """ 将batch数据从CPU加载到GPU中 """
         if torch.is_tensor(sample) or hasattr(sample, 'to'):
             with torch.cuda.stream(self.load_stream):
                 return sample.to(self.device, non_blocking=True)
@@ -83,30 +81,4 @@ class CudaDataLoader(object):
 
 
 
-if __name__ == '__main__':
-    import time
-    from neuroc_pygs.options import build_train_loader, get_args, build_dataset
-    from neuroc_pygs.samplers.prefetch_generator import BackgroundGenerator
-    from neuroc_pygs.samplers.data_prefetcher_2 import TransferGenerator
-    from torch_geometric.data import Data
-    args = get_args()
-    args.mode = 'graphsage'
-    data = build_dataset(args)
-    train_loader = build_train_loader(args, data)
-
-    opt_loader = CudaDataLoader(train_loader, args.device, sampler=args.mode, data=data)
-    print('start', args.device)
-    t1 = time.time()
-    for i, x in enumerate(train_loader):
-        print(i)
-        if i == 0:
-            print('base')
-    t2 = time.time()
-    for i, x in enumerate(opt_loader):
-        print(i)
-        if i == 0:
-            print('opt', x)
-            # print('opt', Data.from_dict({li[0]:li[1] for li in x}))
-    t3 = time.time()
-    print(f'use time: {t2 - t1}, opt time: {t3 - t2}')
 
