@@ -16,7 +16,7 @@ from neuroc_pygs.utils import get_dataset
 from neuroc_pygs.configs import PROJECT_PATH
 
 
-dir_out = '/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec6_cutting/exp_thesis_outlier_per'
+dir_out = '/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec6_cutting/out_motivation_data'
 
 def get_args():
     parser = argparse.ArgumentParser(description='OGBN-Products (Cluster-GCN)')
@@ -57,12 +57,6 @@ class SAGE(torch.nn.Module):
         self.convs.append(SAGEConv(hidden_channels, out_channels))
 
     def forward(self, x, adjs):
-        # `train_loader` computes the k-hop neighborhood of a batch of nodes,
-        # and returns, for each layer, a bipartite graph object, holding the
-        # bipartite edges `edge_index`, the index `e_id` of the original edges,
-        # and the size/shape `size` of the bipartite graph.
-        # Target nodes are also included in the source nodes so that one can
-        # easily apply skip-connections or add self-loops.
         for i, (edge_index, _, size) in enumerate(adjs):
             x_target = x[:size[1]]  # Target nodes are always placed first.
             x = self.convs[i]((x, x_target), edge_index)
@@ -72,9 +66,6 @@ class SAGE(torch.nn.Module):
         return x.log_softmax(dim=-1)
 
     def inference(self, x_all, subgraph_loader, device, df=None):
-        # pbar = tqdm(total=x_all.size(0) * self.num_layers)
-        # pbar.set_description('Evaluating')
-
         for i in range(self.num_layers):
             xs = []
             for batch_size, n_id, adj in subgraph_loader:
@@ -158,6 +149,7 @@ def test(model, data, x, y, subgraph_loader, device, df=None):
 
 
 def fit(model, optimizer, train_loader, data, subgraph_loader, device):
+    # 训练，并将最好的模型的保存用于推理
     x = data.x.to(device)
     y = data.y.squeeze().to(device)
     best_model = None 
@@ -175,7 +167,7 @@ def fit(model, optimizer, train_loader, data, subgraph_loader, device):
             final_test_acc = test_acc
             best_model = copy.deepcopy(model)
                     
-    torch.save(best_model.state_dict(), os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_diff_res',  'reddit_sage_best_model.pth'))
+    torch.save(best_model.state_dict(), os.path.join(PROJECT_PATH, 'sec6_cutting', 'best_model_pth',  'reddit_sage_best_model.pth'))
 
 
 def run_fit():
@@ -201,7 +193,7 @@ def run_test(file_suffix):
     data = dataset[0]
     x = data.x.to(device)
     y = data.y.squeeze().to(device)
-    save_dict = torch.load(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_diff_res',  'reddit_sage_best_model.pth'))
+    save_dict = torch.load(os.path.join(PROJECT_PATH, 'sec6_cutting', 'best_model_pth',  'reddit_sage_best_model.pth'), map_location=device)
     model.load_state_dict(save_dict)
     df = defaultdict(list)
     for _ in range(40):
@@ -224,10 +216,10 @@ def run_test(file_suffix):
 
 if __name__ == '__main__':
     import gc
-    file_suffix = 'v1'
+    file_suffix = 'v0'
     tab_data = []
-    for bs in [1024, 2048, 4096, 8192, 16384]:
-        sys.argv = [sys.argv[0], '--infer_batch_size', str(bs), '--device', '1']
+    for bs in [8400, 8500, 8600, 8700, 8800, 8900]:
+        sys.argv = [sys.argv[0], '--infer_batch_size', str(bs), '--device', '0']
         test_accs, times = run_test(file_suffix)
         tab_data.append([str(bs)] + list(test_accs) + list(times))
         gc.collect()

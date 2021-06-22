@@ -17,7 +17,7 @@ from neuroc_pygs.configs import PROJECT_PATH
 
 # linear model
 def get_linear_model(model='gcn', data='reddit', bs=180):
-    real_path = f'out_linear_model_csv/{data}_{model}_{bs}_cluster.csv'
+    real_path = f'out_linear_model_datasets/{data}_{model}_{bs}_cluster.csv'
     df = pd.read_csv(real_path, index_col=0).values
     X, y = np.array(df[:, :2], dtype=np.float32), np.array(df[:, -1], dtype=np.float32)
     reg = LinearRegression()
@@ -30,11 +30,15 @@ def get_linear_model(model='gcn', data='reddit', bs=180):
 
 
 def run_linear_model():
-    for model in ['gcn', 'gat']:
-        for data in ['reddit', 'yelp']:
-            for bs in [175, 180, 185]:
-                res = get_linear_model(model=model, data=data, bs=bs)
-                print(res)
+    for exp_model in ['gcn', 'gat']:
+        for exp_data in ['reddit', 'yelp']:
+            if exp_data == 'reddit' and exp_model == 'gat':
+                re_bs = [170, 175, 180]
+            else:
+                re_bs = [175, 180, 185]
+            for bs in re_bs:
+                res = get_linear_model(model=exp_model, data=exp_data, bs=bs)
+                print(exp_model, exp_data, bs, res)
 
 # random forest
 def make_contrast(X, y):
@@ -77,7 +81,7 @@ def pics_random_forest(files, model='gcn', file_type='random_forest'):
     # 收集训练数据
     X, y = [], []
     for file in files:
-        real_path = f'out_random_forest_csv/{model}_{file}_automl_model.csv'
+        real_path = f'out_random_forest_datasets/{model}_{file}_random_forest.csv'
         df = pd.read_csv(real_path, index_col=0).values
         X.append(df[:,:-2]);  y.append(df[:,-1])
 
@@ -110,7 +114,7 @@ def pics_random_forest(files, model='gcn', file_type='random_forest'):
             ax.plot(x_smooth, y_smooth, label=c, color=colors[j], linestyle=linestyles[j], linewidth=2)
 
         ax.legend()
-        fig.savefig(f'exp5_thesis_figs/memory_model/exp_memory_training_{model}_{file_type}_{names[i]}.png', dpi=400)
+        fig.savefig(f'exp5_thesis_figs/exp_memory_training_{model}_{file_type}_{names[i]}.png', dpi=400)
         
 
 def run_random_forest():
@@ -120,7 +124,7 @@ def run_random_forest():
 
 
 def save_linear_model(model, data, bs):  # save
-    real_path = f'out_linear_model_csv/{data}_{model}_{bs}_cluster.csv'
+    real_path = f'out_linear_model_datasets/{data}_{model}_{bs}_cluster.csv'
     df = pd.read_csv(real_path, index_col=0).values
     X, y = np.array(df[:, :2], dtype=np.float32), np.array(df[:, -1], dtype=np.float32)
     reg = LinearRegression()
@@ -137,7 +141,7 @@ def save_linear_model(model, data, bs):  # save
 def save_random_forest(model, files=['classes', 'nodes_edges', 'features', 'reddit', 'yelp',  'paras']):
     X, y = [], []
     for file in files:
-        real_path = f'out_random_forest_csv/{model}_{file}_random_forest.csv'
+        real_path = f'out_random_forest_datasets/{model}_{file}_random_forest.csv'
         df = pd.read_csv(real_path, index_col=0).values
         X.append(df[:,:-2]);  y.append(df[:,-1])
 
@@ -155,14 +159,18 @@ def save_random_forest(model, files=['classes', 'nodes_edges', 'features', 'redd
 
 if __name__ == '__main__':
     # 1. get metric
-    # run_linear_model()
-    # run_random_forest()
+    run_linear_model()
+    run_random_forest()
 
     # 2. save model
     # step1 save linear model
     for model in ['gcn', 'gat']:
         for data in ['reddit', 'yelp']:
-            for bs in [175, 180, 185]:
+            if data == 'reddit' and model == 'gat':
+                re_bs = [170, 175, 180]
+            else:
+                re_bs = [175, 180, 185]
+            for bs in re_bs:
                 save_linear_model(model, data, bs)
 
     # step2 save random forest

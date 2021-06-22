@@ -134,5 +134,5 @@ def build_random_forest_datasets():
         
 
 if __name__ == '__main__':
-    dir_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'out_random_forest_csv')
+    dir_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'out_random_forest_datasets')
     build_random_forest_datasets()

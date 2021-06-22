@@ -117,7 +117,7 @@ def run_all(exp_datasets=EXP_DATASET, exp_models=ALL_MODELS, exp_modes=MODES, ex
 
 
 def collect_motivation_info():
-    dir_path = os.path.join(PROJECT_PATH, 'sec5_memory/out_motivation_csv')
+    dir_path = os.path.join(PROJECT_PATH, 'sec5_memory/out_motivation_data')
     max_cnt = 40
     default_args = '--hidden_dims 1024 --gaan_hidden_dims 256 --head_dims 128 --heads 4 --d_a 32 --d_v 32 --d_m 32'
     sys.argv = [sys.argv[0], '--device', 'cuda:0', '--num_workers', '0'] + default_args.split(' ')
@@ -125,7 +125,7 @@ def collect_motivation_info():
 
 
 def build_linear_model_dataset():
-    dir_path = os.path.join(PROJECT_PATH, 'sec5_memory/out_linear_model_csv')
+    dir_path = os.path.join(PROJECT_PATH, 'sec5_memory/out_linear_model_datasets')
     max_cnt = 120    
     default_args = '--hidden_dims 1024 --gaan_hidden_dims 256 --head_dims 128 --heads 4 --d_a 32 --d_v 32 --d_m 32'
     sys.argv = [sys.argv[0], '--device', 'cuda:0', '--num_workers', '0'] + default_args.split(' ')

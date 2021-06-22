@@ -26,6 +26,7 @@ class CudaDataLoader(object):
         """ 不断的将cuda数据加载到队列里"""
         while True:
             for i, sample in enumerate(self.loader):
+                # 内存超限处理机制
                 if self.to_flag:
                     data = self.load_instance(sample)
                     if self.sampler == 'graphsage':
@@ -54,17 +55,14 @@ class CudaDataLoader(object):
         return self
 
     def __next__(self):
-        # 加载线程挂了
         if not self.worker.is_alive() and self.queue.empty():
             self.idx = 0
             self.queue.join()
             self.worker.join()
             raise StopIteration
-        # 一个epoch加载完了
         elif self.idx >= len(self.loader):
             self.idx = 0
             raise StopIteration
-        # 下一个batch
         else:
             out = self.queue.get()
             self.queue.task_done()

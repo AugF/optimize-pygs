@@ -12,6 +12,7 @@ from tqdm import tqdm
 from collections import defaultdict
 from torch_geometric.data import NeighborSampler
 from torch_geometric.nn import SAGEConv
+from tabulate import tabulate
 from joblib import load
 from neuroc_pygs.utils import get_dataset
 from neuroc_pygs.configs import PROJECT_PATH
@@ -19,10 +20,8 @@ from neuroc_pygs.sec6_cutting.cutting_methods import cut_by_importance, cut_by_r
 from neuroc_pygs.sec6_cutting.cutting_utils import BSearch
 
 
-dir_path = '/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec6_cutting/exp_diff_res'
-dir_out = '/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec6_cutting/exp_thesis_res'
-reg = load(dir_path + '/reddit_sage_linear_model_v0.pth')
-memory_ratio = pd.read_csv(dir_path + '/regression_mape_res.csv', index_col=0)['reddit_sage']['mape'] - 0.05
+reg = load('out_linear_model_pth/reddit_sage.pth')
+memory_ratio = float(open('out_linear_model_pth/reddit_sage.txt').read()) - 0.05 # mape + bias
 memory_limit = 3 * 1024 * 1024 * 1024 # 3221225472
 bsearch = BSearch(clf=reg, memory_limit=memory_limit)
 print(f'memory_ratio: {memory_ratio}, memory_limit: {memory_limit}')
@@ -69,12 +68,6 @@ class SAGE(torch.nn.Module):
         self.convs.append(SAGEConv(hidden_channels, out_channels))
 
     def forward(self, x, adjs):
-        # `train_loader` computes the k-hop neighborhood of a batch of nodes,
-        # and returns, for each layer, a bipartite graph object, holding the
-        # bipartite edges `edge_index`, the index `e_id` of the original edges,
-        # and the size/shape `size` of the bipartite graph.
-        # Target nodes are also included in the source nodes so that one can
-        # easily apply skip-connections or add self-loops.
         for i, (edge_index, _, size) in enumerate(adjs):
             x_target = x[:size[1]]  # Target nodes are always placed first.
             x = self.convs[i]((x, x_target), edge_index)
@@ -93,6 +86,9 @@ class SAGE(torch.nn.Module):
             first_flag = True
             for batch_size, n_id, adj in subgraph_loader:
                 edge_index, _, size = adj
+
+                # 内存超限处理机制
+                # 这里只控制了一层作为示范，实际中为了保证内存使用可控，所有层都需要进行考虑
                 if i == 0:
                     torch.cuda.reset_max_memory_allocated(device)
                     torch.cuda.empty_cache()
@@ -100,8 +96,9 @@ class SAGE(torch.nn.Module):
 
                     node, edge = size[0], edge_index.shape[1]
                     memory_pre = reg.predict([[node, edge]])[0]
-                    if first_flag:
-                        real_memory_ratio = memory_ratio + 0.2
+                
+                    if first_flag: # 实际中发现，第一条数据非常不准，所以这里进行了特殊处理
+                        real_memory_ratio = memory_ratio + 0.2 # 0.2是多次实验得到的经验值
                         first_flag = False
                     else:
                         real_memory_ratio = memory_ratio
@@ -125,9 +122,8 @@ class SAGE(torch.nn.Module):
                 if i != self.num_layers - 1:
                     x = F.relu(x)
                 xs.append(x.cpu())
-
-                # pbar.update(batch_size)
-
+                
+                # 样本收集
                 if i == 0:
                     if df is not None:
                         node, edge = size[0], edge_index.shape[1]
@@ -141,21 +137,15 @@ class SAGE(torch.nn.Module):
                         print(f'nodes={node}, edge={edge}, predict: {memory_pre}-{predict_peak}, real: {memory}, diff: {memory - current_memory}, device: {device}')
 
             x_all = torch.cat(xs, dim=0)
-
-        # pbar.close()
-
         return x_all
 
 
 @torch.no_grad()
 def test(model, data, x, y, subgraph_loader, args, df=None):
     model.eval()
-
     out = model.inference(x, subgraph_loader, args, df)
-
     y_true = y.cpu().unsqueeze(-1)
     y_pred = out.argmax(dim=-1, keepdim=True)
-
     results = []
     for mask in [data.train_mask, data.val_mask, data.test_mask]:
         results += [int(y_pred[mask].eq(y_true[mask]).sum()) / int(mask.sum())]
@@ -166,7 +156,7 @@ def test(model, data, x, y, subgraph_loader, args, df=None):
 def run_test(file_suffix):
     args = get_args()
     print(args)
-    real_path = os.path.join(dir_out, f'reddit_sage_{args.infer_batch_size}_opt_{args.cutting_method}_{args.cutting_way}_{file_suffix}.csv')
+    real_path = f'out_optimize_res/reddit_sage_{args.infer_batch_size}_{args.cutting_method}_{args.cutting_way}_{file_suffix}.csv'
     test_accs = []
     times = []
     print(real_path)
@@ -179,7 +169,7 @@ def run_test(file_suffix):
     data = dataset[0]
     x = data.x.to(device)
     y = data.y.squeeze().to(device)
-    save_dict = torch.load(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_diff_res',  'reddit_sage_best_model.pth'))
+    save_dict = torch.load(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_diff_res',  'reddit_sage_best_model.pth'), map_location=device)
     model.load_state_dict(save_dict)
     df = defaultdict(list)
     for _ in range(40):
@@ -201,13 +191,13 @@ def run_test(file_suffix):
 
 
 if __name__ == '__main__':
-    file_suffix = 'my_thesis_v1' # xx
-    for bs in [8500, 9000, 9500]:
+    file_suffix = 'v0' # xx
+    for bs in [8700, 8800, 8900]:
         tab_data = []
-        for cutting in ['random_2', 'degree_way3', 'pr_way4']:
+        for cutting in ['random_2', 'degree_way1', 'pr_way2']:
             method, way = cutting.split('_')
-            sys.argv = [sys.argv[0], '--infer_batch_size', str(bs), '--device', '2', '--cutting_method', method, '--cutting_way', way]
-            test_accs, times = run_test()
+            sys.argv = [sys.argv[0], '--infer_batch_size', str(bs), '--device', '0', '--cutting_method', method, '--cutting_way', way]
+            test_accs, times = run_test(file_suffix)
             tab_data.append([str(bs), cutting] + list(test_accs) + list(times))
             gc.collect()
-        pd.DataFrame(tab_data).to_csv(os.path.join(dir_out, f'reddit_sage_opt_{bs}_{file_suffix}.csv'))
+        print(tabulate(tab_data, headers=['batch size', 'cutting method', 'acc', 'use time']))

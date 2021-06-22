@@ -1,5 +1,6 @@
 
 class BSearch(object):
+    # 基于二分的超限子图规模预测方法
     def __init__(self, clf, memory_limit):
         # clf: 预测模型; ratio: 偏差比例
         self.clf, self.memory_limit = clf, memory_limit
@@ -13,27 +14,3 @@ class BSearch(object):
             else:
                 r = mid - 1
         return edges - l
-
-
-def test():
-    from neuroc_pygs.options import get_args, build_dataset, build_subgraphloader
-    from joblib import load
-
-    dir_path = '/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec6_cutting/exp_diff_res'
-    args = get_args()
-    data = build_dataset(args)
-    subgraphloader = build_subgraphloader(args, data)
-
-    model = 'cluster_gcn'
-    batch = iter(subgraphloader).next()
-    batch_size, _, adj = batch
-    edge_index, _, size = adj 
-
-    node, edge = size[0], edge_index.shape[1]
-    reg = load(dir_path + f'/{model}_linear_model_v0.pth')
-    res = reg.predict([[node, edge]])
-    memory_limit = 4000000
-
-    bs = BSearch(reg, memory_limit)
-    cutting_nums = bs.get_cutting_nums(node, edge)
-    print(cutting_nums, reg.predict([[node, edge - cutting_nums]]))

@@ -88,3 +88,4 @@ def train(model, optimizer, data, loader, device, mode, non_blocking=False, df=N
             print(f"Batch:{df['cnt'][0]}, sample: {t2-t1}, move: {t3-t2}, cal: {t4-t3}")
         all_loss.append(loss.item() * batch_size)
     return np.sum(all_loss) / int(data.train_mask.sum())
+

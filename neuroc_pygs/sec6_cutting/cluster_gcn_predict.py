@@ -19,16 +19,16 @@ from torch_geometric.nn import SAGEConv
 from torch_geometric.utils import to_undirected
 from torch_sparse import SparseTensor
 from joblib import load
+from tabulate import tabulate
 
 from ogb.nodeproppred import PygNodePropPredDataset, Evaluator
 from neuroc_pygs.configs import PROJECT_PATH
-from neuroc_pygs.sec6_cutting.cutting_methods import cut_by_importance_reverse, cut_by_random
+from neuroc_pygs.sec6_cutting.cutting_methods import cut_by_importance, cut_by_random
 from neuroc_pygs.sec6_cutting.cutting_utils import BSearch
 
 
-dir_path = '/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec6_cutting/exp_diff_res'
-reg = load(dir_path + '/cluster_gcn_linear_model_v0.pth')
-memory_ratio = pd.read_csv(dir_path + '/regression_mape_res.csv', index_col=0)['cluster_gcn']['mape'] + 0.01
+reg = load('out_linear_model_pth/cluster_gcn.pth')
+memory_ratio = float(open('out_linear_model_pth/cluster_gcn.txt').read()) + 0.01 # mape + bias
 memory_limit = 2 * 1024 * 1024 * 1024 # 2147483648
 bsearch = BSearch(clf=reg, memory_limit=memory_limit)
 print(f'memory_ratio: {memory_ratio}, memory_limit: {memory_limit}')
@@ -70,9 +70,7 @@ class GCN(torch.nn.Module):
 
     def inference(self, x_all, subgraph_loader, args, df=None):
         device = args.device
-        # pbar = tqdm(total=x_all.size(0) * len(self.convs))
-        # pbar.set_description('Evaluating')
-        
+
         x_all = self.inProj(x_all.to(device))
         x_all = x_all.cpu()
         inp = x_all
@@ -83,6 +81,9 @@ class GCN(torch.nn.Module):
             first_flag = True
             for batch_size, n_id, adj in subgraph_loader:
                 edge_index, _, size = adj
+
+                # 内存超限处理机制
+                # 这里只控制了一层作为示范，实际中为了保证内存使用可控，所有层都需要进行考虑
                 if i == 0:
                     torch.cuda.reset_max_memory_allocated(device)
                     torch.cuda.empty_cache()
@@ -90,8 +91,9 @@ class GCN(torch.nn.Module):
 
                     node, edge = size[0], edge_index.shape[1]
                     memory_pre = reg.predict([[node, edge]])[0]
-                    if first_flag:
-                        real_memory_ratio = memory_ratio + 0.25
+
+                    if first_flag: # 实际中发现，第一条数据非常不准，所以这里进行了特殊处理
+                        real_memory_ratio = memory_ratio + 0.25 # 0.25是多次实验得到的经验值
                         first_flag = False
                     else:
                         real_memory_ratio = memory_ratio
@@ -104,7 +106,7 @@ class GCN(torch.nn.Module):
                         if args.cutting_method == 'random':
                             edge_index = cut_by_random(edge_index, cutting_nums, seed=int(args.cutting_way))
                         else:
-                            edge_index = cut_by_importance_reverse(edge_index, cutting_nums, method=args.cutting_method, name=args.cutting_way)
+                            edge_index = cut_by_importance(edge_index, cutting_nums, method=args.cutting_method, name=args.cutting_way)
                         st2 = time.time()
                         print(f'cutting use time {st2 - st1}s')
                         
@@ -117,8 +119,7 @@ class GCN(torch.nn.Module):
                     x = F.dropout(x, p=self.dropout, training=self.training)
                 xs.append(x.cpu())
 
-                # pbar.update(batch_size)
-
+                # 样本收集
                 if i == 0:
                     if df is not None:
                         node, edge = size[0], edge_index.shape[1]
@@ -134,8 +135,6 @@ class GCN(torch.nn.Module):
             x_all = torch.cat(xs, dim=0)
             if i != len(self.convs) - 1:
                 x_all = x_all + 0.2*inp
-        # pbar.close()
-
         return x_all
 
 
@@ -200,10 +199,10 @@ def prepare_data(args):
     return args, data
 
 
-def run_test():
+def run_test(file_suffix):
     args = get_args()
     print(args)
-    real_path = os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_diff_res', f'cluster_gcn_{args.infer_batch_size}_opt_{args.cutting_method}_{args.cutting_way}_reverse_v1.csv')
+    real_path = f'out_optimize_res/cluster_gcn_{args.infer_batch_size}_opt_{args.cutting_method}_{args.cutting_way}_{file_suffix}.csv'
     test_accs = []
     times = []
     print(real_path)
@@ -223,7 +222,7 @@ def run_test():
     evaluator = Evaluator(name='ogbn-products')
    
     model.reset_parameters()
-    save_dict = torch.load(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_diff_res',  'cluster_gcn_best_model.pth'))
+    save_dict = torch.load(os.path.join(PROJECT_PATH, 'sec6_cutting', 'best_model_pth',  'cluster_gcn_best_model.pth'))
     model.load_state_dict(save_dict)
 
     df = defaultdict(list)
@@ -246,12 +245,13 @@ def run_test():
 
 
 if __name__ == "__main__":
+    file_suffix = 'v0'
     for bs in [9000, 9100, 9200]:
         tab_data = []
-        for cutting in ['random_2', 'degree_way1', 'degree_way2', 'pr_way1', 'pr_way2']:
+        for cutting in ['random_2', 'degree_way1', 'pr_way2']:
             method, way = cutting.split('_')
             sys.argv = [sys.argv[0], '--num_workers', 0,'--infer_batch_size', str(bs), '--device', '0', '--cutting_method', method, '--cutting_way', way]
-            test_accs, times = run_test()
+            test_accs, times = run_test(file_suffix)
             tab_data.append([str(bs), cutting] + list(test_accs) + list(times))
             gc.collect()
-        pd.DataFrame(tab_data).to_csv(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_opt_res', f'cluster_gcn_opt_{bs}_pagerank_reverse_v1.csv'))
+        print(tabulate(tab_data, headers=['batch size', 'cutting method', 'acc', 'use time']))

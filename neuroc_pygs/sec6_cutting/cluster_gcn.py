@@ -24,7 +24,7 @@ from ogb.nodeproppred import PygNodePropPredDataset, Evaluator
 from neuroc_pygs.configs import PROJECT_PATH
 
 
-dir_out = '/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec6_cutting/exp_thesis_outlier_per'
+dir_out = '/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec6_cutting/out_motivation_data'
 
 class GCN(torch.nn.Module):
     def __init__(self, in_channels, hidden_channels, out_channels, num_layers,
@@ -61,9 +61,6 @@ class GCN(torch.nn.Module):
         return torch.log_softmax(x, dim=-1)
 
     def inference(self, x_all, subgraph_loader, device, df=None):
-        # pbar = tqdm(total=x_all.size(0) * len(self.convs))
-        # pbar.set_description('Evaluating')
-        
         x_all = self.inProj(x_all.to(device))
         x_all = x_all.cpu()
         inp = x_all
@@ -193,7 +190,7 @@ def fit(model, data, loader, subgraph_loader, evaluator, optimizer, device, args
                 final_test_acc = test_acc
                 best_model = copy.deepcopy(model)
 
-    torch.save(best_model.state_dict(), os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_diff_res',  'cluster_gcn_best_model.pth'))
+    torch.save(best_model.state_dict(), os.path.join(PROJECT_PATH, 'sec6_cutting', 'best_model_pth',  'cluster_gcn_best_model.pth'))
 
 
 
@@ -280,7 +277,7 @@ def run_test(file_suffix):
     evaluator = Evaluator(name='ogbn-products')
    
     model.reset_parameters()
-    save_dict = torch.load(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_diff_res',  'cluster_gcn_best_model.pth'))
+    save_dict = torch.load(os.path.join(PROJECT_PATH, 'sec6_cutting', 'best_model_pth',  'cluster_gcn_best_model.pth'))
     model.load_state_dict(save_dict)
 
     df = defaultdict(list)
@@ -304,10 +301,10 @@ def run_test(file_suffix):
 
 if __name__ == "__main__":
     import gc
-    file_suffix = 'v1'
+    file_suffix = 'v0'
     tab_data = []
-    for bs in [1024, 2048, 4096, 8192, 16384]:
-        sys.argv = [sys.argv[0], '--infer_batch_size', str(bs), '--device', '1']
+    for bs in [8400, 8500, 8600, 8700, 8800, 8900]:
+        sys.argv = [sys.argv[0], '--infer_batch_size', str(bs), '--device', '0']
         test_accs, times = run_test(file_suffix)
         tab_data.append([str(bs)] + list(test_accs) + list(times))
         gc.collect()

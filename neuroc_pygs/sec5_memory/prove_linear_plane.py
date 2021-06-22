@@ -38,9 +38,7 @@ def run():
     data = build_dataset(args)
     model, optimizer = build_model_optimizer(args, data)
     model = model.to(args.device)
-    memory = torch.cuda.memory_stats(args.device)["allocated_bytes.all.current"]
     torch.cuda.reset_max_memory_allocated(args.device)
-    print(f'device: {args.device}, model memory: {memory}, model: {args.model}')
 
     data = data.to(args.device)
     for epoch in range(1): # 实验测试都一样
@@ -50,8 +48,7 @@ def run():
 
     peak_memory = torch.cuda.memory_stats(args.device)["allocated_bytes.all.peak"]
     torch.cuda.reset_max_memory_allocated(args.device)
-    print(args.dataset, peak_memory, '\n')
-    return [args.dataset, data.num_nodes, data.num_edges, peak_memory, peak_memory - memory]
+    return [args.dataset, data.num_nodes, data.num_edges, peak_memory]
 
 
 def get_linear_plane(model='gat'):
@@ -62,29 +59,34 @@ def get_linear_plane(model='gat'):
             exp_data = f'random_{int(nodes/1000)}k_{int(expect_edges/1000)}k'
             sys.argv = [sys.argv[0], '--dataset', exp_data, '--device', 'cuda:2', '--model', model] + default_args.split(' ')
             tab_data.append(run())
-    file_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_res', f'{model}_linear_plane_data_final.csv')
-    print(tabulate(tab_data, headers=['Name', 'Nodes', 'Edges', 'Peak Memory', 'Differ Memory'], tablefmt='github'))
-    pd.DataFrame(tab_data, columns=['Name', 'Nodes', 'Edges', 'Peak Memory', 'Differ Memory']).to_csv(file_path)
+    file_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'out_motivation_data', f'{model}_memory_2dims_curve_data.csv')
+    pd.DataFrame(tab_data, columns=['Name', 'Nodes', 'Edges', 'Peak Memory']).to_csv(file_path)
 
 
-def pics_linear_plane(model='gat'):
-    file_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_res', f'{model}_linear_plane_data_final.csv')
-    tab_data = pd.read_csv(file_path, index_col=0).values[1:]
-    nodes = list(map(lambda x: int(x), tab_data[:, 1]))
-    edges = list(map(lambda x: int(x), tab_data[:, 2]))
-    memory = list(map(lambda x: int(x) / (1024*1024), tab_data[:, 4]))
-    print(nodes, edges, memory)
+def pics_linear_plane(model='gat'):    
+    base_size = 14
+    plt.style.use("grayscale")
+    plt.rcParams['font.sans-serif'] = ['SimHei']  # 用来正常显示中文标签
+    plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
+    plt.rcParams["font.size"] = base_size
 
-    # from mpl_toolkits.mplot3d import Axes3D
-    fig = plt.figure()
+    tab_data = pd.read_csv(f"out_motivation_data/gat_memory_2dims_curve_data.csv", index_col=0).values
+    nodes = list(map(lambda x: int(x) / 1000, tab_data[:, 1]))
+    edges = list(map(lambda x: int(x) / 1000, tab_data[:, 2]))
+    memory = list(map(lambda x: int(x) / (1024*1024), tab_data[:, 3]))
+
+    fig = plt.figure(figsize=(7, 5))
     ax = plt.axes(projection='3d')
-    ax.set_xlabel('点数', fontsize=14)
-    ax.set_ylabel('边数', fontsize=14)
-    ax.set_zlabel('膨胀内存', fontsize=14)
+    ax.set_xlabel('点数', fontsize=base_size + 2)
+    ax.set_xticks([20, 40, 60, 80, 100])
+    ax.set_yticks([20, 40, 60, 80, 100])
+    ax.set_xticklabels(['20k', '40k', '60k', '80k', '100k'])
+    ax.set_yticklabels(['20k', '40k', '60k', '80k', '100k'])
+    ax.set_ylabel('边数', fontsize=base_size + 2)
+    ax.set_zlabel('峰值内存 (MB)', fontsize=base_size + 2)
     ax.scatter3D(nodes, edges, memory, cmap='Blues')
-    fig.savefig(os.path.join(PROJECT_PATH, 'sec5_memory', 'exp_figs', f'exp_memory_{model}_linear_plane.png', dpi=400))
+    fig.savefig('exp5_thesis_figs/exp_memory_gat_2dims_curve_data.png')
 
 
 if __name__ == '__main__':
-    # get_linear_plane()
     pics_linear_plane()

@@ -16,7 +16,7 @@ config = {
 plt.rcParams.update(config)
 plt.rcParams["font.size"] = 18
 
-dir_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'out_train_csv')
+dir_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'out_train_data')
 
 labels = ['GCN Pubmed', 'GCN Coauthor-Physics', 'GAT Pubmed', 'GAT Coauthor-Physics']
 markers = 'oD^sdp'
@@ -42,5 +42,5 @@ for j, c in enumerate(df_data.columns):
 ax.set_xticks(np.arange(7))
 ax.set_xticklabels(['Zero', '1%', '3%', '6%', '10%', '20%', '50%'])
 ax.legend()
-fig.savefig(f'exp5_thesis_figs/resampling/exp_memory_training_resampling_acc.png', dpi=400)
+fig.savefig(f'exp5_thesis_figs/exp_memory_training_resampling_acc.png', dpi=400)
 
