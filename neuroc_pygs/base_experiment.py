@@ -4,9 +4,7 @@ import numpy as np
 from neuroc_pygs.options import get_args, build_dataset, build_model_optimizer, build_train_loader, build_subgraphloader
 from neuroc_pygs.epoch_utils import train_full, test_full, train, infer
 
-def trainer_full():
-    args = get_args()
-    print(args)
+def trainer_full(args):
     data = build_dataset(args)
     model, optimizer = build_model_optimizer(args, data)
     model, data = model.to(args.device), data.to(args.device)
@@ -17,9 +15,7 @@ def trainer_full():
     return
 
 
-def trainer_sampling():
-    args = get_args()
-    print(args)
+def trainer_sampling(args):
     data = build_dataset(args)
     train_loader = build_train_loader(args, data)
     subgraph_loader = build_subgraphloader(args, data)
@@ -37,12 +33,11 @@ def trainer_sampling():
         print(f'Epoch: {_:03d}, Train: {accs[0]:.8f}, Val: {accs[1]:.8f}, Test: {accs[2]:.8f}')
     return
 
+
 if __name__ == '__main__':
-    import argparse
-    parser = argparse.ArgumentParser(description='参数')
-    parser.add_argument('--mode', type=str, default='cluster', help='None, sampling: [cluster, sage]')
-    args = parser.parse_args()
+    args = get_args()
+    print(args)
     if args.mode == 'None':
-        trainer_full()
+        trainer_full(args)
     else:
-        trainer_sampling()
+        trainer_sampling(args)

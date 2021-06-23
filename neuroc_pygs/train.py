@@ -3,13 +3,11 @@ import torch
 from threading import Thread
 from queue import Queue
 
-from neuroc_pygs.sec4_time.epoch_utils import train_full
-from neuroc_pygs.options import get_args, build_dataset, build_model_optimizer
+from neuroc_pygs.sec4_time.epoch_utils import train_full, train
+from neuroc_pygs.options import get_args, build_dataset, build_model_optimizer, build_train_loader
 
 
-def train_full():
-    args = get_args()
-    print(args)
+def train_full(args):
     data = build_dataset(args)
     model, optimizer = build_model_optimizer(args, data)
     model, data = model.to(args.device), data.to(args.device)
@@ -20,12 +18,10 @@ def train_full():
             'epoch': epoch,
         }
         os.makedirs(args.checkpoint_dir, exist_ok=True)
-        torch.save(save_dict, os.path.join(args.checkpoint_dir, 'model_full_%d.pth' % epoch))
+        torch.save(save_dict, os.path.join(args.checkpoint_dir, 'model_%d.pth' % epoch))
 
 
-def train_sampling():
-    args = get_args()
-    print(args)
+def train_sampling(args):
     data = build_dataset(args)
     train_loader = build_train_loader(args, data)
     if args.opt_train_flag:
@@ -40,15 +36,13 @@ def train_sampling():
             'epoch': epoch,
         }
         os.makedirs(args.checkpoint_dir, exist_ok=True)
-        torch.save(save_dict, os.path.join(args.checkpoint_dir, 'model_sampling_%d.pth' % epoch))
+        torch.save(save_dict, os.path.join(args.checkpoint_dir, 'model_%d.pth' % epoch))
 
 
 if __name__ == '__main__':
-    import argparse
-    parser = argparse.ArgumentParser(description='参数')
-    parser.add_argument('--mode', type=str, default='cluster', help='None, sampling: [cluster, sage]')
-    args = parser.parse_args()
+    args = get_args()
+    print(args)
     if args.mode == 'None':
-        train_full()
+        train_full(args)
     else:
-        train_sampling()
+        train_sampling(args)

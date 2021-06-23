@@ -82,7 +82,7 @@ class GCN(torch.nn.Module):
             for batch_size, n_id, adj in subgraph_loader:
                 edge_index, _, size = adj
 
-                # 内存超限处理机制
+                # !!! 内存超限处理机制
                 # 这里只控制了一层作为示范，实际中为了保证内存使用可控，所有层都需要进行考虑
                 if i == 0:
                     torch.cuda.reset_max_memory_allocated(device)
