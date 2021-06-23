@@ -32,7 +32,7 @@ parser.add_argument('--d_m', type=int, default=64, help="gaan model: gate: max a
 parser.add_argument('--x_sparse', action='store_true', default=False, help="whether to use data.x sparse version")
 
 parser.add_argument('--seed', type=int, default=1, help="random seed")
-parser.add_argument('--device', type=str, default='cuda:1', help='[cpu, cuda:id]')
+parser.add_argument('--device', type=str, default='cuda:0', help='[cpu, cuda:id]')
 parser.add_argument('--cpu', action='store_true', default=False, help='use cpu, not use gpu')
 parser.add_argument('--lr', type=float, default=0.01, help="adam's learning rate")
 parser.add_argument('--weight_decay', type=float, default=0.0005, help="adam's weight decay")
@@ -99,9 +99,6 @@ elif args.mode == 'graphsage':
                                num_workers=args.num_workers) 
 loader_time = time.time() - loader_time
 
-#print("xx", train_loader[0])
-# train_loader must iter
-
 # 3. set model
 if args.model == 'gcn':
     # 预先计算edge_weight出来
@@ -143,7 +140,6 @@ optimizer = torch.optim.Adam([
     for i in range(1 if args.model == "ggnn" else args.layers)]
     , lr=args.lr)  # Only perform weight-decay on first convolution, 参考了pytorch_geometric中的gcn.py的例子: https://github.com/rusty1s/pytorch_geometric/blob/master/examples/gcn.py
 
-print("out", model.device)
 
 def train(epoch, mode):
     model.train()
@@ -152,27 +148,18 @@ def train(epoch, mode):
 
     total_loss = 0
 
-    sampling_time, to_time, train_time = 0.0, 0.0, 0.0
 
     train_iter = iter(train_loader)
-    cnt = 0
     while True:
         try:
-            t0 = time.time()
             batch = next(train_iter)
-            t1 = time.time()
-            sampling_time = t1 - t0
             
             if mode == "cluster":
                 batch = batch.to(device)
-                nodes, edges = batch.x.shape[0], batch.edge_index.shape[1]
-                print(f"nodes: {nodes}, edges: {edges}")
-                t2 = time.time()
-                to_time = t2 - t1
+                # nodes, edges = batch.x.shape[0], batch.edge_index.shape[1]
+                # print(f"nodes: {nodes}, edges: {edges}")
                 optimizer.zero_grad()
                 out = model(batch.x, batch.edge_index)
-                print("out", out, out.shape)
-                print("batch.y", batch.y, batch.y.shape)
                 if args.dataset in ['yelp', 'reddit']:
                     loss = torch.nn.BCEWithLogitsLoss()(out[batch.train_mask, :], batch.y[batch.train_mask, :])
                 else:
@@ -185,15 +172,13 @@ def train(epoch, mode):
             elif mode == 'graphsage':
                 batch_size, n_id, adjs = batch
                 adjs = [adj.to(device) for adj in adjs] 
-                nodes, edges = adjs[0][2][0], adjs[0][0].shape[1]
-                print(f"nodes: {nodes}, edges: {edges}")
+                # nodes, edges = adjs[0][2][0], adjs[0][0].shape[1]
+                # print(f"nodes: {nodes}, edges: {edges}")
                 x = data.x[n_id].to(device)
                 if args.dataset in ['yelp', 'reddit']:
                     y = data.y[n_id[:batch_size], :].to(device)
                 else:
                     y = data.y[n_id[:batch_size]].to(device)
-                t2 = time.time()
-                to_time = t2 - t1
                 optimizer.zero_grad()            
                 out = model(data.x[n_id].to(device), adjs)
                 if args.dataset in ['yelp', 'reddit']:
@@ -205,12 +190,8 @@ def train(epoch, mode):
             optimizer.step()
             
             total_loss += loss.item() * batch_size            
-            train_time = time.time() - t2 # 
             
-            cnt += 1
-            print(f"cnt:{cnt}, sampling_time: {sampling_time}, to_time: {to_time}, train_time: {train_time}")
             # get max memory
-            print("max memory(bytes): ", torch.cuda.memory_stats(device)["allocated_bytes.all.peak"])
             torch.cuda.reset_max_memory_allocated(device)
         except StopIteration:
             break
@@ -218,121 +199,24 @@ def train(epoch, mode):
     loss = total_loss / total_nodes
     return loss
 
-# 对于sample进行特别的实现
-def train_optimize(epoch, mode):
-    model.train()
-    
-    num = len(train_loader)
-    train_iter = iter(train_loader)
-    def task1(q1):
-        loader_iter = iter(train_iter)
-        for i in range(num):
-            data = next(loader_iter)
-            q1.put(data)
-    
-    def task2(q1, q2):
-        for i in range(num):
-            data = q1.get()
-            data = data.to(device)
-            q2.put(data)
-    
-    def task3(q2):
-        total_loss = total_examples = total_correct = 0
-        for i in range(num):
-            batch = q2.get()
-            optimizer.zero_grad()
-            
-            if mode == "cluster":
-                out = model(batch.x, batch.edge_index)
-                if args.dataset in ['yelp']:
-                    loss = torch.nn.BCEWithLogitsLoss()(out[batch.train_mask, :], batch.y[batch.train_mask, :])
-                else:
-                    if args.dataset == 'amazon':
-                        label = torch.argmax(batch.y[batch.train_mask], dim=1)
-                    else:
-                        label = batch.y[batch.train_mask]
-                    loss = F.nll_loss(out.log_softmax(dim=-1)[batch.train_mask], label)
-                batch_size = batch.train_mask.sum().item()  
-            
-    while True:
-        try:
-            t0 = time.time()
-            batch = next(train_iter)
-            t1 = time.time()
-            sampling_time = t1 - t0
-            
-            if args.mode == "cluster":
-                batch = batch.to(device)
-                nodes, edges = batch.x.shape[0], batch.edge_index.shape[1]
-                print(f"nodes: {nodes}, edges: {edges}")
-                t2 = time.time()
-                to_time = t2 - t1
-                optimizer.zero_grad()
-                out = model(batch.x, batch.edge_index)
-                print("out", out, out.shape)
-                print("batch.y", batch.y, batch.y.shape)
-                if args.dataset in ['yelp']:
-                    loss = torch.nn.BCEWithLogitsLoss()(out[batch.train_mask, :], batch.y[batch.train_mask, :])
-                else:
-                    if args.dataset == 'amazon':
-                        label = torch.argmax(batch.y[batch.train_mask], dim=1)
-                    else:
-                        label = batch.y[batch.train_mask]
-                    loss = F.nll_loss(out.log_softmax(dim=-1)[batch.train_mask], label)
-                batch_size = batch.train_mask.sum().item()
-            elif args.mode == 'graphsage':
-                # 这里还需要重新设计
-                batch_size, n_id, adjs = batch
-                adjs = [adj.to(device) for adj in adjs] 
-                nodes, edges = adjs[0][2][0], adjs[0][0].shape[1]
-                print(f"nodes: {nodes}, edges: {edges}")
-                x = data.x[n_id].to(device)
-                if args.dataset in ['yelp', 'amazon']:
-                    y = data.y[n_id[:batch_size], :].to(device)
-                else:
-                    y = data.y[n_id[:batch_size]].to(device)
-                t2 = time.time()
-                to_time = t2 - t1
-                optimizer.zero_grad()            
-                out = model(data.x[n_id].to(device), adjs)
-                if args.dataset in ['yelp', 'amazon']:
-                    loss = torch.nn.BCEWithLogitsLoss()(out, y)
-                else:
-                    loss = F.nll_loss(out.log_softmax(dim=-1), y)
-
-            loss.backward()
-            optimizer.step()
-            
-            total_loss += loss.item() * batch_size            
-            train_time = time.time() - t2 # 
-            
-        except StopIteration:
-            break
-
-    loss = total_loss / total_nodes
-    return loss
 
 @torch.no_grad()
 def test(epoch):  # Inference should be performed on the full graph.
-    t0 = time.time()
     model.eval()
     out = model.inference(data.x, subgraph_loader)
 
     y_true = data.y.cpu()
     y_pred = out.argmax(dim=-1)
-    t1 = time.time()
     
     accs = []
     for mask in [data.train_mask, data.val_mask, data.test_mask]:
         correct = y_pred[mask].eq(y_true[mask]).sum().item()
         accs.append(correct / mask.sum().item())
 
-    print(f"Epoch {epoch}, inference_time: {t1 - t0}s, other_time: {time.time() - t1}s")
     return accs
 
-cnt = len(subgraph_loader)
-for epoch in range(args.epochs):
-    t0 = time.time()
-    train(epoch, mode=args.mode)
 
-print(f"use_time: {time.time() - st}s")
+for epoch in range(args.epochs):
+    train(epoch, mode=args.mode)
+    accs = test(epoch)
+    print(f'Epoch: {epoch:03d}, Train: {accs[0]:.8f}, Val: {accs[1]:.8f}, Test: {accs[2]:.8f}')

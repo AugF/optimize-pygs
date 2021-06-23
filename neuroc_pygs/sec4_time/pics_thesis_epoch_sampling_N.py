@@ -30,7 +30,6 @@ for file in ['gcn_pubmed', 'gaan_amazon-computers']:
     df_data = pd.read_csv('out_epoch_csv/sampling_' + file + '_N.csv', index_col=0)
     df[file] = {'Baseline': [], 'Optimize': [], 'x': [],
                 'real_ratio': [], 'exp_ratio': [], 'r1': []}
-    print(df_data.index)
     for data in df_data.index:
         df[file]['Baseline'].append(float(df_data['baseline'][data]))
         df[file]['Optimize'].append(float(df_data['opt'][data]))
@@ -39,7 +38,6 @@ for file in ['gcn_pubmed', 'gaan_amazon-computers']:
         df[file]['exp_ratio'].append(1/float(df_data['exp_ratio'][data]))
         df[file]['r1'].append(1/float(df_data['r1'][data]))
 
-print(df)
 base_size = 14
 i = 0
 for item in df.keys():

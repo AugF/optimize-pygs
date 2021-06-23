@@ -84,7 +84,7 @@ for mode in ['graphsage']:
         ax.set_xticks(x)
         ax.set_xticklabels(xs, fontsize=base_size)
         fig.savefig(
-            f'out_thesis_figs/exp_batch_graph_{mode}_batch_{file}.png', dpi=400)
+            f'exp4_thesis_figs/batch_figs/exp_batch_graph_{mode}_batch_{file}.png', dpi=400)
 
         base_size = 10
         # fig2

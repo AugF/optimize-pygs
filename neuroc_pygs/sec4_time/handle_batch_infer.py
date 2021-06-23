@@ -34,12 +34,13 @@ def read_file(file_name, dir_path='out_batch_log'):
                 opt_time_cnt += 1
     return dd_data
 
+
 index = []
 for exp_data in ['flickr']:
     for exp_model in ['gcn', 'ggnn', 'gaan', 'gat']:
         for var in [1024]:
             index.append(f'{exp_model}_{exp_data}_{var}')
-            
+
 dd_data = read_file('batches_infer_flickr.log')
 dd_data = pd.DataFrame(dd_data.values(), index=index, columns=columns)
 print(dd_data)

@@ -99,7 +99,7 @@ for mode in ['cluster', 'graphsage']:
                color=colors[1], edgecolor='black', label='优化后')
         ax.legend(loc='lower left', ncol=2, fontsize='small')
         fig.savefig(
-            f'out_batch_figs/exp_batch_N_{mode}_total_{file}.png', dpi=400)
+            f'exp4_thesis_figs/batch_figs/exp_batch_N_{mode}_total_{file}.png', dpi=400)
 
         # fig3
         fig, ax = plt.subplots(figsize=(7/1.5, 5/1.5), tight_layout=True)

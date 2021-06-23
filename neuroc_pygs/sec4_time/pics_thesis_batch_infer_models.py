@@ -23,7 +23,7 @@ plt.style.use("grayscale")
 plt.rcParams["font.size"] = base_size
 
 
-file_names = ['gcn', 'gat']
+file_names = ['gcn']
 datasets = ['pubmed', 'amazon-computers',
             'coauthor-physics', 'flickr', 'com-amazon']
 datasets_maps = {

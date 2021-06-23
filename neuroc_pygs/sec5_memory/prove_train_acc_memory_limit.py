@@ -87,6 +87,6 @@ def test_acc():
                 print(res)
                 tab_data.append(res)
         print(tabulate(tab_data, headers=headers, tablefmt='github'))
-        pd.DataFrame(tab_data, columns=headers).to_csv(dir_out + f'/prove_train_acc_{model}.csv')
+        # pd.DataFrame(tab_data, columns=headers).to_csv(dir_out + f'/prove_train_acc_{model}.csv')
 
 

@@ -73,7 +73,7 @@ def run_one(file_name, args):
     print(file_name)
     base_memory = torch.cuda.memory_stats(args.device)["allocated_bytes.all.current"]
     print(f'base memory: {base_memory}')
-    real_path = dir_path + f'/{file_name}.csv'
+    real_path = f'out_motivation_data/{file_name}.csv'
     if os.path.exists(real_path):
         res = pd.read_csv(real_path, index_col=0).to_dict(orient='list')
     else:

@@ -10,7 +10,7 @@ from torch_geometric.data import ClusterData, ClusterLoader, NeighborSampler
 from neuroc_pygs.configs import EXP_DATASET, ALL_MODELS, EXP_RELATIVE_BATCH_SIZE, MODES, PROJECT_PATH
 from neuroc_pygs.options import get_args, build_dataset, build_model_optimizer, build_train_loader
 from neuroc_pygs.sec6_cutting.cutting_utils import BSearch
-from neuroc_pygs.sec6_cutting.cutting_methods import cut_by_importance_method_reverse, cut_by_random, get_pagerank, get_degree
+from neuroc_pygs.sec6_cutting.cutting_method import cut_by_importance_method_reverse, cut_by_random, get_pagerank, get_degree
 
 memory_limit = {
     'gcn': 6.5, # 6,979,321,856

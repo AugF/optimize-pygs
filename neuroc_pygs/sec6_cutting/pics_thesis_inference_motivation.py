@@ -48,7 +48,6 @@ for i, model in enumerate(['reddit_sage', 'cluster_gcn']):
         print(real_path)
         if os.path.exists(real_path):
             res = pd.read_csv(real_path, index_col=0).to_dict(orient='list')['memory']
-            print(file_name, res)
         else:
             res = []
         box_data.append(list(map(lambda x: x/(1024*1024*1024), res)))
@@ -60,7 +59,7 @@ for i, model in enumerate(['reddit_sage', 'cluster_gcn']):
     ax.plot(xlim, [line] * len(xlim), linestyle='dashed', color='b', linewidth=1.5, label='GPU内存上限')
     ax.legend()
 
-fig.savefig(f'exp6_thesis_figs/inference/exp_memory_inference_motivation.png', dpi=400)
+fig.savefig(f'exp6_thesis_figs/exp_memory_inference_motivation.png', dpi=400)
 
 
 

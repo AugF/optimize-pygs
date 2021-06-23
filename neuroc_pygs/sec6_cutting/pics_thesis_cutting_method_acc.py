@@ -83,4 +83,4 @@ for model in ['gcn', 'gat']:
         else:
             ax.legend(fontsize='small')
         fig.savefig(
-            f'exp6_thesis_figs/exp_memory_inference_cutting_methods_{cur_name}.png', dpi=400)
+            f'exp6_thesis_figs/exp_memory_inference_cutting_method_{cur_name}.png', dpi=400)

@@ -57,7 +57,7 @@ def get_linear_plane(model='gat'):
     for nodes in range(5000, 100001, 5000):
         for expect_edges in range(5000, 100001, 5000):
             exp_data = f'random_{int(nodes/1000)}k_{int(expect_edges/1000)}k'
-            sys.argv = [sys.argv[0], '--dataset', exp_data, '--device', 'cuda:2', '--model', model] + default_args.split(' ')
+            sys.argv = [sys.argv[0], '--dataset', exp_data, '--device', 'cuda:0', '--model', model] + default_args.split(' ')
             tab_data.append(run())
     file_path = os.path.join(PROJECT_PATH, 'sec5_memory', 'out_motivation_data', f'{model}_memory_2dims_curve_data.csv')
     pd.DataFrame(tab_data, columns=['Name', 'Nodes', 'Edges', 'Peak Memory']).to_csv(file_path)

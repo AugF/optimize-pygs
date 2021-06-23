@@ -65,4 +65,3 @@ for item in df.keys():
     fig.savefig(
         f'exp4_thesis_figs/epoch_sampling_figs/exp_epoch_sampling_hidden_dims_{item}_else.png', dpi=400)
     i += 2
-    # exp_epoch_sampling_batch_size_{file}_{item}_else.png

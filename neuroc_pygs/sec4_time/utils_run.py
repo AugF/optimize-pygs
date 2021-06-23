@@ -11,7 +11,7 @@ def kill_threads():
         for path in lines:
             progress =  path.split(' ')[1]
             client   =  path.split(' ')[6].split('/')[0]
-            if client=="pts":
+            if client == "pts":
                 continue
 
             print(progress , client)
@@ -20,6 +20,10 @@ def kill_threads():
        
 def run_pics():
     for file in os.listdir('.'):
-        if 'pics_thesis' in file and 'ppt' in file:
-        print(file)
-        os.system('python ' + file)
+        if 'pics_thesis' in file or 'ppt' in file:
+            print(file)
+            os.system('python ' + file)
+    
+
+if __name__ == '__main__':
+    run_pics()

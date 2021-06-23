@@ -1,61 +1,49 @@
-## 系统
+面向内存受限环境的图神经网络训练与推理流程优化
 
-motivation.py: 常规流程
-- train(): 训练
-- infer(): 推理
-- train_loader(): 这里可以剥离出来
+## 说明
 
-begin_train_loader: 准备train_loader的数据
-run_one: 运行一次
+图神经网络训练阶段，以GCN和GAT算法作为典型算法
+评估了内存开销预测模型和训练阶段重采样比例的影响
 
-motivation_predict.py: 内存受限处理流程
-
-1. 内存开销预测模型
-- 面向超参数确定的线性预测模型
-- 面向超参数不确定的随机森林预测模型
-> 以训练作为展示，注意这里需要统一为峰值内存，而不是膨胀内存
-make_datasets.py: 构造数据集
-
-> 两种内存开销模型的各种测试文件
-- 准确率
-- 准确率
-- 额外开销（这个还需要额外计算）
-> 这里的数据进行重新运行吧？
-> 模型保存在哪？
-> 注意这里的内存开销预测模型需要重新测试
-
-2. 重采样机制
-> 图5-13展示了中间的结果
-（这里的文件需要重新寻找）
-prove_train_acc_memory_limit.py
-
-训练阶段，默认使用重采样后
-
-3. 基于二分的超限子图上限预测方法
+## 目录结构
+exp_automl_datasets_diff
+exp_figs
+exp_log_diff
+exp_motivation_diff
+exp_train_figs
+exp_res
 
 
-4. 基于度数和PageRank的超限子图剪枝方法
+out_motivation_data: 
+- 1. 展示不同批次的训练的题
+- 2. 图5-6证明峰值内存开销与顶点数和边数之间的二元关系
 
 
-## 图片的来源
 exp5_thesis_figs
 
-- memory_model
-exp_memory_training_gat_automl_mape_diff.png
-exp_memory_training_gat_automl_r2_diff.png
-exp_memory_training_gcn_automl_mape_diff.png
-exp_memory_training_gcn_automl_r2_diff.png
+线性模型
+- 1. 构建数据集，保存在out_linear_model_datasets; (motivation.py)
+- 2. out_linear_model_pth: 训练好的模型文件
+- 3. out_linear_model_res: 使用线性模型后保存的文件结果
 
-- motivation
-exp_memory_training_gat_cluster_motivation_diff.png
-exp_memory_training_gat_cluster_motivation_edges_diff.png
-gcn
+随机森林
+- 1. 构架数据集，保存在out_random_forest_datasets (build_random_forest_datasets.py)
+- 2. out_random_forest_pth: 训练好的模型文件
+- 3. out_random_forest_res: 使用随机森林后保存的文件
 
-- motivation_opt
-exp_memory_training_gat_cluster_motivation_automl_mape_diff_v3.png
-linear_model
+motivation_optimize.py: 使用内存开销模型后的结果
 
-- resampling
-exp_memory_training_gat_linear_model_yelp_180_acc.png
-loss.png
-resampling_acc.png
+handle_overhead_data.py: 计算额外开销
+memory_model.py: 评估和保存内存开销模型
+
+prove_linear_plane.py: 图5-6证明，用于收集文件
+prove_train_acc_memory_limit.py: 证明重采样对精度的影响
+
+
+pics_thesis_motivation_edges.py: 图5-2, 边数分布箱线图
+pics_thesis_motivation_memory.py: 图5-3, 内存分布箱线图
+pics_thesis_motivation_optimize.py: 如图5-8,5-9,5-10,5-11, 绘制内存开销模型执行后的结果
+pics_thesis_train_acc_resampling.py: 图5-17, 绘制训练集精度与重采样比例的关系
+pics_thesis_training.py: 图5-13,, 训练阶段，使用重采样后，验证集上的精度的变化趋势
+
+configs.py: 算法默认的参数配置

@@ -62,7 +62,6 @@ def cut_by_importance(edge_index, cutting_nums, method='degree', name='way1'):
 
     outliers = [importance[i][1] for i in range(cutting_nums)]
     mask = list(set(range(edge_index.shape[1])) - set(outliers))
-    print(outliers)
     return edge_index[:, mask]
 
 
@@ -90,6 +89,9 @@ def run_overhead(): # 计算额外开销，对应于大论文图5-19
     args = get_args()
     args.dataset = 'random_10k_100k'
     data = build_dataset(args)
+
+    # 实验1
+    df = {}
     for r in rs:
         cutting_nums = int(100000 * r)
         t1 = time.time()
@@ -100,9 +102,10 @@ def run_overhead(): # 计算额外开销，对应于大论文图5-19
         cut_by_importance(data.edge_index, cutting_nums, method='pagerank', name='way2')
         t4 = time.time()
         df[r] = [t2 - t1, t3 - t2, t4 - t3]
-        print(r, df[r])
+    print(df)
 
     # 实验2
+    df = {}
     edges = [10, 15, 30, 50, 70, 90]
     args = get_args()
     for e in edges:
@@ -117,7 +120,7 @@ def run_overhead(): # 计算额外开销，对应于大论文图5-19
         cut_by_importance(data.edge_index, cutting_nums, method='pagerank', name='way2')
         t4 = time.time()
         df[e] = [t2 - t1, t3 - t2, t4 - t3]
-        print(e, df[e])
+    print(df)
 
 
 if __name__ == '__main__':

@@ -15,7 +15,7 @@ from tabulate import tabulate
 from collections import defaultdict
 from neuroc_pygs.options import build_dataset, get_args, build_dataset, build_model_optimizer
 from neuroc_pygs.configs import PROJECT_PATH
-from neuroc_pygs.sec5_memory.configs import MODEL_PARAS
+from neuroc_pygs.configs import MODEL_PARAS
 
 
 def train(model, batch, optimizer): # 全数据训练
@@ -29,14 +29,12 @@ def train(model, batch, optimizer): # 全数据训练
 
 def run_random_forest(): 
     args = get_args()
-    print(args)
     data = build_dataset(args)
     model, optimizer = build_model_optimizer(args, data)
     model = model.to(args.device)
     memory = torch.cuda.memory_stats(args.device)["allocated_bytes.all.current"]
     torch.cuda.reset_max_memory_allocated(args.device)
     torch.cuda.empty_cache()
-    print(f'device: {args.device}, model memory: {memory}, model: {args.model}')
 
     data = data.to(args.device)
     peak_memorys = []
@@ -51,10 +49,11 @@ def run_random_forest():
             peak_memorys.append(peak_memory)
     paras_dict = model.get_hyper_paras() # 获取超参数
     res = [data.num_nodes, data.num_edges] + [v for v in paras_dict.values()] + [np.mean(peak_memory), np.mean(peak_memory) - memory]
+    print(res)
     return res
 
 
-def build_random_forest_dataset(model):
+def build_random_forest_dataset(model, file_suffix='v0'):
     # 边数和点数
     default_args = '--hidden_dims 1024 --gaan_hidden_dims 256 --head_dims 128 --heads 4 --d_a 32 --d_v 32 --d_m 32'
     tab_data = []
@@ -67,12 +66,12 @@ def build_random_forest_dataset(model):
                 continue
             sys.argv = [sys.argv[0], '--dataset', exp_data, '--model', model] + default_args.split(' ')
             try:
-                tab_data.append(run_automl())
+                tab_data.append(run_random_forest())
                 gc.collect()
             except Exception as e:
                 print(e.args)
                 print(traceback.format_exc())
-    pd.DataFrame(tab_data).to_csv(dir_path + f'/{model}_nodes_edges_random_forest.csv')
+    pd.DataFrame(tab_data).to_csv(dir_path + f'/{model}_nodes_edges_random_forest_{file_suffix}.csv')
 
     # 特征数
     tab_data = []
@@ -84,12 +83,12 @@ def build_random_forest_dataset(model):
             continue
         sys.argv = [sys.argv[0], '--dataset', exp_data, '--model', model]
         try:
-            tab_data.append(run_automl())
+            tab_data.append(run_random_forest())
             gc.collect()
         except Exception as e:
             print(e.args)
             print(traceback.format_exc())
-    pd.DataFrame(tab_data).to_csv(dir_path + f'/{model}_features_random_forest.csv')  
+    pd.DataFrame(tab_data).to_csv(dir_path + f'/{model}_features_random_forest_{file_suffix}.csv')  
 
     # 类别数
     tab_data = []
@@ -97,19 +96,19 @@ def build_random_forest_dataset(model):
         exp_data = base_name + f'_500_{classes}'
         if not os.path.exists('/mnt/data/wangzhaokang/wangyunpan/data/' + exp_data):
             continue
-        if os.path.exists(dir_path + f'/{model}_{exp_data}_random_forest.csv'):
+        if os.path.exists(dir_path + f'/{model}_{exp_data}_random_forest_{file_suffix}.csv'):
             continue
         sys.argv = [sys.argv[0], '--dataset', exp_data, '--model', model]
         for para, para_values in MODEL_PARAS[model].items():
             for p_v in para_values: #  paras: 13
                 sys.argv += [f'--{para}', str(p_v)]
                 try:
-                    tab_data.append(run_automl())
+                    tab_data.append(run_random_forest())
                     gc.collect()
                 except Exception as e:
                     print(e.args)
                     print(traceback.format_exc())
-    pd.DataFrame(tab_data).to_csv(dir_path + f'/{model}_classes_random_forest.csv')
+    pd.DataFrame(tab_data).to_csv(dir_path + f'/{model}_classes_random_forest_{file_suffix}.csv')
     
     # 算法自带的参数
     tab_data = []
@@ -119,12 +118,12 @@ def build_random_forest_dataset(model):
             for p_v in para_values: 
                 sys.argv = init_argv + [f'--{para}', str(p_v), '--dataset', dataset]
                 try:
-                    tab_data.append(run_automl())
+                    tab_data.append(run_random_forest())
                     gc.collect()
                 except Exception as e:
                     print(e.args)
                     print(traceback.format_exc())
-    pd.DataFrame(tab_data).to_csv(dir_path + f'/{model}_paras_random_forest.csv')
+    pd.DataFrame(tab_data).to_csv(dir_path + f'/{model}_paras_random_forest_{file_suffix}.csv')
     return
 
 

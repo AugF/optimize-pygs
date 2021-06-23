@@ -16,7 +16,7 @@ from tabulate import tabulate
 from joblib import load
 from neuroc_pygs.utils import get_dataset
 from neuroc_pygs.configs import PROJECT_PATH
-from neuroc_pygs.sec6_cutting.cutting_methods import cut_by_importance, cut_by_random
+from neuroc_pygs.sec6_cutting.cutting_method import cut_by_importance, cut_by_random
 from neuroc_pygs.sec6_cutting.cutting_utils import BSearch
 
 
@@ -169,7 +169,7 @@ def run_test(file_suffix):
     data = dataset[0]
     x = data.x.to(device)
     y = data.y.squeeze().to(device)
-    save_dict = torch.load(os.path.join(PROJECT_PATH, 'sec6_cutting', 'exp_diff_res',  'reddit_sage_best_model.pth'), map_location=device)
+    save_dict = torch.load(os.path.join(PROJECT_PATH, 'sec6_cutting', 'best_model_pth',  'reddit_sage_best_model.pth'), map_location=device)
     model.load_state_dict(save_dict)
     df = defaultdict(list)
     for _ in range(40):

@@ -45,6 +45,8 @@ class CREATE_EventHandler(pyinotify.ProcessEvent):
 
 def run_eval():
     args = get_args()
+    if len(os.listdir(args.checkpoint_dir)) > 0:
+        os.system(f'rm {args.checkpoint_dir}/*')
     data = build_dataset(args)
     subgraph_loader = build_subgraphloader(args, data)
     if args.opt_eval_flag:

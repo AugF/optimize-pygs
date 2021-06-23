@@ -23,7 +23,7 @@ from tabulate import tabulate
 
 from ogb.nodeproppred import PygNodePropPredDataset, Evaluator
 from neuroc_pygs.configs import PROJECT_PATH
-from neuroc_pygs.sec6_cutting.cutting_methods import cut_by_importance, cut_by_random
+from neuroc_pygs.sec6_cutting.cutting_method import cut_by_importance, cut_by_random
 from neuroc_pygs.sec6_cutting.cutting_utils import BSearch
 
 
