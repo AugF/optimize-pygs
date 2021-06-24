@@ -90,11 +90,11 @@ setup.py          // python库安装文件
     - 训练与评估步骤的流水线优化 `python opt_experiment.py [其他参数]`
     - 叠加优化 `python opt_experiment.py --opt_train_flag 1 --opt_eval_flag 1 [其他参数]`
 
-3. 面向内存受限环境的图神经网络训练与推理优化方法，训练阶段的例子（`sec4_memory/motivation_predict.py`），推理阶段的例子（`sec5_cutting/cluster_gcn_predict.py`, `sec5_cutting/reddit_sage_predict.py`）。以`sec4_memory/motivation_predict.py`进行介绍，此处采用随机森林作为内存开销预测模型。
-    - 进入工作目录，`cd sec4_memory`
+3. 面向内存受限环境的图神经网络训练与推理优化方法，训练阶段的例子（`sec5_memory/motivation_predict.py`），推理阶段的例子（`sec5_cutting/cluster_gcn_predict.py`, `sec6_cutting/reddit_sage_predict.py`）。以`sec5_memory/motivation_predict.py`进行介绍，此处采用随机森林作为内存开销预测模型。
+    - 进入工作目录，`cd sec5_memory`
     - 构建一定数量的样本，`python build_random_forest_datasets.py`。样本数据保存在`out_random_forest_datasets`目录中。
     - 训练随机森林模型，`python memory_model.py`。训练好的模型文件保存在`out_random_forest_pth`目录中。
-    - 使用内存开销预测模型以保证内存稳定的环境，`python motivation_predict.py`。运行中生成的文件保存在`out_random_forest_res`文件中。
+    - 使用内存开销预测模型以保证内存稳定的环境，`python motivation_optimize.py`。运行中生成的文件保存在`out_random_forest_res`文件中。
 
 数据集信息
 

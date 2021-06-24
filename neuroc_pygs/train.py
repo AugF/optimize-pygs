@@ -5,6 +5,7 @@ from queue import Queue
 
 from neuroc_pygs.sec4_time.epoch_utils import train_full, train
 from neuroc_pygs.options import get_args, build_dataset, build_model_optimizer, build_train_loader
+from neuroc_pygs.samplers.cuda_prefetcher import CudaDataLoader
 
 
 def train_full(args):

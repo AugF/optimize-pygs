@@ -3,6 +3,7 @@ import time
 import numpy as np
 from neuroc_pygs.options import get_args, build_dataset, build_model_optimizer, build_train_loader, build_subgraphloader
 from neuroc_pygs.sec4_time.epoch_utils import train_full, test_full, train, infer
+from neuroc_pygs.samplers.cuda_prefetcher import CudaDataLoader
 
 def trainer_full(args):
     data = build_dataset(args)
@@ -11,17 +12,12 @@ def trainer_full(args):
     for epoch in range(args.epochs): # 50
         train_full(model, data, optimizer)
         accs = test_full(model, data)
-        print(f'Epoch: {_:03d}, Train: {accs[0]:.8f}, Val: {accs[1]:.8f}, Test: {accs[2]:.8f}')
+        print(f'Epoch: {epoch:03d}, Train: {accs[0]:.8f}, Val: {accs[1]:.8f}, Test: {accs[2]:.8f}')
     return
 
 
 def trainer_sampling(args):
     data = build_dataset(args)
-    if args.opt_train_flag:
-        train_loader = CudaDataLoader(train_loader, device=args.device)
-    if args.opt_eval_flag:
-        subgraph_loader = CudaDataLoader(subgraph_loader, args.device, sampler='infer_sage')
-
     train_loader = build_train_loader(args, data)
     subgraph_loader = build_subgraphloader(args, data)
     if args.opt_train_flag:
