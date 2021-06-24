@@ -40,6 +40,8 @@ class CREATE_EventHandler(pyinotify.ProcessEvent):
 
 def run_eval():
     args = get_args()
+    if not os.path.exists(args.checkpoint_dir):
+        os.makedirs(args.checkpoint_dir)
     if len(os.listdir(args.checkpoint_dir)) > 0:
         os.system(f'rm {args.checkpoint_dir}/*')
     data = build_dataset(args)

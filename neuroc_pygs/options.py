@@ -92,7 +92,7 @@ def get_args():
     parser.add_argument('--eval_step', type=int,
                         default=1, help='eval step')
     parser.add_argument('--checkpoint_dir', type=str,
-                        default='/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec4_time/exp_checkpoints', help='eval step')
+                        default='exp_checkpoints', help='eval step')
     
     # for opt
     parser.add_argument('--opt_flag', type=bool,

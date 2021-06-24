@@ -8,7 +8,7 @@ from neuroc_pygs.sec4_time.epoch_utils import test_full
 from neuroc_pygs.sec6_cutting.cutting_method import cut_by_random, get_pagerank, get_degree, cut_by_importance_method
 
 
-dir_path = '/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec6_cutting/out_cutting_method_res'
+dir_path = 'out_cutting_method_res'
 
 for exp_model in ['gcn', 'gat']:
     for exp_data in ['amazon-photo', 'pubmed', 'amazon-computers', 'coauthor-physics']:

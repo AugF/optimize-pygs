@@ -5,9 +5,9 @@ from neuroc_pygs.configs import PROJECT_PATH
 
 def opt_epoch(args=''):
     pro_train = subprocess.Popen(
-        "python /home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec4_time/epoch_opt_full_train.py --device cuda:0 " + args, shell=True)
+        "python sec4_time/epoch_opt_full_train.py --device cuda:0 " + args, shell=True)
     pro_eval = subprocess.Popen(
-        "python /home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec4_time/epoch_opt_full_eval.py --device cuda:1 " + args, shell=True)
+        "python epoch_opt_full_eval.py --device cuda:1 " + args, shell=True)
     print(f'Pid train process: {pro_train.pid}, eval_process: {pro_eval.pid}')
     pro_eval.communicate()
     pro_eval.wait()
@@ -15,7 +15,7 @@ def opt_epoch(args=''):
 
 
 def epoch(args=''):
-    pro = subprocess.Popen("python /home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec4_time/epoch_base_full.py --device cuda:0 " + args, shell=True)
+    pro = subprocess.Popen("python epoch_base_full.py --device cuda:0 " + args, shell=True)
     pro.communicate()
     pro.wait()
 

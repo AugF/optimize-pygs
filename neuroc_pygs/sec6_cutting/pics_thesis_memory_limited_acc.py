@@ -14,9 +14,7 @@ config = {
 base_size = 14
 plt.rcParams["font.size"] = base_size
 
-dir_path = '/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec6_cutting'
-
-df = pd.read_csv(dir_path + f'/out_cutting_method_res/memory_limited_acc.txt')
+df = pd.read_csv(f'out_cutting_method_res/memory_limited_acc.txt')
 df.index = [f"{df['Name'][i]}_{df['Method'][i]}_{df['BatchSize'][i]}" for i in range(len(df.index))]
 del df['Name'], df['Method'], df['BatchSize']
 

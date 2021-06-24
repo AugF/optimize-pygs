@@ -64,7 +64,7 @@ setup.py          // python库安装文件
     pip install torch-geometric==1.5.0
     ```
 4. 安装其他软件，`pip install -r requirements.txt`
-5. 设置数据集目录，将`neuroc_pygs/`文件中设置`dataset_root="xxx/mydata"`, 并执行`python setup.py install --user`保存修改。
+5. 设置目录，将`neuroc_pygs/`文件中设置`dataset_root="xxx/mydata"`, `PROJECT_PATH="xxx/neuroc_pygs"`（即neuroc_pygs目录的绝对位置）。并执行`python setup.py install --user`保存修改。
 
 ### 运行环境
 

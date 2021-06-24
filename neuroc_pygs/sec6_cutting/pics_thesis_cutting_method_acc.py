@@ -21,8 +21,7 @@ base_size = 15
 
 plt.rcParams["font.size"] = base_size
 
-root_path = '/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec6_cutting'
-real_path = root_path + '/out_cutting_method_res/cutting_method_acc.txt'
+real_path = 'out_cutting_method_res/cutting_method_acc.txt'
 headers = None
 mydata = []
 with open(real_path) as f:

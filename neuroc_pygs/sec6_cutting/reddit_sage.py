@@ -16,7 +16,7 @@ from neuroc_pygs.utils import get_dataset
 from neuroc_pygs.configs import PROJECT_PATH
 
 
-dir_out = '/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec6_cutting/out_motivation_data'
+dir_out = 'out_motivation_data'
 
 def get_args():
     parser = argparse.ArgumentParser(description='OGBN-Products (Cluster-GCN)')
