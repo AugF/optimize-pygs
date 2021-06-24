@@ -35,3 +35,16 @@ pics_thesis_inference_bsearch.py: 基于二分的采样子图上限方法实际�
 pics_thesis_memory_limited_acc.py: 内存受限下，使用剪枝策略后的精度结果
 ```
 
+### 注意事项
+
+如果出现以下目录找不到，请手动建立:
+```
+best_model_pth
+exp6_thesis_figs
+out_cutting_method_res
+out_linear_model_datasets
+out_linear_model_pth
+out_linear_model_res
+out_motivation_data
+out_optimize_res
+```

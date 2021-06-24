@@ -151,8 +151,8 @@ def save_random_forest(model, files=['classes', 'nodes_edges', 'features', 'redd
     reg.fit(X_train, y_train)
     y_pred = reg.predict(X_test) 
     mape = mean_absolute_percentage_error(y_test, y_pred)
-    dump(reg, f'out_random_forest_pth/{model}.pth')
-    with open(f'out_random_forest_pth/{model}.txt', 'w') as f:
+    dump(reg, f'out_random_forest_pth/{model}_random_forest.pth')
+    with open(f'out_random_forest_pth/{model}_random_forest.txt', 'w') as f:
         f.write(str(mape))
     print(f'model={model}, mape={str(mape)}')
 

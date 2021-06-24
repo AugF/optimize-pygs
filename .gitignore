@@ -1,7 +1,10 @@
 *log
 *log*/
 *json
-*pth
+*exp_checkpoints*
+!*/sec5_memory/out_linear_model_pth/*
+!*/sec5_memory/out_random_forest_pth/*
+!*sec6_cutting/best_model_pth/*
 *csv
 *png
 !tools/*

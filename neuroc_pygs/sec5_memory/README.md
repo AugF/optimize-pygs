@@ -32,3 +32,18 @@ pics_thesis_motivation_optimize.py: 如图5-8,5-9,5-10,5-11, 绘制内存开销�
 pics_thesis_train_acc_resampling.py: 图5-17, 绘制训练集精度与重采样比例的关系
 pics_thesis_training.py: 图5-13, 训练阶段，使用重采样后，验证集上的精度的变化趋势
 ```
+
+### 注意事项
+
+如果出现以下目录找不到，请手动建立:
+```
+exp5_thesis_figs
+out_linear_model_datasets
+out_linear_model_pth
+out_linear_model_res
+out_motivation_data
+out_random_forest_datasets
+out_random_forest_pth
+out_random_forest_res
+out_train_data
+```

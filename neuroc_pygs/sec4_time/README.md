@@ -33,3 +33,25 @@ handle_xxx.py: log日志处理脚本
 
 pics_thesis_xxx.py: 绘图脚本
 ```
+
+### 注意事项
+
+如果出现以下目录找不到，请手动建立:
+```
+exp_checkpoints
+exp4_thesis_figs
+    batch_figs
+    batch_infer_figs
+    epoch_full_figs
+    epoch_sampling_figs
+    total_figs
+exp4_thesis_ppt_figs
+    batch_figs
+    epoch_sampling_figs
+out_batch_csv
+out_batch_log
+out_epoch_csv
+out_epoch_log
+out_epoch_sampling_log
+out_total_csv
+```
