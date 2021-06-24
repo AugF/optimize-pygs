@@ -11,3 +11,4 @@ tqdm==4.46.1
 tabulate==0.8.9
 fast-pagerank==0.0.4
 pyinotify==0.9.6
+snap-stanford==6.0.0

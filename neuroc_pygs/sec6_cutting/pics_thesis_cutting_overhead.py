@@ -11,7 +11,6 @@ config = {
 }
 
 base_size = 14
-# plt.style.use("grayscale")
 
 plt.rcParams["font.size"] = base_size
 

@@ -1,10 +1,12 @@
 import copy
-import math
+import math, os
 import torch
 import numpy as np
 from scipy import sparse
 from fast_pagerank import pagerank
 from collections import defaultdict
+from neuroc_pygs.utils import create_random_dataset
+from neuroc_pygs.configs import dataset_root
 
 
 def get_degree(edge_index):
@@ -88,6 +90,10 @@ def run_overhead(): # 计算额外开销，对应于大论文图5-19
     rs = [0.01, 0.03, 0.06, 0.1, 0.2, 0.5]
     args = get_args()
     args.dataset = 'random_10k_100k'
+    if not os.path.exists(dataset_root + '/' + args.dataset): # 不存在，则随机生成图
+        create_random_dataset(args.dataset, nodes=10000, edges=100000*0.75, expect_edges=100000, features=500, classes=7, 
+                                split_train=0.50, split_val=0.25, root=dataset_root)
+        print('success!!!')
     data = build_dataset(args)
 
     # 实验1
@@ -110,6 +116,9 @@ def run_overhead(): # 计算额外开销，对应于大论文图5-19
     args = get_args()
     for e in edges:
         args.dataset = f'random_10k_{e}k'
+        if not os.path.exists(dataset_root + '/' + args.dataset): # 不存在，则随机生成图
+            create_random_dataset(args.dataset, nodes=10000, edges=e*750, expect_edges=e*1000, features=500, classes=7, 
+                                    split_train=0.50, split_val=0.25, root=dataset_root)
         cutting_nums = 10
         data = build_dataset(args)
         t1 = time.time()

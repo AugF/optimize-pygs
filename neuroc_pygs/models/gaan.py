@@ -7,7 +7,6 @@ from tqdm import tqdm
 
 from neuroc_pygs.models.gaan_layers import GaANConv
 from neuroc_pygs.utils import glorot, zeros, nvtx_push, nvtx_pop, log_memory
-from neuroc_pygs.samplers.prefetch_generator import BackgroundGenerator
 
 
 class GaAN(Module):
@@ -77,10 +76,7 @@ class GaAN(Module):
             log_memory(flag, device, f'layer{i} start')
 
             xs = []
-            if opt_loader:
-                loader_iter = BackgroundGenerator(iter(subgraph_loader))
-            else:
-                loader_iter = iter(subgraph_loader)
+            loader_iter = iter(subgraph_loader)
             while True:
                 try:
                     et0 = time.time()

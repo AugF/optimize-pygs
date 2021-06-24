@@ -25,6 +25,7 @@ from ogb.nodeproppred import PygNodePropPredDataset, Evaluator
 from neuroc_pygs.configs import PROJECT_PATH
 from neuroc_pygs.sec6_cutting.cutting_method import cut_by_importance, cut_by_random
 from neuroc_pygs.sec6_cutting.cutting_utils import BSearch
+from neuroc_pygs.configs import dataset_root
 
 
 reg = load('out_linear_model_pth/cluster_gcn.pth')
@@ -184,8 +185,7 @@ def get_args():
 
 
 def prepare_data(args):
-    root = '/mnt/data/wangzhaokang/wangyunpan/datasets'
-    dataset = PygNodePropPredDataset(name='ogbn-products', root=root)
+    dataset = PygNodePropPredDataset(name='ogbn-products', root=dataset_root)
     split_idx = dataset.get_idx_split()
     data = dataset[0]
 

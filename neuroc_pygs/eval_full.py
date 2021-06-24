@@ -3,7 +3,7 @@ import torch
 import pyinotify
 import asyncio
 
-from neuroc_pygs.epoch_utils import infer
+from neuroc_pygs.sec4_time.epoch_utils import infer
 from neuroc_pygs.samplers.cuda_prefetcher import CudaDataLoader
 from neuroc_pygs.options import get_args, build_dataset, build_subgraphloader, build_model
 

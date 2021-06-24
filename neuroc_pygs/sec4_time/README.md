@@ -1,53 +1,35 @@
-## 说明
+## 基于流水线的图神经网络训练推理流程优化方法
 
+### 简要说明
 
-## 目录结构
+主要包括了两个优化：
+1. 采样流程的优化
+2. 训练与评估流程的优化
 
-- exp_checkpoints
-> 交换文件
-- exp_txt
-> 核心文件
+基于GCN, GGNN, GAT, GaAN四个算法在六个真实数据集上进行了评估。
 
-- exp4_thesis_figs
+### 目录结构
 
-4.1 采样流程的流水线并行优化
-- out_batch_log
-- out_batch_csv
+![](../../tools/文件关系图_sec4_time.png)
 
-4.2 训练和评估步骤的流水线并行优化
-- out_epoch_log
-- out_epoch_sampling_log
+```
+exp_checkpoints: 训练与评估流程的优化的辅助目录
+exp4_thesis_figs: 最终图像文件
+exp4_thesis_ppt_figs: 最终图像文件（展示在ppt中）
 
-- out_epoch_csv
+epoch_utils.py: 一些基本的辅助文件
 
-4.3 叠加优化
-- out_total_csv
+epoch_base_full.py: 优化前的流程
+epoch_base_sampling.py: 同上
 
-runs -> log -> csv -> figs
+epoch_opt_full_eval.py: 训练与评估流程的优化的辅助文件
+epoch_opt_full_train.py: 同上
+epoch_opt_sampling_eval.py: 同上
+epoch_opt_sampling_train.py: 同上
 
-文件输出：
-exp4_thesis_figs: 论文的输出文件
+test_xxx: 优化前后的对比的脚本
 
-基准文件：
-epoch_utils.py: 基本的文件
+handle_xxx.py: log日志处理脚本
 
-- 优化前：
-epoch_base_full.py
-epoch_base_sampling.py
-
-- 优化后：
-epoch_opt_full_eval.py
-epoch_opt_full_train.py
-epoch_opt_sampling_eval.py
-epoch_opt_sampling_train.py
-
-
-handle_batch.py, handle_batch_infer.py: 处理batch文件
-handle_epoch.py, handle_epoch_sampling.py: 处理epoch的log文件，生成csv文件
-
-test_batch.py, test_batch_infer.py: 测试优化前后效果的文件
-test_epoch_full.py, test_epoch_total.py: 测试epoch优化前后的文件
-
-## 说明
-
-1. 运行`pics_xxx`文件时“Fontconfig error”可以忽略，不会对结果产生影响。
+pics_thesis_xxx.py: 绘图脚本
+```

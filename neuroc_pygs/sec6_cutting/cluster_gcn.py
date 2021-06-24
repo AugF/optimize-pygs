@@ -21,7 +21,7 @@ from torch_geometric.utils import to_undirected
 from torch_sparse import SparseTensor
 
 from ogb.nodeproppred import PygNodePropPredDataset, Evaluator
-from neuroc_pygs.configs import PROJECT_PATH
+from neuroc_pygs.configs import PROJECT_PATH, dataset_root
 
 
 dir_out = '/home/wangzhaokang/wangyunpan/gnns-project/optimize-pygs/neuroc_pygs/sec6_cutting/out_motivation_data'
@@ -213,8 +213,7 @@ def get_args():
 
 
 def prepare_data(args):
-    root = '/mnt/data/wangzhaokang/wangyunpan/datasets'
-    dataset = PygNodePropPredDataset(name='ogbn-products', root=root)
+    dataset = PygNodePropPredDataset(name='ogbn-products', root=dataset_root)
     split_idx = dataset.get_idx_split()
     data = dataset[0]
 

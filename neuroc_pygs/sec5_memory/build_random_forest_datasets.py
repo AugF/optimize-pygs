@@ -14,8 +14,8 @@ from sklearn.metrics import mean_squared_error
 from tabulate import tabulate
 from collections import defaultdict
 from neuroc_pygs.options import build_dataset, get_args, build_dataset, build_model_optimizer
-from neuroc_pygs.configs import PROJECT_PATH
-from neuroc_pygs.configs import MODEL_PARAS
+from neuroc_pygs.configs import PROJECT_PATH, MODEL_PARAS, dataset_root
+from neuroc_pygs.utils import create_random_dataset
 
 
 def train(model, batch, optimizer): # 全数据训练
@@ -62,8 +62,9 @@ def build_random_forest_dataset(model, file_suffix='v0'):
         for edges in vars_set:
             exp_data = f'random_{int(nodes/1000)}k_{int(edges/1000)}k'
             print(exp_data)
-            if not os.path.exists('/mnt/data/wangzhaokang/wangyunpan/data/' + exp_data):
-                continue
+            if not os.path.exists(dataset_root + '/' + exp_data): # 不存在，则随机生成图
+                create_random_dataset(exp_data, nodes=nodes, edges=edges*0.75, expect_edges=edges, features=500, classes=7, 
+                                      split_train=0.50, split_val=0.25, root=dataset_root)
             sys.argv = [sys.argv[0], '--dataset', exp_data, '--model', model] + default_args.split(' ')
             try:
                 tab_data.append(run_random_forest())
@@ -79,8 +80,9 @@ def build_random_forest_dataset(model, file_suffix='v0'):
     base_name = f'random_{int(nodes/1000)}k_{int(expect_edges/1000)}k'
     for features in range(50, 5001, 500): # 10
         exp_data = base_name + f'_{features}_7'
-        if not os.path.exists('/mnt/data/wangzhaokang/wangyunpan/data/' + exp_data):
-            continue
+        if not os.path.exists(dataset_root + '/' + exp_data):
+            create_random_dataset(exp_data, nodes=nodes, edges=expect_edges*0.75, expect_edges=expect_edges, features=features, classes=7, 
+                        split_train=0.50, split_val=0.25, root=dataset_root)
         sys.argv = [sys.argv[0], '--dataset', exp_data, '--model', model]
         try:
             tab_data.append(run_random_forest())
@@ -94,8 +96,9 @@ def build_random_forest_dataset(model, file_suffix='v0'):
     tab_data = []
     for classes in range(3, 301, 30): # 10
         exp_data = base_name + f'_500_{classes}'
-        if not os.path.exists('/mnt/data/wangzhaokang/wangyunpan/data/' + exp_data):
-            continue
+        if not os.path.exists(dataset_root + '/' + exp_data):
+            create_random_dataset(exp_data, nodes=nodes, edges=expect_edges*0.75, expect_edges=expect_edges, features=500, classes=classes, 
+            split_train=0.50, split_val=0.25, root=dataset_root)
         if os.path.exists(dir_path + f'/{model}_{exp_data}_random_forest_{file_suffix}.csv'):
             continue
         sys.argv = [sys.argv[0], '--dataset', exp_data, '--model', model]
@@ -110,6 +113,7 @@ def build_random_forest_dataset(model, file_suffix='v0'):
                     print(traceback.format_exc())
     pd.DataFrame(tab_data).to_csv(dir_path + f'/{model}_classes_random_forest_{file_suffix}.csv')
     
+    return
     # 算法自带的参数
     tab_data = []
     init_argv = [sys.argv[0], '--model', model]

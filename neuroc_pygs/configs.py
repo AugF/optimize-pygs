@@ -1,4 +1,4 @@
-dataset_root = "/mnt/data/wangzhaokang/wangyunpan/data"
+dataset_root = "/mnt/data/wangzhaokang/wangyunpan/mydata"
 
 DATASET_METRIC = {
     'cora': 'accuracy',
