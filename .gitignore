@@ -3,8 +3,8 @@
 *json
 *pth
 *csv
-_*png
-*_*png
+*png
+!tools/*
 *pdf
 *tmp*/
 *tmp*/**
